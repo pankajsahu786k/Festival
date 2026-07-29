@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartShop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            padding: 35px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo-section h1 {
+            color: #d9534f;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .logo-section p {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #d9534f;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 13px;
+            background-color: #d9534f;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-submit:hover {
+            background-color: #c9302c;
+        }
+
+        .btn-submit:disabled {
+            background-color: #e08b88;
+            cursor: not-allowed;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .footer-links a {
+            color: #d9534f;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="logo-section">
+            <h1>SmartShop</h1>
+            <p>Apne account me login karein</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="mobileNumber">WhatsApp / Mobile Number</label>
+                <input type="tel" id="mobileNumber" placeholder="10 digit number" required pattern="[0-9]{10}">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Apna password daalein" required>
+            </div>
+
+            <button type="submit" class="btn-submit">Login 🚀</button>
+        </form>
+
+        <div class="footer-links">
+            Don't have an account? <a href="signup.html">Register here</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = "Logging in... ⏳";
+            submitBtn.disabled = true;
+
+            const mobileNumber = document.getElementById('mobileNumber').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // Live Render Login API par request bhejna
+                const response = await fetch('https://festival-h6ff.onrender.com/api/vendor/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ mobileNumber, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Successful login par Token aur Role ko browser me save karna
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('userRole', data.role);
+                    localStorage.setItem('shopSlug', data.shopSlug);
+
+                    alert(`Success: ${data.message}`);
+                    
+                    // Dashboard ya Home page par redirect karna
+                    window.location.href = 'Index.html';
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert('Network Error! Kripya internet connection check karein.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+</html>
