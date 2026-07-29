@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path'); // Naya: HTML files ka path dhoondhne ke liye
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
+const jwt = require('jsonwebtoken'); // Naya line
 
 const app = express();
 
@@ -64,6 +65,44 @@ app.post('/api/vendor/register', async (req, res) => {
     } catch (error) {
         console.error("Registration Error: ", error);
         res.status(500).json({ message: "Server me koi dikkat hai, thodi der baad try karein." });
+    }
+});
+// 🚀 NAYA: Unified Login API (Vendor & Admin)
+app.post('/api/vendor/login', async (req, res) => {
+    try {
+        const { mobileNumber, password } = req.body;
+
+        // 1. Check karte hain ki kya ye number database me hai ya nahi
+        const user = await Vendor.findOne({ mobileNumber });
+        if (!user) {
+            return res.status(400).json({ message: "Yeh number register nahi hai. Pehle account banayein." });
+        }
+
+        // 2. Password match karte hain (User ka type kiya hua vs Database ka secured password)
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Password galat hai. Kripya dobara try karein." });
+        }
+
+        // 3. Login successful hone par ek secure "Token" banate hain
+        // Yeh token browser yaad rakhega taaki user ko baar-baar login na karna pade
+        const token = jwt.sign(
+            { id: user._id, role: user.role }, 
+            'smartshop_secret_key', // Ise baad me .env me daalenge
+            { expiresIn: '7d' } // 7 din tak login rahega
+        );
+
+        // 4. Frontend ko success message aur user ka role bhejna
+        res.json({
+            message: "Login Successful!",
+            token: token,
+            role: user.role, // "vendor" ya "admin"
+            shopSlug: user.shopSlug
+        });
+
+    } catch (error) {
+        console.error("Login Error: ", error);
+        res.status(500).json({ message: "Server me error hai, kripya baad me try karein." });
     }
 });
 
