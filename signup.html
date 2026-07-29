@@ -105,7 +105,7 @@
         </div>
     </div>
 
-   <script>
+    <script>
         document.getElementById('vendorSignupForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
             
@@ -137,7 +137,7 @@
                     // Agar sab sahi raha
                     alert(`Success: ${data.message}\nShop URL ID: ${data.shopSlug}`);
                     // Registration ke baad wapas home page par bhej dena
-                    window.location.href = 'index.html'; 
+                    window.location.href = 'Index.html'; 
                 } else {
                     // Agar server ne koi error di (jaise number already exists)
                     alert(`Error: ${data.message}`);
