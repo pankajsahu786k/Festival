@@ -105,11 +105,50 @@
         </div>
     </div>
 
-    <script>
-        document.getElementById('vendorSignupForm').addEventListener('submit', function(e) {
+   <script>
+        document.getElementById('vendorSignupForm').addEventListener('submit', async function(e) {
             e.preventDefault(); 
+            
+            // Button ka text change karna taaki user ko loading dikhe
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = "Creating Account... ⏳";
+            submitBtn.disabled = true;
+
+            // Form me bhari hui values nikalna
             const shopName = document.getElementById('shopName').value;
-            alert(`Perfect! ${shopName} ka form professional lag raha hai.\nAb hum backend me API bana kar is data ko database me save karenge.`);
+            const ownerName = document.getElementById('ownerName').value;
+            const mobileNumber = document.getElementById('mobileNumber').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                // Live Render API par data bhejna (POST Request)
+                const response = await fetch('https://festival-h6ff.onrender.com/api/vendor/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ shopName, ownerName, mobileNumber, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Agar sab sahi raha
+                    alert(`Success: ${data.message}\nShop URL ID: ${data.shopSlug}`);
+                    // Registration ke baad wapas home page par bhej dena
+                    window.location.href = 'index.html'; 
+                } else {
+                    // Agar server ne koi error di (jaise number already exists)
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert('Network Error! Kripya internet connection check karein.');
+            } finally {
+                // Process khatam hone ke baad button ko wapas normal karna
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         });
     </script>
 
