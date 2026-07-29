@@ -1,0 +1,9 @@
+# Dependency directories
+node_modules/
+
+# Local environment variables (Passwords/Keys)
+.env
+
+# Optional: Build files
+build/
+dist/
