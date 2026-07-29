@@ -2,13 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bcrypt = require('bcryptjs'); // Password ko secure (encrypt) karne ke liye
-const Vendor = require('./models/Vendor'); // Humara banaya hua Database Model
+const path = require('path'); // Naya: HTML files ka path dhoondhne ke liye
+const bcrypt = require('bcryptjs');
+const Vendor = require('./models/Vendor');
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// 🚀 NAYA: Express ko batayein ki root folder ki static files (Index.html, signup.html, demo.mp4) serve kare
+app.use(express.static(path.join(__dirname, '../')));
 
 // Live Database Connection
 const MONGO_URI = process.env.MONGO_URI; 
@@ -17,30 +21,31 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
-// Test API Route (Jo aapne abhi test kiya)
+// 🚀 NAYA: Direct Link kholne par Index.html open karne ka route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../Index.html'));
+});
+
+// Test API Route
 app.get('/api/test', (req, res) => {
     res.json({ message: "SmartShop Live Backend is running perfectly!" });
 });
 
-// 🚀 NAYA: Vendor Registration API
+// Vendor Registration API Route
 app.post('/api/vendor/register', async (req, res) => {
     try {
         const { shopName, ownerName, mobileNumber, password } = req.body;
 
-        // Check karte hain ki kya ye number pehle se register toh nahi hai
         let existingVendor = await Vendor.findOne({ mobileNumber });
         if (existingVendor) {
             return res.status(400).json({ message: "Yeh mobile number pehle se register hai. Kripya login karein." });
         }
 
-        // Password ko secure karna (Hashing)
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
-        // Shop ka unique URL banana (e.g. "Sharma Store" -> "sharma-store")
         const shopSlug = shopName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
-        // Database me save karne ke liye data tayar karna
         const newVendor = new Vendor({
             shopName,
             ownerName,
@@ -49,7 +54,6 @@ app.post('/api/vendor/register', async (req, res) => {
             shopSlug
         });
 
-        // Data MongoDB me save karna
         await newVendor.save();
         
         res.status(201).json({ 
