@@ -144,6 +144,30 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
         res.status(500).json({ message: "Server error, details save nahi ho payi." });
     }
 });
+// ==========================================
+// 4. PUBLIC SHOP DETAILS API (Customer ke liye)
+// ==========================================
+app.get('/api/shop/:slug', async (req, res) => {
+    try {
+        // URL se jo slug aayega, usko database me dhoondhenge
+        const shop = await Vendor.findOne({ shopSlug: req.params.slug });
+        
+        if (!shop) {
+            return res.status(404).json({ message: "Dukan nahi mili" });
+        }
+
+        // Sirf zaroori details bhejenge (Password kabhi nahi bhejna chahiye!)
+        res.json({
+            shopName: shop.shopName,
+            mobileNumber: shop.mobileNumber,
+            category: shop.category
+        });
+
+    } catch (error) {
+        console.error("Shop Fetch Error: ", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
 
 // ==========================================
 // SERVER START

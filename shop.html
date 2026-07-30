@@ -44,35 +44,57 @@
     </div>
 
     <script>
-        // 1. URL se Store ID nikalna
+        // 1. URL se Store ID (Slug) nikalna
         const urlParams = new URLSearchParams(window.location.search);
         const storeId = urlParams.get('store');
 
-        // Store name UI me update karna (Capitalize karke)
-        if(storeId) {
-            const formattedName = storeId.replace(/-/g, ' ').toUpperCase();
-            document.getElementById('storeName').innerText = formattedName;
-        } else {
-            document.getElementById('storeName').innerText = "Demo Store";
+        let dynamicVendorPhone = ""; // Yeh variable database se aayega
+        let realShopName = "";
+
+        // 2. Backend se Shop ki Asli details mangwana (DYNAMIC LOGIC)
+        async function fetchShopDetails() {
+            if(!storeId) {
+                document.getElementById('storeName').innerText = "Store ID Missing";
+                return;
+            }
+
+            try {
+                // Nayi API ko call karna
+                const response = await fetch(`https://festival-h6ff.onrender.com/api/shop/${storeId}`);
+                const data = await response.json();
+
+                if(response.ok) {
+                    // Asli naam aur number set karna
+                    realShopName = data.shopName;
+                    document.getElementById('storeName').innerText = realShopName;
+                    
+                    // WhatsApp number me aage '91' lagana zaroori hai
+                    dynamicVendorPhone = "91" + data.mobileNumber; 
+                } else {
+                    document.getElementById('storeName').innerText = "Shop Not Found";
+                    alert("Yeh dukan system me nahi hai!");
+                }
+            } catch (error) {
+                console.error("Error fetching shop details:", error);
+            }
         }
 
-        // 2. Demo Products Array (Aage chalkar ye Database se aayega)
+        // 3. Demo Products (Aage chalkar ye bhi database se aayenge)
         const products = [
             { id: 1, name: "Premium Rakhi Set", price: 150, image: "https://images.unsplash.com/photo-1628543105304-4bedee16b473?w=200&h=200&fit=crop" },
             { id: 2, name: "Kaju Katli (500g)", price: 450, image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&h=200&fit=crop" },
             { id: 3, name: "Pooja Thali", price: 299, image: "https://images.unsplash.com/photo-1595853035070-59a39fe84de3?w=200&h=200&fit=crop" }
         ];
 
-        let cart = {}; // Cart object to store quantities
+        let cart = {}; 
 
-        // 3. Products ko screen par dikhana
+        // 4. Products UI me dikhana
         function renderProducts() {
             const list = document.getElementById('productList');
             list.innerHTML = '';
 
             products.forEach(product => {
                 const qty = cart[product.id] || 0;
-                
                 list.innerHTML += `
                     <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
                         <img src="${product.image}" class="w-24 h-24 object-cover rounded-xl border border-gray-100">
@@ -81,7 +103,6 @@
                                 <h3 class="font-bold text-gray-900 leading-tight">${product.name}</h3>
                                 <p class="text-orange-600 font-black mt-1">₹${product.price}</p>
                             </div>
-                            
                             <div class="flex justify-end mt-2">
                                 ${qty === 0 ? 
                                     `<button onclick="updateCart(${product.id}, 1)" class="border border-orange-500 text-orange-600 font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-orange-50">Add +</button>` 
@@ -100,22 +121,16 @@
             updateCartUI();
         }
 
-        // 4. Cart Logic (Quantity badhana/ghatana)
         function updateCart(productId, change) {
             if(!cart[productId]) cart[productId] = 0;
-            
             cart[productId] += change;
-            
             if(cart[productId] <= 0) delete cart[productId];
-            
-            renderProducts(); // Refresh list to show new buttons
+            renderProducts(); 
         }
 
-        // 5. Total calculate karna aur Bottom Bar dikhana
         function updateCartUI() {
             let total = 0;
             let itemCount = 0;
-
             for (const [id, qty] of Object.entries(cart)) {
                 const product = products.find(p => p.id == id);
                 if(product) {
@@ -123,11 +138,8 @@
                     itemCount += qty;
                 }
             }
-
             document.getElementById('cartTotal').innerText = `₹${total}`;
             const cartBar = document.getElementById('cartBar');
-
-            // Agar cart me saman hai, toh bar upar aayega
             if(itemCount > 0) {
                 cartBar.classList.remove('translate-y-full');
             } else {
@@ -135,9 +147,14 @@
             }
         }
 
-        // 6. Checkout to WhatsApp Function
+        // 5. Dynamic WhatsApp Checkout
         function checkoutToWhatsApp() {
-            let message = `*New Order Details* 🛍️\nStore: ${storeId}\n\n`;
+            if(!dynamicVendorPhone) {
+                alert("Dukandaar ka number load ho raha hai ya dukan invalid hai. Kripya refresh karein.");
+                return;
+            }
+
+            let message = `*New Order Details* 🛍️\nStore: ${realShopName}\n\n`;
             let total = 0;
 
             for (const [id, qty] of Object.entries(cart)) {
@@ -151,15 +168,13 @@
 
             message += `\n*Total Bill: ₹${total}*\n\nPlease process this order.`;
 
-            // Yahan dukandaar ka number aayega (Abhi ke liye ek dummy/apna number daal dein)
-            // Encode URI taaki space aur symbols link me sahi se kaam karein
-            const vendorPhone = "919876543210"; 
-            const whatsappUrl = `https://wa.me/${vendorPhone}?text=${encodeURIComponent(message)}`;
-            
+            // Yahan ab dynamic number jayega!
+            const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(message)}`;
             window.location.href = whatsappUrl;
         }
 
-        // Page load hote hi products dikhao
+        // Page load hote hi data fetch karo aur product dikhao
+        fetchShopDetails();
         renderProducts();
     </script>
 </body>
