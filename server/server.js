@@ -205,6 +205,59 @@ app.get('/api/products/:shopSlug', async (req, res) => {
         res.status(500).json({ message: "Products fetch nahi ho paaye." });
     }
 });
+// 🚀 1. ADD PRODUCT WITH MULTIPLE IMAGES
+app.post('/api/products/add', async (req, res) => {
+    try {
+        const { shopSlug, name, price, category, description, images } = req.body;
+        
+        if (!images || images.length < 3 || images.length > 5) {
+            return res.status(400).json({ message: "Kripya kam se kam 3 aur maximum 5 photos upload karein." });
+        }
+
+        const newProduct = new Product({
+            shopSlug,
+            name,
+            price,
+            category,
+            description,
+            images
+        });
+
+        await newProduct.save();
+        res.status(201).json({ message: "Product / Listing successfully add ho gaya!", product: newProduct });
+    } catch (error) {
+        console.error("Add Product Error:", error);
+        res.status(500).json({ message: "Server error, item add nahi ho paya." });
+    }
+});
+
+// 🚀 2. EDIT PRODUCT API
+app.put('/api/products/edit/:id', async (req, res) => {
+    try {
+        const { name, price, category, description, images } = req.body;
+        
+        const updateData = { name, price, category, description };
+        if (images && images.length >= 3 && images.length <= 5) {
+            updateData.images = images;
+        }
+
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        res.json({ message: "Product successfully update ho gaya!", product: updatedProduct });
+    } catch (error) {
+        console.error("Edit Error:", error);
+        res.status(500).json({ message: "Update karne me error aaya." });
+    }
+});
+
+// 🚀 3. DELETE PRODUCT API
+app.delete('/api/products/delete/:id', async (req, res) => {
+    try {
+        await Product.findByIdAndDelete(req.params.id);
+        res.json({ message: "Item successfully delete ho gaya!" });
+    } catch (error) {
+        res.status(500).json({ message: "Delete karne me error aaya." });
+    }
+});
 // ==========================================
 // SERVER START
 // ==========================================
