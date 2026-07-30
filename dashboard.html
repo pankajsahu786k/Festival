@@ -36,7 +36,7 @@
         <main class="flex-1 flex flex-col h-screen overflow-y-auto">
             
             <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-xl font-bold text-gray-800">Welcome to your Dashboard! 👋</h2>
+                <h2 class="text-xl font-bold text-gray-800">Vendor Control Panel 👋</h2>
                 <div class="flex items-center gap-4">
                     <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1">
                         <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live
@@ -51,48 +51,68 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Orders</p>
-                        <h3 class="text-4xl font-black text-gray-900 mt-2">0</h3>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Shop ID</p>
+                        <h3 id="slugDisplay" class="text-2xl font-black text-orange-600 mt-2">Loading...</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Today's Revenue</p>
-                        <h3 class="text-4xl font-black text-gray-900 mt-2">₹0</h3>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Public Link</p>
+                        <a href="#" id="storeLink" target="_blank" class="text-xs text-blue-600 font-bold hover:underline block truncate mt-3">Generating...</a>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Store Status</p>
-                        <h3 class="text-2xl font-bold text-green-600 mt-3 flex items-center gap-2">Active & Ready</h3>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Status</p>
+                        <h3 class="text-2xl font-bold text-green-600 mt-2 flex items-center gap-2">Active</h3>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     
                     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">🏪 Store Profile</h3>
-                        <div class="space-y-5">
-                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
-                                <span class="text-gray-500 font-medium">Shop ID (Slug)</span>
-                                <span id="slugDisplay" class="font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">Loading...</span>
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">➕ Add New Item / Property</h3>
+                        
+                        <form id="addProductForm" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Title / Name</label>
+                                <input type="text" id="prodName" placeholder="E.g. 2 BHK Flat MP Nagar / Pearl Rakhi" required
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                             </div>
-                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
-                                <span class="text-gray-500 font-medium">System Role</span>
-                                <span id="roleDisplay" class="bg-orange-100 text-orange-700 px-3 py-1 rounded-md text-xs font-bold uppercase">Loading...</span>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Price (₹)</label>
+                                    <input type="number" id="prodPrice" placeholder="E.g. 25000" required
+                                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Category</label>
+                                    <input type="text" id="prodCategory" placeholder="E.g. Rental / Sweets" required
+                                        class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                </div>
                             </div>
-                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
-                                <span class="text-gray-500 font-medium">Location</span>
-                                <span class="font-bold text-gray-900">Bhopal, MP</span>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Image URL</label>
+                                <input type="url" id="prodImage" placeholder="https://images.unsplash.com/..."
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                             </div>
-                            <div class="mt-4">
-                                <span class="text-gray-500 font-medium block mb-2">Public Store Link:</span>
-                                <a href="#" id="storeLink" target="_blank" class="text-sm text-blue-600 font-bold hover:underline break-all">Generating...</a>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Description</label>
+                                <textarea id="prodDesc" rows="3" placeholder="Full details, address, features..."
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium"></textarea>
                             </div>
-                        </div>
+
+                            <button type="submit" 
+                                class="w-full bg-orange-600 text-white font-bold text-sm py-3.5 rounded-xl hover:bg-orange-700 transition shadow-md">
+                                Save Item to Store 🚀
+                            </button>
+                        </form>
                     </div>
 
                     <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center items-center text-center">
                         <div class="relative z-10 w-full" id="qrCodeContainer">
-                            <h3 class="text-2xl font-extrabold mb-2">Get Your Smart QR</h3>
+                            <h3 class="text-2xl font-extrabold mb-2">Get Your Store QR</h3>
                             <p class="text-orange-100 text-sm mb-6 leading-relaxed">
-                                Grahak scan karke seedha dukan ka menu dekhenge aur pay karenge.
+                                Grahak scan karke aapke saare listings live dekh sakte hain.
                             </p>
                             <button onclick="generateQR()" 
                                 class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all w-full md:w-auto">
@@ -114,41 +134,60 @@
         }
 
         const shopSlug = localStorage.getItem('shopSlug');
-        const userRole = localStorage.getItem('userRole');
-        
-        // Dukan ka live URL (jo customer kholenge)
         const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
 
         if(shopSlug) {
             document.getElementById('slugDisplay').innerText = shopSlug;
-            
-            // Public link ko update karna
             const storeLinkEl = document.getElementById('storeLink');
             storeLinkEl.innerText = shopUrl;
             storeLinkEl.href = shopUrl;
         }
-        if(userRole) {
-            document.getElementById('roleDisplay').innerText = userRole;
-        }
 
-        // 🚀 NAYA: QR Code Generate Karne ka Function
-        function generateQR() {
-            if(!shopSlug) {
-                alert("Shop ID nahi mili! Kripya wapas login karein.");
-                return;
+        // ADD PRODUCT FORM SUBMIT LOGIC
+        document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.innerText = "Saving... ⏳";
+            submitBtn.disabled = true;
+
+            const name = document.getElementById('prodName').value;
+            const price = document.getElementById('prodPrice').value;
+            const category = document.getElementById('prodCategory').value;
+            const image = document.getElementById('prodImage').value;
+            const description = document.getElementById('prodDesc').value;
+
+            try {
+                const response = await fetch('https://festival-h6ff.onrender.com/api/products/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopSlug, name, price, category, image, description })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Success: Item store me add ho gaya hai!');
+                    document.getElementById('addProductForm').reset();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert('Network Error!');
+            } finally {
+                submitBtn.innerText = "Save Item to Store 🚀";
+                submitBtn.disabled = false;
             }
+        });
 
-            // QR Server API se image mangwana
+        function generateQR() {
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
-
-            // Button hata kar wahan QR code image set karna
             document.getElementById('qrCodeContainer').innerHTML = `
-                <h3 class="text-xl font-extrabold mb-4">Aapka Smart QR Code</h3>
+                <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
                 <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
-                    <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48 md:w-56 md:h-56">
+                    <img src="${qrApiUrl}" class="w-48 h-48 md:w-56 md:h-56">
                 </div>
-                <p class="text-sm mt-4 text-orange-100 font-medium">Ise screenshot le kar ya print karke counter par lagayein!</p>
-                <a href="${qrApiUrl}" target="_blank" class="mt-4 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
+                <a href="${qrApiUrl}" target="_blank" class="mt-4 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm">View Full Size</a>
             `;
         }
 

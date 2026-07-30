@@ -84,12 +84,15 @@
             </div>
         </div>
 
-    </div> <script>
+    </div> 
+    <script>
         const urlParams = new URLSearchParams(window.location.search);
         const storeId = urlParams.get('store');
         let dynamicVendorPhone = ""; 
         let realShopName = "";
+        let products = []; // Ab ye Array Database se aayega!
 
+        // Fetch Shop Info
         async function fetchShopDetails() {
             if(!storeId) {
                 document.getElementById('storeName').innerText = "Store ID Missing";
@@ -102,52 +105,37 @@
                     realShopName = data.shopName;
                     document.getElementById('storeName').innerText = realShopName;
                     dynamicVendorPhone = "91" + data.mobileNumber; 
-                } else {
-                    document.getElementById('storeName').innerText = "Shop Not Found";
                 }
             } catch (error) {
                 console.error("Error fetching shop details:", error);
             }
         }
 
-        // Updated High Quality Images
-        const products = [
-            { 
-                id: 1, 
-                name: "Premium Pearl Rakhi Set", 
-                price: 150, 
-                images: [
-                    "https://images.unsplash.com/photo-1628543105304-4bedee16b473?auto=format&fit=crop&w=500&q=80",
-                    "https://images.unsplash.com/photo-1595853035070-59a39fe84de3?auto=format&fit=crop&w=500&q=80"
-                ],
-                description: "Celebrate the bond of love with this beautifully handcrafted Premium Pearl Rakhi. Made with authentic beads and comes with complimentary Roli-Chawal.",
-                rating: 4.8,
-                reviews: 124
-            },
-            { 
-                id: 2, 
-                name: "Pure Kaju Katli (500g)", 
-                price: 450, 
-                images: [
-                    "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=500&q=80",
-                    "https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=500&q=80"
-                ],
-                description: "100% pure premium cashew nuts blended with right amount of sweetness and wrapped in edible silver foil. A classic Indian sweet.",
-                rating: 4.9,
-                reviews: 350
-            },
-            { 
-                id: 3, 
-                name: "Festival Pooja Thali", 
-                price: 299, 
-                images: [
-                    "https://images.unsplash.com/photo-1605371844229-23c21a4f0db5?auto=format&fit=crop&w=500&q=80"
-                ],
-                description: "A beautifully decorated brass Pooja Thali containing diya, incense holder, and small bowls for kumkum. Gives your festival preparation a traditional touch.",
-                rating: 4.5,
-                reviews: 89
+        // Fetch Dynamic Products from Database
+        async function fetchProducts() {
+            if(!storeId) return;
+            try {
+                const response = await fetch(`https://festival-h6ff.onrender.com/api/products/${storeId}`);
+                const data = await response.json();
+                
+                if(response.ok && data.length > 0) {
+                    products = data.map(p => ({
+                        id: p._id,
+                        name: p.name,
+                        price: p.price,
+                        images: [p.image || "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&q=80"],
+                        description: p.description || "No description provided.",
+                        rating: 4.8,
+                        reviews: 12
+                    }));
+                } else {
+                    products = []; // No items added yet
+                }
+                renderProducts();
+            } catch (error) {
+                console.error("Error fetching products:", error);
             }
-        ];
+        }
 
         let cart = {}; 
 
@@ -155,10 +143,15 @@
             const list = document.getElementById('productList');
             list.innerHTML = '';
 
+            if(products.length === 0) {
+                list.innerHTML = `<div class="col-span-2 text-center py-10 text-gray-400 font-medium">Abhi koi item add nahi hua hai.</div>`;
+                return;
+            }
+
             products.forEach(product => {
                 const qty = cart[product.id] || 0;
                 list.innerHTML += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group cursor-pointer" onclick="openProductModal(${product.id})">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative group cursor-pointer" onclick="openProductModal('${product.id}')">
                         <div class="relative aspect-square overflow-hidden bg-gray-50">
                             <img src="${product.images[0]}" class="w-full h-full object-cover">
                             ${qty > 0 ? `<div class="absolute top-2 right-2 bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shadow-md">${qty}</div>` : ''}
@@ -179,20 +172,12 @@
             updateCartUI();
         }
 
-        // ==============================================
-        // MODAL LOGIC (Bottom to Top Slide)
-        // ==============================================
-        let activeProductId = null;
-
+        // Modal Logic
         function openProductModal(id) {
             const product = products.find(p => p.id === id);
             if(!product) return;
-            activeProductId = id;
 
-            let imagesHtml = '';
-            product.images.forEach(img => {
-                imagesHtml += `<img src="${img}" class="w-full h-auto aspect-square object-cover flex-shrink-0 snap-center">`;
-            });
+            let imagesHtml = `<img src="${product.images[0]}" class="w-full h-auto aspect-square object-cover flex-shrink-0 snap-center">`;
 
             document.getElementById('modalContent').innerHTML = `
                 <div class="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-gray-50">
@@ -204,20 +189,10 @@
                         <div class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1">
                             ${product.rating} ★
                         </div>
-                        <span class="text-xs font-medium text-gray-500">${product.reviews} ratings</span>
                     </div>
                     <div class="border-t border-gray-100 pt-5">
-                        <h3 class="font-bold text-gray-900 mb-2">Product Description</h3>
+                        <h3 class="font-bold text-gray-900 mb-2">Details</h3>
                         <p class="text-gray-600 text-sm leading-relaxed">${product.description}</p>
-                    </div>
-                    <div class="border-t border-gray-100 pt-5 mt-5">
-                        <div class="bg-orange-50 rounded-xl p-4 flex items-center gap-3 border border-orange-100">
-                            <span class="text-xl">🚚</span>
-                            <div>
-                                <p class="text-sm font-bold text-gray-900">Instant Delivery</p>
-                                <p class="text-xs text-gray-600">Pick up from counter right away.</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             `;
@@ -230,7 +205,6 @@
                 closeProductModal(); 
             };
 
-            // Slide Up Animation
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(0)';
         }
@@ -238,7 +212,6 @@
         function closeProductModal() {
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(100%)';
-            activeProductId = null;
         }
 
         function updateCart(productId, change) {
@@ -269,10 +242,10 @@
 
         function checkoutToWhatsApp() {
             if(!dynamicVendorPhone) {
-                alert("Shop details loading... Please wait a second.");
+                alert("Loading details...");
                 return;
             }
-            let message = `*New Order Details* 🛍️\nStore: ${realShopName}\n\n`;
+            let message = `*New Booking / Order Details* 🛍️\nStore: ${realShopName}\n\n`;
             let total = 0;
             for (const [id, qty] of Object.entries(cart)) {
                 const product = products.find(p => p.id == id);
@@ -282,13 +255,13 @@
                     total += itemTotal;
                 }
             }
-            message += `\n*Total Bill: ₹${total}*\n\nPlease process this order.`;
+            message += `\n*Total Bill: ₹${total}*\n\nPlease process this.`;
             const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(message)}`;
             window.location.href = whatsappUrl;
         }
 
         fetchShopDetails();
-        renderProducts();
+        fetchProducts();
     </script>
 </body>
 </html>

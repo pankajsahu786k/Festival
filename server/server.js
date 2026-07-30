@@ -6,6 +6,7 @@ const path = require('path');
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
 const jwt = require('jsonwebtoken'); 
+const Product = require('./models/Product');
 
 const app = express();
 
@@ -168,7 +169,42 @@ app.get('/api/shop/:slug', async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+// ==========================================
+// 5. ADD NEW PRODUCT / PROPERTY API
+// ==========================================
+app.post('/api/products/add', async (req, res) => {
+    try {
+        const { shopSlug, name, price, category, description, image } = req.body;
+        
+        const newProduct = new Product({
+            shopSlug,
+            name,
+            price,
+            category,
+            description,
+            image: image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&q=80' // Default fallback image
+        });
 
+        await newProduct.save();
+        res.status(201).json({ message: "Item / Property successfully add ho gaya!", product: newProduct });
+    } catch (error) {
+        console.error("Add Product Error:", error);
+        res.status(500).json({ message: "Item add karne me error aaya." });
+    }
+});
+
+// ==========================================
+// 6. GET PRODUCTS FOR A SPECIFIC SHOP
+// ==========================================
+app.get('/api/products/:shopSlug', async (req, res) => {
+    try {
+        const products = await Product.find({ shopSlug: req.params.shopSlug }).sort({ createdAt: -1 });
+        res.json(products);
+    } catch (error) {
+        console.error("Fetch Products Error:", error);
+        res.status(500).json({ message: "Products fetch nahi ho paaye." });
+    }
+});
 // ==========================================
 // SERVER START
 // ==========================================
