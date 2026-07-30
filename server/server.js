@@ -2,17 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const path = require('path'); // Naya: HTML files ka path dhoondhne ke liye
+const path = require('path'); 
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
-const jwt = require('jsonwebtoken'); // Naya line
+const jwt = require('jsonwebtoken'); 
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// 🚀 NAYA: Express ko batayein ki root folder ki static files (Index.html, signup.html, demo.mp4) serve kare
+// Static files serve karne ke liye
 app.use(express.static(path.join(__dirname, '../')));
 
 // Live Database Connection
@@ -22,7 +22,7 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
-// 🚀 NAYA: Direct Link kholne par Index.html open karne ka route
+// Direct Link kholne par Index.html open karne ka route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Index.html'));
 });
@@ -32,7 +32,9 @@ app.get('/api/test', (req, res) => {
     res.json({ message: "SmartShop Live Backend is running perfectly!" });
 });
 
-// Vendor Registration API Route
+// ==========================================
+// 1. VENDOR REGISTRATION API ROUTE
+// ==========================================
 app.post('/api/vendor/register', async (req, res) => {
     try {
         const { shopName, ownerName, mobileNumber, password } = req.body;
@@ -67,37 +69,40 @@ app.post('/api/vendor/register', async (req, res) => {
         res.status(500).json({ message: "Server me koi dikkat hai, thodi der baad try karein." });
     }
 });
-// 🚀 NAYA: Unified Login API (Vendor & Admin)
+
+// ==========================================
+// 2. UNIFIED LOGIN API (Vendor & Admin)
+// ==========================================
 app.post('/api/vendor/login', async (req, res) => {
     try {
         const { mobileNumber, password } = req.body;
 
-        // 1. Check karte hain ki kya ye number database me hai ya nahi
+        // Check karte hain ki kya ye number database me hai
         const user = await Vendor.findOne({ mobileNumber });
         if (!user) {
             return res.status(400).json({ message: "Yeh number register nahi hai. Pehle account banayein." });
         }
 
-        // 2. Password match karte hain (User ka type kiya hua vs Database ka secured password)
+        // Password match karte hain
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: "Password galat hai. Kripya dobara try karein." });
         }
 
-        // 3. Login successful hone par ek secure "Token" banate hain
-        // Yeh token browser yaad rakhega taaki user ko baar-baar login na karna pade
+        // Secure Token generate karna
         const token = jwt.sign(
             { id: user._id, role: user.role }, 
-            'smartshop_secret_key', // Ise baad me .env me daalenge
-            { expiresIn: '7d' } // 7 din tak login rahega
+            'smartshop_secret_key', 
+            { expiresIn: '7d' } 
         );
 
-        // 4. Frontend ko success message aur user ka role bhejna
+        // Frontend ko poora data bhejna flag ke sath
         res.json({
             message: "Login Successful!",
             token: token,
-            role: user.role, // "vendor" ya "admin"
-            shopSlug: user.shopSlug
+            role: user.role, 
+            shopSlug: user.shopSlug,
+            isSetupCompleted: user.isSetupCompleted || false
         });
 
     } catch (error) {
@@ -106,6 +111,43 @@ app.post('/api/vendor/login', async (req, res) => {
     }
 });
 
+// ==========================================
+// 3. SAVE EXTRA SHOP DETAILS API (Onboarding)
+// ==========================================
+app.post('/api/vendor/setup-shop', async (req, res) => {
+    try {
+        const { shopSlug, category, address, upiId, description } = req.body;
+
+        const updatedVendor = await Vendor.findOneAndUpdate(
+            { shopSlug: shopSlug },
+            { 
+                category, 
+                address, 
+                upiId, 
+                description, 
+                isSetupCompleted: true 
+            },
+            { new: true } 
+        );
+
+        if (!updatedVendor) {
+            return res.status(404).json({ message: "Vendor nahi mila. Kripya wapas login karein." });
+        }
+
+        res.json({ 
+            message: "Shop Profile Successfully Setup!", 
+            vendor: updatedVendor 
+        });
+
+    } catch (error) {
+        console.error("Setup Error: ", error);
+        res.status(500).json({ message: "Server error, details save nahi ho payi." });
+    }
+});
+
+// ==========================================
+// SERVER START
+// ==========================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);
