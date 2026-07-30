@@ -15,7 +15,6 @@
 <body class="flex justify-center min-h-screen">
 
     <div class="w-full max-w-md bg-gray-50 min-h-screen relative shadow-2xl flex flex-col pb-24 overflow-x-hidden">
-
         <header class="bg-white shadow-sm sticky top-0 z-20">
             <div class="px-4 py-4 flex justify-between items-center">
                 <div>
@@ -26,51 +25,12 @@
             </div>
         </header>
 
-        <main class="p-4 grid grid-cols-2 gap-4" id="productList">
-            </main>
-
-        <div id="cartBar" 
-             class="fixed bottom-0 left-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 shadow-xl transition-all duration-300 flex justify-between items-center z-40"
-             style="transform: translateX(-50%) translateY(100%);">
-            <div class="flex flex-col">
-                <span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Amount</span>
-                <span class="text-xl font-black text-gray-900" id="cartTotal">₹0</span>
-            </div>
-            <button onclick="checkoutToWhatsApp()" class="bg-orange-600 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-orange-700 flex items-center gap-2">
-                <span>Order on WhatsApp</span> 📲
-            </button>
-        </div>
-
-        <div id="productModal" 
-             class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300"
-             style="transform: translateX(-50%) translateY(100%);">
-            
-            <div class="sticky top-0 bg-white/80 backdrop-blur-md px-4 py-4 flex justify-between items-center z-10 border-b border-gray-100">
-                <button onclick="closeProductModal()" class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm">←</button>
-                <span class="font-bold text-gray-900">Property / Item Details</span>
-                <div class="w-10"></div> 
-            </div>
-
-            <div id="modalContent" class="flex-1 overflow-y-auto pb-24"></div>
-
-            <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex gap-4">
-                <div class="flex-1">
-                    <p class="text-xs text-gray-500 font-bold uppercase">Price</p>
-                    <p id="modalPrice" class="text-2xl font-black text-gray-900">₹0</p>
-                </div>
-                <button id="modalAddToCartBtn" class="flex-[2] bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black flex items-center justify-center">
-                    Select Item 🛒
-                </button>
-            </div>
-        </div>
-
+        <main class="p-4 grid grid-cols-2 gap-4" id="productList"></main>
     </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const storeId = urlParams.get('store');
-        let dynamicVendorPhone = ""; 
-        let realShopName = "";
         let products = [];
 
         async function fetchShopDetails() {
@@ -79,13 +39,9 @@
                 const response = await fetch(`https://festival-h6ff.onrender.com/api/shop/${storeId}`);
                 const data = await response.json();
                 if(response.ok) {
-                    realShopName = data.shopName;
-                    document.getElementById('storeName').innerText = realShopName;
-                    dynamicVendorPhone = "91" + data.mobileNumber; 
+                    document.getElementById('storeName').innerText = data.shopName;
                 }
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (error) { console.error(error); }
         }
 
         async function fetchProducts() {
@@ -95,24 +51,11 @@
                 const data = await response.json();
                 
                 if(response.ok && data.length > 0) {
-                    products = data.map(p => ({
-                        id: p._id,
-                        name: p.name,
-                        price: p.price,
-                        images: p.images && p.images.length > 0 ? p.images : ["https://via.placeholder.com/500"],
-                        description: p.description || "No description provided.",
-                        category: p.category
-                    }));
-                } else {
-                    products = [];
+                    products = data;
                 }
                 renderProducts();
-            } catch (error) {
-                console.error(error);
-            }
+            } catch (error) { console.error(error); }
         }
-
-        let cart = {}; 
 
         function renderProducts() {
             const list = document.getElementById('productList');
@@ -124,13 +67,15 @@
             }
 
             products.forEach(product => {
-                const qty = cart[product.id] || 0;
+                // Safely load first image
+                let firstImg = (product.images && product.images.length > 0) ? product.images[0] : 'https://via.placeholder.com/500?text=No+Image';
+                
                 list.innerHTML += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer" onclick="openProductModal('${product.id}')">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer">
                         <div class="relative aspect-square overflow-hidden bg-gray-50">
-                            <img src="${product.images[0]}" class="w-full h-full object-cover">
+                            <img src="${firstImg}" onerror="this.src='https://via.placeholder.com/500?text=Error'" class="w-full h-full object-cover">
                             <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
-                                📷 ${product.images.length} Photos
+                                📷 ${product.images ? product.images.length : 0} Photos
                             </div>
                         </div>
                         <div class="p-3 flex-1 flex flex-col justify-between">
@@ -143,96 +88,6 @@
                     </div>
                 `;
             });
-            updateCartUI();
-        }
-
-        // 🚀 MULTI-PHOTO SLIDE IN MODAL
-        function openProductModal(id) {
-            const product = products.find(p => p.id === id);
-            if(!product) return;
-
-            // Generate Horizontal Swipable Photos Slider
-            let imagesHtml = product.images.map(img => `
-                <img src="${img}" class="w-full h-72 object-cover flex-shrink-0 snap-center">
-            `).join('');
-
-            document.getElementById('modalContent').innerHTML = `
-                <div class="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black">
-                    ${imagesHtml}
-                </div>
-                <div class="p-2 text-center text-xs text-gray-400 font-medium">
-                    👈 Photos dekhne ke liye left/right swipe karein (Total: ${product.images.length})
-                </div>
-
-                <div class="p-5">
-                    <h2 class="text-2xl font-extrabold text-gray-900 leading-tight mb-2">${product.name}</h2>
-                    <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${product.category}</span>
-                    
-                    <div class="border-t border-gray-100 pt-4 mt-4">
-                        <h3 class="font-bold text-gray-900 mb-2">Description / Full Details</h3>
-                        <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">${product.description}</p>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('modalPrice').innerText = `₹${product.price}`;
-            
-            const btn = document.getElementById('modalAddToCartBtn');
-            btn.onclick = () => {
-                updateCart(product.id, 1);
-                closeProductModal(); 
-            };
-
-            const modal = document.getElementById('productModal');
-            modal.style.transform = 'translateX(-50%) translateY(0)';
-        }
-
-        function closeProductModal() {
-            const modal = document.getElementById('productModal');
-            modal.style.transform = 'translateX(-50%) translateY(100%)';
-        }
-
-        function updateCart(productId, change) {
-            if(!cart[productId]) cart[productId] = 0;
-            cart[productId] += change;
-            if(cart[productId] <= 0) delete cart[productId];
-            renderProducts(); 
-        }
-
-        function updateCartUI() {
-            let total = 0;
-            let itemCount = 0;
-            for (const [id, qty] of Object.entries(cart)) {
-                const product = products.find(p => p.id == id);
-                if(product) {
-                    total += (product.price * qty);
-                    itemCount += qty;
-                }
-            }
-            document.getElementById('cartTotal').innerText = `₹${total}`;
-            const cartBar = document.getElementById('cartBar');
-            if(itemCount > 0) {
-                cartBar.style.transform = 'translateX(-50%) translateY(0)';
-            } else {
-                cartBar.style.transform = 'translateX(-50%) translateY(100%)';
-            }
-        }
-
-        function checkoutToWhatsApp() {
-            if(!dynamicVendorPhone) return;
-            let message = `*New Booking / Inquiry* 🛍️\nStore: ${realShopName}\n\n`;
-            let total = 0;
-            for (const [id, qty] of Object.entries(cart)) {
-                const product = products.find(p => p.id == id);
-                if(product) {
-                    let itemTotal = product.price * qty;
-                    message += `▪️ ${product.name} - ₹${itemTotal}\n`;
-                    total += itemTotal;
-                }
-            }
-            message += `\n*Total Amount: ₹${total}*\n\nPlease provide more details.`;
-            const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(message)}`;
-            window.location.href = whatsappUrl;
         }
 
         fetchShopDetails();
