@@ -147,7 +147,13 @@
                     localStorage.setItem('shopSlug', data.shopSlug);
 
                     alert(`Success: ${data.message}`);
-                    window.location.href = 'Index.html'; 
+                    
+                    // NAYA LOGIC: Check karein ki setup complete hai ya nahi
+                    if (!data.isSetupCompleted) {
+                        window.location.href = 'setup-shop.html'; // Setup page par bhejein
+                    } else {
+                        window.location.href = 'dashboard.html'; // Dashboard par bhejein
+                    }
                 } else {
                     alert(`Error: ${data.message}`);
                 }
