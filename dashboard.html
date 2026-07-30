@@ -24,7 +24,6 @@
                     <span>📦 Orders</span>
                     <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
                 </a>
-                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition">📲 QR Code</a>
                 <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition">⚙️ Settings</a>
             </nav>
             <div class="p-4 border-t border-gray-800">
@@ -51,19 +50,17 @@
             <div class="p-8 space-y-8">
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                         <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Orders</p>
                         <h3 class="text-4xl font-black text-gray-900 mt-2">0</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                         <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Today's Revenue</p>
                         <h3 class="text-4xl font-black text-gray-900 mt-2">₹0</h3>
                     </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                         <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Store Status</p>
-                        <h3 class="text-2xl font-bold text-green-600 mt-3 flex items-center gap-2">
-                            Active & Ready
-                        </h3>
+                        <h3 class="text-2xl font-bold text-green-600 mt-3 flex items-center gap-2">Active & Ready</h3>
                     </div>
                 </div>
 
@@ -80,26 +77,27 @@
                                 <span class="text-gray-500 font-medium">System Role</span>
                                 <span id="roleDisplay" class="bg-orange-100 text-orange-700 px-3 py-1 rounded-md text-xs font-bold uppercase">Loading...</span>
                             </div>
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
                                 <span class="text-gray-500 font-medium">Location</span>
                                 <span class="font-bold text-gray-900">Bhopal, MP</span>
+                            </div>
+                            <div class="mt-4">
+                                <span class="text-gray-500 font-medium block mb-2">Public Store Link:</span>
+                                <a href="#" id="storeLink" target="_blank" class="text-sm text-blue-600 font-bold hover:underline break-all">Generating...</a>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center">
-                        <div class="relative z-10">
+                    <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center items-center text-center">
+                        <div class="relative z-10 w-full" id="qrCodeContainer">
                             <h3 class="text-2xl font-extrabold mb-2">Get Your Smart QR</h3>
-                            <p class="text-orange-100 text-sm mb-6 max-w-sm leading-relaxed">
-                                Apne counter ke liye ek unique QR code generate karein. Grahak scan karke seedha dukan ka menu dekhenge aur pay karenge.
+                            <p class="text-orange-100 text-sm mb-6 leading-relaxed">
+                                Grahak scan karke seedha dukan ka menu dekhenge aur pay karenge.
                             </p>
-                            <button onclick="alert('Agla step yahi hai bhai! Jaldi aa raha hai QR code feature.')" 
-                                class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all">
+                            <button onclick="generateQR()" 
+                                class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all w-full md:w-auto">
                                 Generate QR Code 🪄
                             </button>
-                        </div>
-                        <div class="absolute -bottom-6 -right-4 text-9xl opacity-20 pointer-events-none">
-                            📱
                         </div>
                     </div>
 
@@ -110,24 +108,50 @@
     </div>
 
     <script>
-        // 1. Security Check: Agar token (login proof) nahi hai, toh bhagao yahan se
         const token = localStorage.getItem('token');
         if (!token) {
             window.location.href = 'login.html';
         }
 
-        // 2. LocalStorage se user ki details nikal kar UI me dikhana
         const shopSlug = localStorage.getItem('shopSlug');
         const userRole = localStorage.getItem('userRole');
+        
+        // Dukan ka live URL (jo customer kholenge)
+        const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
 
         if(shopSlug) {
             document.getElementById('slugDisplay').innerText = shopSlug;
+            
+            // Public link ko update karna
+            const storeLinkEl = document.getElementById('storeLink');
+            storeLinkEl.innerText = shopUrl;
+            storeLinkEl.href = shopUrl;
         }
         if(userRole) {
             document.getElementById('roleDisplay').innerText = userRole;
         }
 
-        // 3. Logout Function (Data clear karo aur home page par bhejo)
+        // 🚀 NAYA: QR Code Generate Karne ka Function
+        function generateQR() {
+            if(!shopSlug) {
+                alert("Shop ID nahi mili! Kripya wapas login karein.");
+                return;
+            }
+
+            // QR Server API se image mangwana
+            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
+
+            // Button hata kar wahan QR code image set karna
+            document.getElementById('qrCodeContainer').innerHTML = `
+                <h3 class="text-xl font-extrabold mb-4">Aapka Smart QR Code</h3>
+                <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
+                    <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48 md:w-56 md:h-56">
+                </div>
+                <p class="text-sm mt-4 text-orange-100 font-medium">Ise screenshot le kar ya print karke counter par lagayein!</p>
+                <a href="${qrApiUrl}" target="_blank" class="mt-4 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
+            `;
+        }
+
         function logout() {
             localStorage.clear();
             window.location.href = 'Index.html';
