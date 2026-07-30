@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - SmartShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
+            <div class="p-6 border-b border-gray-800">
+                <h1 class="text-2xl font-extrabold tracking-tight">Smart<span class="text-orange-500">Shop</span></h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" class="block px-4 py-3 bg-orange-600 rounded-xl font-semibold shadow-md">📊 Dashboard</a>
+                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex justify-between items-center">
+                    <span>📦 Orders</span>
+                    <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
+                </a>
+                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition">📲 QR Code</a>
+                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition">⚙️ Settings</a>
+            </nav>
+            <div class="p-4 border-t border-gray-800">
+                <button onclick="logout()" class="w-full px-4 py-3 bg-gray-800 hover:bg-red-600 rounded-xl font-medium transition text-left flex items-center gap-2">
+                    🚪 Logout
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+            
+            <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
+                <h2 class="text-xl font-bold text-gray-800">Welcome to your Dashboard! 👋</h2>
+                <div class="flex items-center gap-4">
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live
+                    </span>
+                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold border border-orange-200">
+                        S
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-8 space-y-8">
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Orders</p>
+                        <h3 class="text-4xl font-black text-gray-900 mt-2">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Today's Revenue</p>
+                        <h3 class="text-4xl font-black text-gray-900 mt-2">₹0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Store Status</p>
+                        <h3 class="text-2xl font-bold text-green-600 mt-3 flex items-center gap-2">
+                            Active & Ready
+                        </h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">🏪 Store Profile</h3>
+                        <div class="space-y-5">
+                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
+                                <span class="text-gray-500 font-medium">Shop ID (Slug)</span>
+                                <span id="slugDisplay" class="font-bold text-gray-900 bg-gray-100 px-3 py-1 rounded-lg">Loading...</span>
+                            </div>
+                            <div class="flex justify-between items-center pb-4 border-b border-gray-50">
+                                <span class="text-gray-500 font-medium">System Role</span>
+                                <span id="roleDisplay" class="bg-orange-100 text-orange-700 px-3 py-1 rounded-md text-xs font-bold uppercase">Loading...</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-500 font-medium">Location</span>
+                                <span class="font-bold text-gray-900">Bhopal, MP</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center">
+                        <div class="relative z-10">
+                            <h3 class="text-2xl font-extrabold mb-2">Get Your Smart QR</h3>
+                            <p class="text-orange-100 text-sm mb-6 max-w-sm leading-relaxed">
+                                Apne counter ke liye ek unique QR code generate karein. Grahak scan karke seedha dukan ka menu dekhenge aur pay karenge.
+                            </p>
+                            <button onclick="alert('Agla step yahi hai bhai! Jaldi aa raha hai QR code feature.')" 
+                                class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all">
+                                Generate QR Code 🪄
+                            </button>
+                        </div>
+                        <div class="absolute -bottom-6 -right-4 text-9xl opacity-20 pointer-events-none">
+                            📱
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1. Security Check: Agar token (login proof) nahi hai, toh bhagao yahan se
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        // 2. LocalStorage se user ki details nikal kar UI me dikhana
+        const shopSlug = localStorage.getItem('shopSlug');
+        const userRole = localStorage.getItem('userRole');
+
+        if(shopSlug) {
+            document.getElementById('slugDisplay').innerText = shopSlug;
+        }
+        if(userRole) {
+            document.getElementById('roleDisplay').innerText = userRole;
+        }
+
+        // 3. Logout Function (Data clear karo aur home page par bhejo)
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'Index.html';
+        }
+    </script>
+
+</body>
+</html>
