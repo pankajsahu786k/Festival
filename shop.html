@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Store - SmartShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; padding-bottom: 80px; } /* Bottom padding for fixed cart */
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="px-4 py-4 flex justify-between items-center">
+            <div>
+                <p class="text-xs font-bold text-orange-500 uppercase tracking-wide">Welcome to</p>
+                <h1 id="storeName" class="text-xl font-extrabold text-gray-900 truncate max-w-[200px]">Loading Store...</h1>
+            </div>
+            <div class="bg-gray-100 p-2 rounded-full">
+                <span>🏪</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="px-4 py-3 flex gap-3 overflow-x-auto no-scrollbar border-b border-gray-200 bg-white">
+        <button class="bg-gray-900 text-white px-4 py-1.5 rounded-full text-sm font-bold whitespace-nowrap">All Items</button>
+        <button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap border border-gray-200">Festival</button>
+        <button class="bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap border border-gray-200">Sweets</button>
+    </div>
+
+    <main class="p-4 space-y-4" id="productList">
+        </main>
+
+    <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 flex justify-between items-center z-50">
+        <div>
+            <p class="text-xs text-gray-500 font-semibold">Total Bill</p>
+            <h3 class="text-lg font-black text-gray-900" id="cartTotal">₹0</h3>
+        </div>
+        <button onclick="checkoutToWhatsApp()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 flex items-center gap-2">
+            <span>Pay & Order</span> 📲
+        </button>
+    </div>
+
+    <script>
+        // 1. URL se Store ID nikalna
+        const urlParams = new URLSearchParams(window.location.search);
+        const storeId = urlParams.get('store');
+
+        // Store name UI me update karna (Capitalize karke)
+        if(storeId) {
+            const formattedName = storeId.replace(/-/g, ' ').toUpperCase();
+            document.getElementById('storeName').innerText = formattedName;
+        } else {
+            document.getElementById('storeName').innerText = "Demo Store";
+        }
+
+        // 2. Demo Products Array (Aage chalkar ye Database se aayega)
+        const products = [
+            { id: 1, name: "Premium Rakhi Set", price: 150, image: "https://images.unsplash.com/photo-1628543105304-4bedee16b473?w=200&h=200&fit=crop" },
+            { id: 2, name: "Kaju Katli (500g)", price: 450, image: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=200&h=200&fit=crop" },
+            { id: 3, name: "Pooja Thali", price: 299, image: "https://images.unsplash.com/photo-1595853035070-59a39fe84de3?w=200&h=200&fit=crop" }
+        ];
+
+        let cart = {}; // Cart object to store quantities
+
+        // 3. Products ko screen par dikhana
+        function renderProducts() {
+            const list = document.getElementById('productList');
+            list.innerHTML = '';
+
+            products.forEach(product => {
+                const qty = cart[product.id] || 0;
+                
+                list.innerHTML += `
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex gap-4">
+                        <img src="${product.image}" class="w-24 h-24 object-cover rounded-xl border border-gray-100">
+                        <div class="flex-1 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-gray-900 leading-tight">${product.name}</h3>
+                                <p class="text-orange-600 font-black mt-1">₹${product.price}</p>
+                            </div>
+                            
+                            <div class="flex justify-end mt-2">
+                                ${qty === 0 ? 
+                                    `<button onclick="updateCart(${product.id}, 1)" class="border border-orange-500 text-orange-600 font-bold px-4 py-1.5 rounded-lg text-sm hover:bg-orange-50">Add +</button>` 
+                                    : 
+                                    `<div class="flex items-center gap-3 bg-orange-50 px-2 py-1 rounded-lg border border-orange-200">
+                                        <button onclick="updateCart(${product.id}, -1)" class="text-orange-600 font-bold px-2 text-lg">-</button>
+                                        <span class="font-bold text-gray-900 w-4 text-center">${qty}</span>
+                                        <button onclick="updateCart(${product.id}, 1)" class="text-orange-600 font-bold px-2 text-lg">+</button>
+                                    </div>`
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            updateCartUI();
+        }
+
+        // 4. Cart Logic (Quantity badhana/ghatana)
+        function updateCart(productId, change) {
+            if(!cart[productId]) cart[productId] = 0;
+            
+            cart[productId] += change;
+            
+            if(cart[productId] <= 0) delete cart[productId];
+            
+            renderProducts(); // Refresh list to show new buttons
+        }
+
+        // 5. Total calculate karna aur Bottom Bar dikhana
+        function updateCartUI() {
+            let total = 0;
+            let itemCount = 0;
+
+            for (const [id, qty] of Object.entries(cart)) {
+                const product = products.find(p => p.id == id);
+                if(product) {
+                    total += (product.price * qty);
+                    itemCount += qty;
+                }
+            }
+
+            document.getElementById('cartTotal').innerText = `₹${total}`;
+            const cartBar = document.getElementById('cartBar');
+
+            // Agar cart me saman hai, toh bar upar aayega
+            if(itemCount > 0) {
+                cartBar.classList.remove('translate-y-full');
+            } else {
+                cartBar.classList.add('translate-y-full');
+            }
+        }
+
+        // 6. Checkout to WhatsApp Function
+        function checkoutToWhatsApp() {
+            let message = `*New Order Details* 🛍️\nStore: ${storeId}\n\n`;
+            let total = 0;
+
+            for (const [id, qty] of Object.entries(cart)) {
+                const product = products.find(p => p.id == id);
+                if(product) {
+                    let itemTotal = product.price * qty;
+                    message += `▪️ ${product.name} (x${qty}) - ₹${itemTotal}\n`;
+                    total += itemTotal;
+                }
+            }
+
+            message += `\n*Total Bill: ₹${total}*\n\nPlease process this order.`;
+
+            // Yahan dukandaar ka number aayega (Abhi ke liye ek dummy/apna number daal dein)
+            // Encode URI taaki space aur symbols link me sahi se kaam karein
+            const vendorPhone = "919876543210"; 
+            const whatsappUrl = `https://wa.me/${vendorPhone}?text=${encodeURIComponent(message)}`;
+            
+            window.location.href = whatsappUrl;
+        }
+
+        // Page load hote hi products dikhao
+        renderProducts();
+    </script>
+</body>
+</html>
