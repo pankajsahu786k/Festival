@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
@@ -20,16 +22,9 @@
             </div>
             <nav class="flex-1 px-4 py-6 space-y-2">
                 <a href="#" class="block px-4 py-3 bg-orange-600 rounded-xl font-semibold shadow-md">📊 Dashboard</a>
-                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex justify-between items-center">
-                    <span>📦 Orders</span>
-                    <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
-                </a>
-                <a href="#" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition">⚙️ Settings</a>
             </nav>
             <div class="p-4 border-t border-gray-800">
-                <button onclick="logout()" class="w-full px-4 py-3 bg-gray-800 hover:bg-red-600 rounded-xl font-medium transition text-left flex items-center gap-2">
-                    🚪 Logout
-                </button>
+                <button onclick="logout()" class="w-full px-4 py-3 bg-gray-800 hover:bg-red-600 rounded-xl font-medium transition text-left flex items-center gap-2">🚪 Logout</button>
             </div>
         </aside>
 
@@ -37,27 +32,19 @@
             
             <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
                 <h2 class="text-xl font-bold text-gray-800">Welcome to your Dashboard! 👋</h2>
-                <div class="flex items-center gap-4">
-                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide flex items-center gap-1">
-                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> Live
-                    </span>
-                    <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold border border-orange-200">
-                        S
-                    </div>
-                </div>
             </header>
 
             <div class="p-8 space-y-8">
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Leads / Orders</p>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Leads</p>
                         <h3 class="text-4xl font-black text-gray-900 mt-2">0</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                        <div class="flex justify-between items-center mb-2">
+                        <div class="flex justify-between items-center mb-3">
                             <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Live Shop Link</p>
-                            <a href="#" id="storeLinkBtn" target="_blank" class="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded-lg font-bold hover:bg-orange-200 transition">Open Link 🔗</a>
+                            <a href="#" id="storeLinkBtn" target="_blank" class="text-xs bg-orange-100 text-orange-700 px-3 py-1.5 rounded font-bold hover:bg-orange-200 transition">Open Link 🔗</a>
                         </div>
                         <p id="fullStoreLink" class="text-xs font-medium text-gray-800 bg-gray-50 p-2.5 rounded-lg border border-gray-200 break-all">Loading...</p>
                     </div>
@@ -75,53 +62,35 @@
                         <form id="addProductForm" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Title</label>
-                                <input type="text" id="prodName" placeholder="E.g. 2 BHK Flat MP Nagar, Bhopal" required
-                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                <input type="text" id="prodName" placeholder="E.g. 2 BHK Flat MP Nagar" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                             </div>
-
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Price (₹)</label>
-                                    <input type="number" id="prodPrice" placeholder="15000" required
-                                        class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                    <input type="number" id="prodPrice" placeholder="15000" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Category</label>
-                                    <input type="text" id="prodCategory" placeholder="Rent / Sell" required
-                                        class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                    <input type="text" id="prodCategory" placeholder="Rent / Sell" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                                 </div>
                             </div>
-
                             <div>
-                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">
-                                    Gallery Photos <span class="text-orange-600">(1 to 5 Photos)</span>
-                                </label>
-                                <input type="file" id="prodGallery" multiple accept="image/*" required
-                                    class="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-700">
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Gallery Photos <span class="text-orange-600">(1 to 5 Photos)</span></label>
+                                <input type="file" id="prodGallery" multiple accept="image/*" required class="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl bg-gray-50 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-orange-50 file:text-orange-700">
                             </div>
-
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Description</label>
-                                <textarea id="prodDesc" rows="2" placeholder="Facilities, Location, Contact Rules..."
-                                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium"></textarea>
+                                <textarea id="prodDesc" rows="2" placeholder="Facilities, Location, Rules..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium"></textarea>
                             </div>
-
-                            <button type="submit" class="w-full bg-orange-600 text-white font-bold text-sm py-3 rounded-xl hover:bg-orange-700 transition shadow-md">
-                                Save to Live Store 🚀
-                            </button>
+                            <button type="submit" class="w-full bg-orange-600 text-white font-bold text-sm py-3 rounded-xl hover:bg-orange-700 transition shadow-md">Save to Live Store 🚀</button>
                         </form>
                     </div>
 
                     <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center items-center text-center">
                         <div class="relative z-10 w-full" id="qrCodeContainer">
                             <h3 class="text-2xl font-extrabold mb-2">Get Your Smart QR</h3>
-                            <p class="text-orange-100 text-sm mb-6 leading-relaxed">
-                                Grahak ise scan karke aapke saare listings live dekh sakte hain.
-                            </p>
-                            <button onclick="generateQR()" 
-                                class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all w-full md:w-auto">
-                                Generate QR Code 🪄
-                            </button>
+                            <p class="text-orange-100 text-sm mb-6 leading-relaxed">Grahak ise scan karke aapke saare listings dekh sakte hain.</p>
+                            <button onclick="generateQR()" class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all">Generate QR Code 🪄</button>
                         </div>
                     </div>
 
@@ -132,7 +101,6 @@
                         <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">📦 Manage Active Listings</h3>
                         <button onclick="loadMyProducts()" class="text-xs text-orange-600 font-bold hover:underline">🔄 Refresh List</button>
                     </div>
-
                     <div id="myProductsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <p class="text-gray-400 text-sm">Loading listings...</p>
                     </div>
@@ -142,10 +110,20 @@
         </main>
     </div>
 
-    <div id="editModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 class="text-lg font-bold text-gray-900">Edit Listing Details</h3>
+    <div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+            <h3 class="text-lg font-bold text-gray-900">Edit Details & Photos</h3>
             <input type="hidden" id="editProdId">
+            
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <label class="block text-xs font-bold uppercase text-gray-600 mb-2">Manage Photos (Max 5)</label>
+                <div id="editImagesContainer" class="flex gap-3 mb-3 overflow-x-auto pb-2 no-scrollbar"></div>
+                
+                <label class="block text-[10px] font-bold text-orange-600 mb-1">Add More Photos:</label>
+                <input type="file" id="editGalleryUpload" multiple accept="image/*" class="w-full px-2 py-1 text-xs border border-gray-200 rounded-lg bg-white">
+                <p id="editUploadStatus" class="text-[10px] font-bold text-blue-600 mt-1 hidden">Uploading to cloud... ⏳</p>
+            </div>
+
             <div>
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Title</label>
                 <input type="text" id="editName" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium">
@@ -166,7 +144,7 @@
             </div>
             <div class="flex gap-3 pt-2">
                 <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-100 font-bold text-gray-600 rounded-xl text-sm hover:bg-gray-200">Cancel</button>
-                <button onclick="saveProductEdit()" class="flex-1 py-3 bg-orange-600 font-bold text-white rounded-xl text-sm hover:bg-orange-700">Save Changes</button>
+                <button onclick="saveProductEdit()" id="saveEditBtn" class="flex-1 py-3 bg-orange-600 font-bold text-white rounded-xl text-sm hover:bg-orange-700">Save Changes</button>
             </div>
         </div>
     </div>
@@ -183,7 +161,6 @@
             document.getElementById('storeLinkBtn').href = shopUrl;
         }
 
-        // QR Code Generator
         function generateQR() {
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
             document.getElementById('qrCodeContainer').innerHTML = `
@@ -191,17 +168,26 @@
                 <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
                     <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48">
                 </div>
-                <p class="text-sm mt-4 text-orange-100 font-medium">Ise print karke apne counter/desk par lagayein!</p>
                 <a href="${qrApiUrl}" target="_blank" class="mt-3 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
             `;
         }
 
-        // Cloud Image Upload (ImgBB)
+        // 🚀 CLOUD UPLOAD FUNCTION
         const IMGBB_API_KEY = "c5890563d7bc34314bc8868dff6de3ca"; 
         
+        const fileToBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+
         const uploadToCloud = async (file) => {
+            const base64 = await fileToBase64(file);
+            const base64Data = base64.split(',')[1]; 
+
             const formData = new FormData();
-            formData.append('image', file);
+            formData.append('image', base64Data);
 
             const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
                 method: 'POST',
@@ -209,21 +195,21 @@
             });
             const data = await res.json();
             
-            if(data.success && data.data && data.data.url) {
+            if(data.success) {
                 return data.data.url; 
             } else {
                 throw new Error("ImgBB Upload Failed");
             }
         };
 
-        // Add Product Form
+        // ➕ ADD PRODUCT
         document.getElementById('addProductForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('prodGallery');
             const files = Array.from(fileInput.files);
 
-            if (files.length > 5) {
-                alert("⚠️ Maximum 5 photos allowed!");
+            if (files.length < 1 || files.length > 5) {
+                alert("⚠️ Kripya 1 se 5 photos upload karein!");
                 return;
             }
 
@@ -247,7 +233,7 @@
                 });
 
                 if (response.ok) {
-                    alert('Success: Listing photos ke sath live ho gayi hai!');
+                    alert('Success: Item Cloud photos ke sath live ho gaya hai!');
                     document.getElementById('addProductForm').reset();
                     loadMyProducts(); 
                 } else {
@@ -255,34 +241,30 @@
                     alert(`Error: ${data.message}`);
                 }
             } catch (error) {
-                console.error(error);
-                alert('Upload fail ho gaya. Kripya image size ya connection check karein.');
+                alert('Upload fail ho gaya. Kripya check karein.');
             } finally {
                 submitBtn.innerText = "Save to Live Store 🚀";
                 submitBtn.disabled = false;
             }
         });
 
-        // Load Product List
         let myProductsList = [];
         async function loadMyProducts() {
             const listEl = document.getElementById('myProductsList');
-            listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Fetching listings...</p>`;
+            listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Fetching...</p>`;
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/${shopSlug}`);
                 myProductsList = await res.json();
 
                 if (myProductsList.length === 0) {
-                    listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item/property list nahi ki hai.</p>`;
+                    listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi ki hai.</p>`;
                     return;
                 }
-
-                const fallbackImg = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&q=80";
 
                 listEl.innerHTML = myProductsList.map(item => `
                     <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-3 transition hover:shadow-md">
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <img src="${item.images && item.images.length > 0 ? item.images[0] : fallbackImg}" onerror="this.src='${fallbackImg}'" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0">
+                            <img src="${item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&q=80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0">
                             <div class="truncate">
                                 <h4 class="font-bold text-gray-900 text-sm truncate">${item.name}</h4>
                                 <p class="text-xs text-orange-600 font-bold mt-0.5">₹${item.price} • <span class="text-gray-500 font-normal">${item.category}</span></p>
@@ -290,18 +272,69 @@
                             </div>
                         </div>
                         <div class="flex gap-2 mt-2 border-t border-gray-100 pt-3">
-                            <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Edit</button>
-                            <button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>
+                            <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100">Edit</button>
+                            <button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100">Delete</button>
                         </div>
                     </div>
                 `).join('');
-
             } catch (err) {
-                listEl.innerHTML = `<p class="text-red-500 text-sm col-span-3">Failed to load items.</p>`;
+                listEl.innerHTML = `<p class="text-red-500 text-sm">Failed to load items.</p>`;
             }
         }
 
-        // Edit Modal Handlers
+        // ==========================================
+        // 🛠️ EDIT MANAGER & PHOTO LOGIC
+        // ==========================================
+        let editingImages = [];
+
+        function renderEditImages() {
+            const container = document.getElementById('editImagesContainer');
+            if(editingImages.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400">No photos.</p>`;
+                return;
+            }
+            container.innerHTML = editingImages.map((img, index) => `
+                <div class="relative w-16 h-16 flex-shrink-0">
+                    <img src="${img}" class="w-full h-full object-cover rounded-lg border border-gray-200">
+                    <button type="button" onclick="removeEditImage(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-600">X</button>
+                </div>
+            `).join('');
+        }
+
+        function removeEditImage(index) {
+            editingImages.splice(index, 1);
+            renderEditImages();
+        }
+
+        // Instantly upload new photos in edit modal
+        document.getElementById('editGalleryUpload').addEventListener('change', async function(e) {
+            const files = Array.from(e.target.files);
+            if(editingImages.length + files.length > 5) {
+                alert("⚠️ Maximum 5 photos allowed in total!");
+                this.value = '';
+                return;
+            }
+            
+            const statusText = document.getElementById('editUploadStatus');
+            const saveBtn = document.getElementById('saveEditBtn');
+            
+            statusText.classList.remove('hidden');
+            saveBtn.disabled = true;
+
+            try {
+                const imagePromises = files.map(file => uploadToCloud(file));
+                const newUrls = await Promise.all(imagePromises);
+                editingImages = [...editingImages, ...newUrls];
+                renderEditImages();
+            } catch (error) {
+                alert('Photo upload failed.');
+            } finally {
+                statusText.classList.add('hidden');
+                saveBtn.disabled = false;
+                this.value = ''; // clear input
+            }
+        });
+
         function openEditModal(id) {
             const item = myProductsList.find(p => p._id === id);
             if (!item) return;
@@ -311,6 +344,11 @@
             document.getElementById('editPrice').value = item.price;
             document.getElementById('editCategory').value = item.category;
             document.getElementById('editDesc').value = item.description || '';
+            
+            // Load existing images into editor
+            editingImages = item.images ? [...item.images] : [];
+            renderEditImages();
+
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -319,17 +357,26 @@
         }
 
         async function saveProductEdit() {
+            if(editingImages.length < 1 || editingImages.length > 5) {
+                alert("⚠️ Kripya item me 1 se 5 photos zaroor rakhein.");
+                return;
+            }
+
             const id = document.getElementById('editProdId').value;
             const name = document.getElementById('editName').value;
             const price = document.getElementById('editPrice').value;
             const category = document.getElementById('editCategory').value;
             const description = document.getElementById('editDesc').value;
+            const saveBtn = document.getElementById('saveEditBtn');
+
+            saveBtn.innerText = "Saving... ⏳";
+            saveBtn.disabled = true;
 
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, price, category, description })
+                    body: JSON.stringify({ name, price, category, description, images: editingImages })
                 });
 
                 if (res.ok) {
@@ -341,20 +388,18 @@
                 }
             } catch (err) {
                 alert('Network error!');
+            } finally {
+                saveBtn.innerText = "Save Changes";
+                saveBtn.disabled = false;
             }
         }
 
-        // Delete Product
         async function deleteProduct(id) {
             if(!confirm("Kya aap sach me is listing ko delete karna chahte hain?")) return;
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    loadMyProducts(); 
-                }
-            } catch (err) {
-                alert('Delete error.');
-            }
+                if (res.ok) loadMyProducts(); 
+            } catch (err) { alert('Delete error.'); }
         }
 
         function logout() {

@@ -10,8 +10,9 @@ const Product = require('./models/Product');
 
 const app = express();
 
-app.use(express.json({ limit: '10mb' })); // Photos upload ke liye limit badhayi
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// 🚀 Cloud images ke liye limit badhayi hui hai
+app.use(express.json({ limit: '50mb' })); 
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Static files serve karne ke liye
 app.use(express.static(path.join(__dirname, '../')));
@@ -34,7 +35,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // ==========================================
-// 1. VENDOR REGISTRATION API ROUTE
+// 1. VENDOR REGISTRATION & LOGIN APIS
 // ==========================================
 app.post('/api/vendor/register', async (req, res) => {
     try {
@@ -47,23 +48,14 @@ app.post('/api/vendor/register', async (req, res) => {
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
         const shopSlug = shopName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
         const newVendor = new Vendor({
-            shopName,
-            ownerName,
-            mobileNumber,
-            password: hashedPassword,
-            shopSlug
+            shopName, ownerName, mobileNumber, password: hashedPassword, shopSlug
         });
 
         await newVendor.save();
-        
-        res.status(201).json({ 
-            message: "Badhai ho! Aapki dukan successfully register ho gayi.", 
-            shopSlug: shopSlug 
-        });
+        res.status(201).json({ message: "Badhai ho! Aapki dukan successfully register ho gayi.", shopSlug: shopSlug });
 
     } catch (error) {
         console.error("Registration Error: ", error);
@@ -71,33 +63,18 @@ app.post('/api/vendor/register', async (req, res) => {
     }
 });
 
-// ==========================================
-// 2. UNIFIED LOGIN API (Vendor & Admin)
-// ==========================================
 app.post('/api/vendor/login', async (req, res) => {
     try {
         const { mobileNumber, password } = req.body;
-
-        // Check karte hain ki kya ye number database me hai
         const user = await Vendor.findOne({ mobileNumber });
-        if (!user) {
-            return res.status(400).json({ message: "Yeh number register nahi hai. Pehle account banayein." });
-        }
+        
+        if (!user) return res.status(400).json({ message: "Yeh number register nahi hai. Pehle account banayein." });
 
-        // Password match karte hain
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Password galat hai. Kripya dobara try karein." });
-        }
+        if (!isMatch) return res.status(400).json({ message: "Password galat hai. Kripya dobara try karein." });
 
-        // Secure Token generate karna
-        const token = jwt.sign(
-            { id: user._id, role: user.role }, 
-            'smartshop_secret_key', 
-            { expiresIn: '7d' } 
-        );
+        const token = jwt.sign({ id: user._id, role: user.role }, 'smartshop_secret_key', { expiresIn: '7d' });
 
-        // Frontend ko poora data bhejna flag ke sath
         res.json({
             message: "Login Successful!",
             token: token,
@@ -108,94 +85,63 @@ app.post('/api/vendor/login', async (req, res) => {
 
     } catch (error) {
         console.error("Login Error: ", error);
-        res.status(500).json({ message: "Server me error hai, kripya baad me try karein." });
+        res.status(500).json({ message: "Server error, kripya baad me try karein." });
     }
 });
 
-// ==========================================
-// 3. SAVE EXTRA SHOP DETAILS API (Onboarding)
-// ==========================================
 app.post('/api/vendor/setup-shop', async (req, res) => {
     try {
         const { shopSlug, category, address, upiId, description } = req.body;
-
         const updatedVendor = await Vendor.findOneAndUpdate(
             { shopSlug: shopSlug },
-            { 
-                category, 
-                address, 
-                upiId, 
-                description, 
-                isSetupCompleted: true 
-            },
+            { category, address, upiId, description, isSetupCompleted: true },
             { new: true } 
         );
 
-        if (!updatedVendor) {
-            return res.status(404).json({ message: "Vendor nahi mila. Kripya wapas login karein." });
-        }
-
-        res.json({ 
-            message: "Shop Profile Successfully Setup!", 
-            vendor: updatedVendor 
-        });
+        if (!updatedVendor) return res.status(404).json({ message: "Vendor nahi mila. Kripya wapas login karein." });
+        res.json({ message: "Shop Profile Successfully Setup!", vendor: updatedVendor });
 
     } catch (error) {
         console.error("Setup Error: ", error);
         res.status(500).json({ message: "Server error, details save nahi ho payi." });
     }
 });
-// ==========================================
-// 4. PUBLIC SHOP DETAILS API (Customer ke liye)
-// ==========================================
+
 app.get('/api/shop/:slug', async (req, res) => {
     try {
-        // URL se jo slug aayega, usko database me dhoondhenge
         const shop = await Vendor.findOne({ shopSlug: req.params.slug });
-        
-        if (!shop) {
-            return res.status(404).json({ message: "Dukan nahi mili" });
-        }
-
-        // Sirf zaroori details bhejenge (Password kabhi nahi bhejna chahiye!)
-        res.json({
-            shopName: shop.shopName,
-            mobileNumber: shop.mobileNumber,
-            category: shop.category
-        });
-
+        if (!shop) return res.status(404).json({ message: "Dukan nahi mili" });
+        res.json({ shopName: shop.shopName, mobileNumber: shop.mobileNumber, category: shop.category });
     } catch (error) {
         console.error("Shop Fetch Error: ", error);
         res.status(500).json({ message: "Server error" });
     }
 });
+
 // ==========================================
-// 5. ADD NEW PRODUCT / PROPERTY API
+// 🚀 PRODUCT APIS (DUPLICATES REMOVED & FIXED)
 // ==========================================
 app.post('/api/products/add', async (req, res) => {
     try {
-        const { shopSlug, name, price, category, description, image } = req.body;
+        const { shopSlug, name, price, category, description, images } = req.body;
         
+        // Ensure 1 to 5 photos rule is strictly checked
+        if (!images || images.length < 1 || images.length > 5) {
+            return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
+        }
+
         const newProduct = new Product({
-            shopSlug,
-            name,
-            price,
-            category,
-            description,
-            image: image || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&q=80' // Default fallback image
+            shopSlug, name, price, category, description, images
         });
 
         await newProduct.save();
-        res.status(201).json({ message: "Item / Property successfully add ho gaya!", product: newProduct });
+        res.status(201).json({ message: "Item successfully add ho gaya!", product: newProduct });
     } catch (error) {
         console.error("Add Product Error:", error);
-        res.status(500).json({ message: "Item add karne me error aaya." });
+        res.status(500).json({ message: "Server error, item add nahi ho paya." });
     }
 });
 
-// ==========================================
-// 6. GET PRODUCTS FOR A SPECIFIC SHOP
-// ==========================================
 app.get('/api/products/:shopSlug', async (req, res) => {
     try {
         const products = await Product.find({ shopSlug: req.params.shopSlug }).sort({ createdAt: -1 });
@@ -205,39 +151,13 @@ app.get('/api/products/:shopSlug', async (req, res) => {
         res.status(500).json({ message: "Products fetch nahi ho paaye." });
     }
 });
-// 🚀 1. ADD PRODUCT WITH MULTIPLE IMAGES
-app.post('/api/products/add', async (req, res) => {
-    try {
-        const { shopSlug, name, price, category, description, images } = req.body;
-        
-        if (!images || images.length < 3 || images.length > 5) {
-            return res.status(400).json({ message: "Kripya kam se kam 3 aur maximum 5 photos upload karein." });
-        }
 
-        const newProduct = new Product({
-            shopSlug,
-            name,
-            price,
-            category,
-            description,
-            images
-        });
-
-        await newProduct.save();
-        res.status(201).json({ message: "Product / Listing successfully add ho gaya!", product: newProduct });
-    } catch (error) {
-        console.error("Add Product Error:", error);
-        res.status(500).json({ message: "Server error, item add nahi ho paya." });
-    }
-});
-
-// 🚀 2. EDIT PRODUCT API
 app.put('/api/products/edit/:id', async (req, res) => {
     try {
         const { name, price, category, description, images } = req.body;
-        
         const updateData = { name, price, category, description };
-        if (images && images.length >= 3 && images.length <= 5) {
+        
+        if (images && images.length >= 1 && images.length <= 5) {
             updateData.images = images;
         }
 
@@ -249,7 +169,6 @@ app.put('/api/products/edit/:id', async (req, res) => {
     }
 });
 
-// 🚀 3. DELETE PRODUCT API
 app.delete('/api/products/delete/:id', async (req, res) => {
     try {
         await Product.findByIdAndDelete(req.params.id);
@@ -258,6 +177,7 @@ app.delete('/api/products/delete/:id', async (req, res) => {
         res.status(500).json({ message: "Delete karne me error aaya." });
     }
 });
+
 // ==========================================
 // SERVER START
 // ==========================================
