@@ -10,7 +10,6 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #e5e7eb; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Smooth scrolling for photo slider */
         .slider-container { scroll-behavior: smooth; }
     </style>
 </head>
@@ -32,25 +31,21 @@
             <div class="col-span-2 text-center py-10 text-gray-400 font-medium">Loading items...</div>
         </main>
 
-        <div id="cartBar" 
-             class="fixed bottom-0 left-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 shadow-2xl transition-all duration-300 flex justify-between items-center z-40"
-             style="transform: translateX(-50%) translateY(100%);">
+        <div id="cartBar" class="fixed bottom-0 left-1/2 w-full max-w-md bg-white border-t border-gray-200 p-4 shadow-2xl transition-all duration-300 flex justify-between items-center z-40" style="transform: translateX(-50%) translateY(100%);">
             <div class="flex flex-col">
                 <span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Amount</span>
                 <span class="text-xl font-black text-gray-900" id="cartTotal">₹0</span>
             </div>
             <button onclick="checkoutToWhatsApp()" class="bg-orange-600 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-orange-700 flex items-center gap-2">
-                <span>Order on WhatsApp</span> 📲
+                <span>Order Now</span> 📲
             </button>
         </div>
 
-        <div id="productModal" 
-             class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300"
-             style="transform: translateX(-50%) translateY(100%);">
+        <div id="productModal" class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300" style="transform: translateX(-50%) translateY(100%);">
             
             <div class="sticky top-0 bg-white/80 backdrop-blur-md px-4 py-4 flex justify-between items-center z-10 border-b border-gray-100">
                 <button onclick="closeProductModal()" class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm">←</button>
-                <span class="font-bold text-gray-900">Property / Item Details</span>
+                <span class="font-bold text-gray-900">Item Details</span>
                 <div class="w-10"></div> 
             </div>
 
@@ -58,7 +53,7 @@
 
             <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex items-center justify-between gap-4">
                 <div class="flex flex-col">
-                    <p class="text-xs text-gray-500 font-bold uppercase">Price</p>
+                    <p class="text-xs text-gray-500 font-bold uppercase">Total Price</p>
                     <p id="modalPrice" class="text-2xl font-black text-gray-900">₹0</p>
                 </div>
                 
@@ -102,6 +97,7 @@
                         id: p._id,
                         name: p.name,
                         price: p.price,
+                        stockQuantity: p.stockQuantity || 0, // 🚀 STOCK MAP KIYA GAYA HAI YAHAN
                         images: (p.images && p.images.length > 0) ? p.images : [fallbackImg],
                         description: p.description || "No description provided.",
                         category: p.category || "General"
@@ -127,12 +123,18 @@
             products.forEach(product => {
                 const qty = cart[product.id] || 0;
                 const firstImg = product.images[0] || fallbackImg;
+                
+                // Out of stock check
+                const isOutOfStock = product.stockQuantity <= 0;
 
                 list.innerHTML += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative cursor-pointer" onclick="openProductModal('${product.id}')">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative ${isOutOfStock ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}" onclick="${isOutOfStock ? '' : `openProductModal('${product.id}')`}">
+                        
                         <div class="relative aspect-square overflow-hidden bg-gray-50">
                             <img src="${firstImg}" onerror="this.src='${fallbackImg}'" class="w-full h-full object-cover">
                             
+                            ${isOutOfStock ? `<div class="absolute inset-0 bg-white/50 flex items-center justify-center"><span class="bg-red-600 text-white px-3 py-1 text-[10px] font-black uppercase rounded shadow-sm">Out of Stock</span></div>` : ''}
+
                             ${qty > 0 ? `<div class="absolute top-2 right-2 bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shadow-md z-10">${qty}</div>` : ''}
 
                             <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
@@ -152,21 +154,18 @@
             updateCartUI();
         }
 
-        // 🚀 AUTOMATIC PHOTO SLIDER FUNCTION
         function startAutoSlider(totalImages) {
             stopAutoSlider(); 
             if (totalImages <= 1) return;
-
             const slider = document.getElementById('modalImageSlider');
             let currentIndex = 0;
-
             autoSlideInterval = setInterval(() => {
                 currentIndex = (currentIndex + 1) % totalImages;
                 if(slider) {
                     slider.scrollLeft = currentIndex * slider.clientWidth;
                     updateSliderDots(currentIndex);
                 }
-            }, 3000); // 3 seconds me automatic slide hoga
+            }, 3000);
         }
 
         function stopAutoSlider() {
@@ -189,7 +188,6 @@
             });
         }
 
-        // Open Modal Details
         function openProductModal(id) {
             const product = products.find(p => p.id === id);
             if(!product) return;
@@ -198,7 +196,6 @@
                 <img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">
             `).join('');
 
-            // Generate Slide indicators/dots
             let dotsHtml = product.images.map((_, i) => `
                 <span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>
             `).join('');
@@ -208,35 +205,31 @@
                     <div id="modalImageSlider" class="slider-container w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black">
                         ${imagesHtml}
                     </div>
-                    
                     <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-white/60 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-sm">
                         ${dotsHtml}
                     </div>
                 </div>
 
                 <div class="p-5">
-                    <h2 class="text-2xl font-extrabold text-gray-900 leading-tight mb-2">${product.name}</h2>
+                    <div class="flex justify-between items-start gap-2 mb-2">
+                        <h2 class="text-2xl font-extrabold text-gray-900 leading-tight">${product.name}</h2>
+                        <span class="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm flex-shrink-0">📦 Stock: ${product.stockQuantity}</span>
+                    </div>
                     <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${product.category}</span>
                     
                     <div class="border-t border-gray-100 pt-4 mt-4">
-                        <h3 class="font-bold text-gray-900 mb-2">Description / Full Details</h3>
+                        <h3 class="font-bold text-gray-900 mb-2">Description</h3>
                         <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">${product.description}</p>
                     </div>
                 </div>
             `;
-
-            document.getElementById('modalPrice').innerText = `₹${product.price}`;
             
-            // Render Quantity Controls Inside Footer
             updateModalFooterControls(product.id);
 
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(0)';
-
-            // Start Auto sliding
             startAutoSlider(product.images.length);
 
-            // Manual scroll check to update dots manually if user swipes
             const sliderEl = document.getElementById('modalImageSlider');
             sliderEl.addEventListener('scroll', () => {
                 const index = Math.round(sliderEl.scrollLeft / sliderEl.clientWidth);
@@ -244,15 +237,20 @@
             });
         }
 
-        // 🛠️ DYNAMIC PLUS/MINUS QUANTITY CONTROLLER LOGIC FOR MODAL
+        // 🚀 SMART MODAL CONTROLS (PRICE UPDATE & STOCK LIMITS)
         function updateModalFooterControls(productId) {
             const container = document.getElementById('modalActionContainer');
+            const product = products.find(p => p.id === productId);
             const qty = cart[productId] || 0;
+
+            // Update Total Price Dynamically!
+            const displayPrice = qty > 0 ? (product.price * qty) : product.price;
+            document.getElementById('modalPrice').innerText = `₹${displayPrice}`;
 
             if(qty === 0) {
                 container.innerHTML = `
                     <button onclick="changeQuantityFromModal('${productId}', 1)" class="bg-gray-900 text-white rounded-xl font-bold text-sm px-8 py-3.5 hover:bg-black active:scale-95 transition shadow-lg">
-                        Add to Cart 🛒
+                        Add Item 🛒
                     </button>
                 `;
             } else {
@@ -266,12 +264,22 @@
             }
         }
 
+        // 🚀 STOCK LIMIT CHECKER FUNCTION
         function changeQuantityFromModal(productId, change) {
+            const product = products.find(p => p.id === productId);
             if(!cart[productId]) cart[productId] = 0;
-            cart[productId] += change;
+            
+            const newQty = cart[productId] + change;
+
+            // Agar quantity stock se zyada ho rahi hai, toh alert dikhao aur function rok do!
+            if (newQty > product.stockQuantity) {
+                alert(`⚠️ Maaf kijiye, is item ka sirf ${product.stockQuantity} stock hi bacha hai.`);
+                return;
+            }
+
+            cart[productId] = newQty;
             if(cart[productId] <= 0) delete cart[productId];
             
-            // Instant updates
             renderProducts(); 
             updateModalFooterControls(productId);
         }
