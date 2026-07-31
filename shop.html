@@ -10,6 +10,8 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #e5e7eb; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Smooth scrolling for photo slider */
+        .slider-container { scroll-behavior: smooth; }
     </style>
 </head>
 <body class="flex justify-center min-h-screen">
@@ -54,14 +56,14 @@
 
             <div id="modalContent" class="flex-1 overflow-y-auto pb-24"></div>
 
-            <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex gap-4">
-                <div class="flex-1">
+            <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex items-center justify-between gap-4">
+                <div class="flex flex-col">
                     <p class="text-xs text-gray-500 font-bold uppercase">Price</p>
                     <p id="modalPrice" class="text-2xl font-black text-gray-900">₹0</p>
                 </div>
-                <button id="modalAddToCartBtn" class="flex-[2] bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-black flex items-center justify-center">
-                    Select Item 🛒
-                </button>
+                
+                <div id="modalActionContainer" class="flex items-center">
+                    </div>
             </div>
         </div>
 
@@ -73,6 +75,7 @@
         let dynamicVendorPhone = ""; 
         let realShopName = "";
         let products = [];
+        let autoSlideInterval = null; 
         const fallbackImg = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&q=80";
 
         async function fetchShopDetails() {
@@ -126,9 +129,12 @@
                 const firstImg = product.images[0] || fallbackImg;
 
                 list.innerHTML += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col cursor-pointer" onclick="openProductModal('${product.id}')">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative cursor-pointer" onclick="openProductModal('${product.id}')">
                         <div class="relative aspect-square overflow-hidden bg-gray-50">
                             <img src="${firstImg}" onerror="this.src='${fallbackImg}'" class="w-full h-full object-cover">
+                            
+                            ${qty > 0 ? `<div class="absolute top-2 right-2 bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shadow-md z-10">${qty}</div>` : ''}
+
                             <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
                                 📷 ${product.images.length} Photos
                             </div>
@@ -146,6 +152,44 @@
             updateCartUI();
         }
 
+        // 🚀 AUTOMATIC PHOTO SLIDER FUNCTION
+        function startAutoSlider(totalImages) {
+            stopAutoSlider(); 
+            if (totalImages <= 1) return;
+
+            const slider = document.getElementById('modalImageSlider');
+            let currentIndex = 0;
+
+            autoSlideInterval = setInterval(() => {
+                currentIndex = (currentIndex + 1) % totalImages;
+                if(slider) {
+                    slider.scrollLeft = currentIndex * slider.clientWidth;
+                    updateSliderDots(currentIndex);
+                }
+            }, 3000); // 3 seconds me automatic slide hoga
+        }
+
+        function stopAutoSlider() {
+            if (autoSlideInterval) {
+                clearInterval(autoSlideInterval);
+                autoSlideInterval = null;
+            }
+        }
+
+        function updateSliderDots(index) {
+            const dots = document.querySelectorAll('.slider-dot');
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.remove('bg-gray-300', 'w-2');
+                    dot.classList.add('bg-orange-600', 'w-4');
+                } else {
+                    dot.classList.remove('bg-orange-600', 'w-4');
+                    dot.classList.add('bg-gray-300', 'w-2');
+                }
+            });
+        }
+
+        // Open Modal Details
         function openProductModal(id) {
             const product = products.find(p => p.id === id);
             if(!product) return;
@@ -154,12 +198,20 @@
                 <img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">
             `).join('');
 
+            // Generate Slide indicators/dots
+            let dotsHtml = product.images.map((_, i) => `
+                <span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>
+            `).join('');
+
             document.getElementById('modalContent').innerHTML = `
-                <div class="w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black">
-                    ${imagesHtml}
-                </div>
-                <div class="p-2 text-center text-xs text-gray-400 font-medium">
-                    👈 Left/Right swipe karke saari photos dekhein (Total: ${product.images.length})
+                <div class="relative">
+                    <div id="modalImageSlider" class="slider-container w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black">
+                        ${imagesHtml}
+                    </div>
+                    
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-white/60 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-sm">
+                        ${dotsHtml}
+                    </div>
                 </div>
 
                 <div class="p-5">
@@ -175,26 +227,59 @@
 
             document.getElementById('modalPrice').innerText = `₹${product.price}`;
             
-            const btn = document.getElementById('modalAddToCartBtn');
-            btn.onclick = () => {
-                updateCart(product.id, 1);
-                closeProductModal(); 
-            };
+            // Render Quantity Controls Inside Footer
+            updateModalFooterControls(product.id);
 
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(0)';
+
+            // Start Auto sliding
+            startAutoSlider(product.images.length);
+
+            // Manual scroll check to update dots manually if user swipes
+            const sliderEl = document.getElementById('modalImageSlider');
+            sliderEl.addEventListener('scroll', () => {
+                const index = Math.round(sliderEl.scrollLeft / sliderEl.clientWidth);
+                updateSliderDots(index);
+            });
+        }
+
+        // 🛠️ DYNAMIC PLUS/MINUS QUANTITY CONTROLLER LOGIC FOR MODAL
+        function updateModalFooterControls(productId) {
+            const container = document.getElementById('modalActionContainer');
+            const qty = cart[productId] || 0;
+
+            if(qty === 0) {
+                container.innerHTML = `
+                    <button onclick="changeQuantityFromModal('${productId}', 1)" class="bg-gray-900 text-white rounded-xl font-bold text-sm px-8 py-3.5 hover:bg-black active:scale-95 transition shadow-lg">
+                        Add to Cart 🛒
+                    </button>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center bg-gray-100 rounded-xl p-1 border border-gray-200 shadow-inner">
+                        <button onclick="changeQuantityFromModal('${productId}', -1)" class="bg-white text-gray-900 w-10 h-10 rounded-lg font-black text-lg flex items-center justify-center hover:bg-gray-50 active:scale-90 transition shadow-sm">-</button>
+                        <span class="px-5 font-extrabold text-gray-900 text-base min-w-[40px] text-center">${qty}</span>
+                        <button onclick="changeQuantityFromModal('${productId}', 1)" class="bg-white text-gray-900 w-10 h-10 rounded-lg font-black text-lg flex items-center justify-center hover:bg-gray-50 active:scale-90 transition shadow-sm">+</button>
+                    </div>
+                `;
+            }
+        }
+
+        function changeQuantityFromModal(productId, change) {
+            if(!cart[productId]) cart[productId] = 0;
+            cart[productId] += change;
+            if(cart[productId] <= 0) delete cart[productId];
+            
+            // Instant updates
+            renderProducts(); 
+            updateModalFooterControls(productId);
         }
 
         function closeProductModal() {
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(100%)';
-        }
-
-        function updateCart(productId, change) {
-            if(!cart[productId]) cart[productId] = 0;
-            cart[productId] += change;
-            if(cart[productId] <= 0) delete cart[productId];
-            renderProducts(); 
+            stopAutoSlider(); 
         }
 
         function updateCartUI() {
@@ -224,7 +309,7 @@
                 const product = products.find(p => p.id == id);
                 if(product) {
                     let itemTotal = product.price * qty;
-                    message += `▪️ ${product.name} - ₹${itemTotal}\n`;
+                    message += `▪️ ${product.name} (x${qty}) - ₹${itemTotal}\n`;
                     total += itemTotal;
                 }
             }
