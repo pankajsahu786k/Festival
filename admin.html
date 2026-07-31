@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin - SmartShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+    <div id="adminLoginScreen" class="min-h-screen flex items-center justify-center bg-indigo-900 px-4">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-black text-indigo-900">Super<span class="text-blue-500">Admin</span></h1>
+                <p class="text-gray-500 text-sm font-medium mt-2">Boss Mode Login 👑</p>
+            </div>
+            
+            <form id="adminLoginForm" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Username</label>
+                    <input type="text" id="adminUser" placeholder="Enter admin username" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
+                    <input type="password" id="adminPass" placeholder="••••••••" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl hover:bg-indigo-700 transition shadow-lg mt-2">
+                    Login to Control Panel
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminDashboardScreen" class="hidden flex h-screen overflow-hidden">
+        
+        <aside class="w-64 bg-indigo-900 text-white flex flex-col hidden md:flex">
+            <div class="p-6 border-b border-indigo-800">
+                <h1 class="text-2xl font-black tracking-tight">Super<span class="text-blue-400">Admin</span></h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="#" onclick="showSection('overview')" id="nav-overview" class="block px-4 py-3 bg-indigo-600 rounded-xl font-semibold shadow-md">📊 Overview</a>
+                <a href="#" onclick="showSection('vendors')" id="nav-vendors" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">🏪 Manage Vendors</a>
+                <a href="#" onclick="showSection('products')" id="nav-products" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">📦 All Listings</a>
+            </nav>
+            <div class="p-4 border-t border-indigo-800">
+                <button onclick="adminLogout()" class="w-full px-4 py-3 bg-indigo-800 hover:bg-red-600 rounded-xl font-medium transition text-left">🚪 Logout Boss</button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col h-screen overflow-y-auto bg-gray-50">
+            
+            <header class="bg-white shadow-sm px-8 py-5 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800">Platform Control Center 🎛️</h2>
+                <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                    <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> SYSTEM LIVE
+                </div>
+            </header>
+
+            <div class="p-8">
+                
+                <div id="sec-overview" class="space-y-6">
+                    <h3 class="text-2xl font-extrabold text-gray-900">Platform Stats</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-gradient-to-br from-indigo-500 to-blue-600 p-8 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-indigo-100 font-bold uppercase tracking-widest text-sm">Total Vendors / Shops</h4>
+                            <p id="statVendors" class="text-6xl font-black mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 p-8 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-blue-100 font-bold uppercase tracking-widest text-sm">Total Live Properties / Items</h4>
+                            <p id="statProducts" class="text-6xl font-black mt-2">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sec-vendors" class="hidden space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-2xl font-extrabold text-gray-900">Registered Vendors</h3>
+                        <button onclick="fetchAdminData()" class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold">Refresh</button>
+                    </div>
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-bold">
+                                    <th class="p-4">Shop Name</th>
+                                    <th class="p-4">Owner Number</th>
+                                    <th class="p-4">Shop Link</th>
+                                    <th class="p-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendorTableBody" class="text-sm">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="sec-products" class="hidden space-y-6">
+                    <h3 class="text-2xl font-extrabold text-gray-900">All System Listings</h3>
+                    <div id="allProductsList" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'https://festival-h6ff.onrender.com';
+        
+        // Check if already logged in
+        if (localStorage.getItem('adminToken')) {
+            document.getElementById('adminLoginScreen').classList.add('hidden');
+            document.getElementById('adminDashboardScreen').classList.remove('hidden');
+            fetchAdminData();
+        }
+
+        // ==========================================
+        // 🔐 ADMIN LOGIN
+        // ==========================================
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('adminUser').value;
+            const password = document.getElementById('adminPass').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    localStorage.setItem('adminToken', data.token);
+                    document.getElementById('adminLoginScreen').classList.add('hidden');
+                    document.getElementById('adminDashboardScreen').classList.remove('hidden');
+                    fetchAdminData();
+                } else {
+                    alert(data.message);
+                }
+            } catch(err) {
+                alert("Login Error!");
+            }
+        });
+
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            window.location.reload();
+        }
+
+        // ==========================================
+        // 🎛️ DASHBOARD NAVIGATION
+        // ==========================================
+        function showSection(sectionId) {
+            ['overview', 'vendors', 'products'].forEach(id => {
+                document.getElementById(`sec-${id}`).classList.add('hidden');
+                document.getElementById(`nav-${id}`).classList.remove('bg-indigo-600');
+                document.getElementById(`nav-${id}`).classList.add('hover:bg-indigo-800');
+            });
+            document.getElementById(`sec-${sectionId}`).classList.remove('hidden');
+            document.getElementById(`nav-${sectionId}`).classList.add('bg-indigo-600');
+            document.getElementById(`nav-${sectionId}`).classList.remove('hover:bg-indigo-800');
+        }
+
+        // ==========================================
+        // 📊 FETCH ADMIN DATA
+        // ==========================================
+        async function fetchAdminData() {
+            try {
+                // Fetch Vendors
+                const vRes = await fetch(`${API_URL}/api/admin/vendors`);
+                const vendors = await vRes.json();
+                
+                // Fetch Products
+                const pRes = await fetch(`${API_URL}/api/admin/products`);
+                const products = await pRes.json();
+
+                // Update Stats
+                document.getElementById('statVendors').innerText = vendors.length;
+                document.getElementById('statProducts').innerText = products.length;
+
+                // Render Vendors Table
+                const tbody = document.getElementById('vendorTableBody');
+                if(vendors.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Koi dukandaar nahi mila.</td></tr>`;
+                } else {
+                    tbody.innerHTML = vendors.map(v => `
+                        <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                            <td class="p-4 font-bold text-gray-900">${v.shopName}</td>
+                            <td class="p-4 text-gray-600 font-medium">${v.mobileNumber}</td>
+                            <td class="p-4"><a href="shop.html?store=${v.shopSlug}" target="_blank" class="text-blue-600 text-xs font-bold hover:underline">View Shop 🔗</a></td>
+                            <td class="p-4 text-right">
+                                <button onclick="deleteVendor('${v._id}', '${v.shopName}')" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 transition">Delete Vendor</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Render All Products Grid
+                const plist = document.getElementById('allProductsList');
+                if(products.length === 0) {
+                    plist.innerHTML = `<div class="col-span-3 text-gray-500">Koi property/item list nahi hui hai.</div>`;
+                } else {
+                    plist.innerHTML = products.map(p => `
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3">
+                            <div class="flex gap-3">
+                                <img src="${p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/80'}" class="w-16 h-16 object-cover rounded-lg">
+                                <div>
+                                    <h4 class="font-bold text-gray-900 text-sm line-clamp-1">${p.name}</h4>
+                                    <p class="text-xs text-gray-500 mt-1">₹${p.price} • ${p.category}</p>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-50 px-2 py-1.5 rounded-md text-[10px] font-bold text-indigo-700">
+                                🏪 Listed by Store: ${p.shopSlug}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+            } catch(err) {
+                console.error("Admin data fetch error", err);
+            }
+        }
+
+        // ==========================================
+        // 🗑️ DELETE VENDOR ACTION
+        // ==========================================
+        async function deleteVendor(vendorId, shopName) {
+            if(!confirm(`WARNING: Kya aap sach me '${shopName}' dukan aur uske SAARE items delete karna chahte hain? Yeh wapas nahi aayega!`)) return;
+            
+            try {
+                const res = await fetch(`${API_URL}/api/admin/vendor/${vendorId}`, { method: 'DELETE' });
+                if(res.ok) {
+                    alert('Vendor aur uske items delete ho gaye!');
+                    fetchAdminData(); // Refresh Data
+                }
+            } catch(err) {
+                alert('Delete karne me error aayi.');
+            }
+        }
+    </script>
+</body>
+</html>
