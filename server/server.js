@@ -24,12 +24,10 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
-// Direct Link kholne par Index.html open karne ka route
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Index.html'));
 });
 
-// Test API Route
 app.get('/api/test', (req, res) => {
     res.json({ message: "SmartShop Live Backend is running perfectly!" });
 });
@@ -119,13 +117,12 @@ app.get('/api/shop/:slug', async (req, res) => {
 });
 
 // ==========================================
-// 🚀 PRODUCT APIS (DUPLICATES REMOVED & FIXED)
+// 2. PRODUCT APIS
 // ==========================================
 app.post('/api/products/add', async (req, res) => {
     try {
         const { shopSlug, name, price, category, description, images } = req.body;
         
-        // Ensure 1 to 5 photos rule is strictly checked
         if (!images || images.length < 1 || images.length > 5) {
             return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
         }
@@ -175,6 +172,56 @@ app.delete('/api/products/delete/:id', async (req, res) => {
         res.json({ message: "Item successfully delete ho gaya!" });
     } catch (error) {
         res.status(500).json({ message: "Delete karne me error aaya." });
+    }
+});
+
+// ==========================================
+// 👑 3. SUPER ADMIN APIS (NAYE FEATURES)
+// ==========================================
+
+// A. Admin Login API (Hardcoded Secret Login)
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    // Aap chaho toh inhe baad mein badal sakte ho
+    if (username === 'admin' && password === 'superadmin123') {
+        const token = jwt.sign({ role: 'admin' }, 'smartshop_secret_key', { expiresIn: '1d' });
+        res.json({ message: "Welcome Boss! Login Successful", token });
+    } else {
+        res.status(400).json({ message: "Galat Username ya Password!" });
+    }
+});
+
+// B. Get All Vendors (Poore Bhopal ke dukandaar/brokers)
+app.get('/api/admin/vendors', async (req, res) => {
+    try {
+        const vendors = await Vendor.find().sort({ createdAt: -1 });
+        res.json(vendors);
+    } catch (error) {
+        res.status(500).json({ message: "Vendors fetch karne me error aaya." });
+    }
+});
+
+// C. Get All Products (System ki saari properties/items)
+app.get('/api/admin/products', async (req, res) => {
+    try {
+        const products = await Product.find().sort({ createdAt: -1 });
+        res.json(products);
+    } catch (error) {
+        res.status(500).json({ message: "Products fetch karne me error aaya." });
+    }
+});
+
+// D. Delete Vendor & Unke saare Products
+app.delete('/api/admin/vendor/:id', async (req, res) => {
+    try {
+        const vendor = await Vendor.findByIdAndDelete(req.params.id);
+        if (vendor) {
+            // Agar dukandaar delete kiya, toh uske saare items bhi delete ho jayenge
+            await Product.deleteMany({ shopSlug: vendor.shopSlug });
+        }
+        res.json({ message: "Vendor aur uske items safalta purvak delete ho gaye!" });
+    } catch (error) {
+        res.status(500).json({ message: "Vendor delete karne me error." });
     }
 });
 
