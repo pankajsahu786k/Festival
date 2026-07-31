@@ -224,6 +224,44 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
         res.status(500).json({ message: "Vendor delete karne me error." });
     }
 });
+// 🚀 ADD PRODUCT API (Updated for Stock)
+app.post('/api/products/add', async (req, res) => {
+    try {
+        const { shopSlug, name, price, category, description, images, stockQuantity } = req.body;
+        
+        if (!images || images.length < 1 || images.length > 5) {
+            return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
+        }
+
+        const newProduct = new Product({
+            shopSlug, name, price, category, description, images, stockQuantity: stockQuantity || 1
+        });
+
+        await newProduct.save();
+        res.status(201).json({ message: "Item successfully add ho gaya!", product: newProduct });
+    } catch (error) {
+        console.error("Add Product Error:", error);
+        res.status(500).json({ message: "Server error, item add nahi ho paya." });
+    }
+});
+
+// 🚀 EDIT PRODUCT API (Updated for Stock)
+app.put('/api/products/edit/:id', async (req, res) => {
+    try {
+        const { name, price, category, description, images, stockQuantity } = req.body;
+        const updateData = { name, price, category, description, stockQuantity };
+        
+        if (images && images.length >= 1 && images.length <= 5) {
+            updateData.images = images;
+        }
+
+        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
+        res.json({ message: "Product successfully update ho gaya!", product: updatedProduct });
+    } catch (error) {
+        console.error("Edit Error:", error);
+        res.status(500).json({ message: "Update karne me error aaya." });
+    }
+});
 
 // ==========================================
 // SERVER START

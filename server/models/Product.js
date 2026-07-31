@@ -6,7 +6,8 @@ const productSchema = new mongoose.Schema({
     price: { type: Number, required: true },
     category: { type: String, default: 'General' },
     description: { type: String, default: '' },
-    images: [{ type: String }], // 🚀 Multiple photos array (3 to 5 images Base64/URLs)
+    images: [{ type: String }],
+    stockQuantity: { type: Number, default: 1 }, // 🚀 NAYA: Inventory Track Karne Ke Liye
     createdAt: { type: Date, default: Date.now }
 });
 
