@@ -117,18 +117,18 @@ app.get('/api/shop/:slug', async (req, res) => {
 });
 
 // ==========================================
-// 2. PRODUCT APIS
+// 2. PRODUCT APIS (DUPLICATES REMOVED & FIXED)
 // ==========================================
 app.post('/api/products/add', async (req, res) => {
     try {
-        const { shopSlug, name, price, category, description, images } = req.body;
+        const { shopSlug, name, price, category, description, images, stockQuantity } = req.body;
         
         if (!images || images.length < 1 || images.length > 5) {
             return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
         }
 
         const newProduct = new Product({
-            shopSlug, name, price, category, description, images
+            shopSlug, name, price, category, description, images, stockQuantity: stockQuantity || 1
         });
 
         await newProduct.save();
@@ -151,8 +151,8 @@ app.get('/api/products/:shopSlug', async (req, res) => {
 
 app.put('/api/products/edit/:id', async (req, res) => {
     try {
-        const { name, price, category, description, images } = req.body;
-        const updateData = { name, price, category, description };
+        const { name, price, category, description, images, stockQuantity } = req.body;
+        const updateData = { name, price, category, description, stockQuantity };
         
         if (images && images.length >= 1 && images.length <= 5) {
             updateData.images = images;
@@ -176,13 +176,11 @@ app.delete('/api/products/delete/:id', async (req, res) => {
 });
 
 // ==========================================
-// 👑 3. SUPER ADMIN APIS (NAYE FEATURES)
+// 👑 3. SUPER ADMIN APIS
 // ==========================================
 
-// A. Admin Login API (Hardcoded Secret Login)
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    // Aap chaho toh inhe baad mein badal sakte ho
     if (username === 'admin' && password === 'superadmin123') {
         const token = jwt.sign({ role: 'admin' }, 'smartshop_secret_key', { expiresIn: '1d' });
         res.json({ message: "Welcome Boss! Login Successful", token });
@@ -191,7 +189,6 @@ app.post('/api/admin/login', (req, res) => {
     }
 });
 
-// B. Get All Vendors (Poore Bhopal ke dukandaar/brokers)
 app.get('/api/admin/vendors', async (req, res) => {
     try {
         const vendors = await Vendor.find().sort({ createdAt: -1 });
@@ -201,7 +198,6 @@ app.get('/api/admin/vendors', async (req, res) => {
     }
 });
 
-// C. Get All Products (System ki saari properties/items)
 app.get('/api/admin/products', async (req, res) => {
     try {
         const products = await Product.find().sort({ createdAt: -1 });
@@ -211,55 +207,15 @@ app.get('/api/admin/products', async (req, res) => {
     }
 });
 
-// D. Delete Vendor & Unke saare Products
 app.delete('/api/admin/vendor/:id', async (req, res) => {
     try {
         const vendor = await Vendor.findByIdAndDelete(req.params.id);
         if (vendor) {
-            // Agar dukandaar delete kiya, toh uske saare items bhi delete ho jayenge
             await Product.deleteMany({ shopSlug: vendor.shopSlug });
         }
         res.json({ message: "Vendor aur uske items safalta purvak delete ho gaye!" });
     } catch (error) {
         res.status(500).json({ message: "Vendor delete karne me error." });
-    }
-});
-// 🚀 ADD PRODUCT API (Updated for Stock)
-app.post('/api/products/add', async (req, res) => {
-    try {
-        const { shopSlug, name, price, category, description, images, stockQuantity } = req.body;
-        
-        if (!images || images.length < 1 || images.length > 5) {
-            return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
-        }
-
-        const newProduct = new Product({
-            shopSlug, name, price, category, description, images, stockQuantity: stockQuantity || 1
-        });
-
-        await newProduct.save();
-        res.status(201).json({ message: "Item successfully add ho gaya!", product: newProduct });
-    } catch (error) {
-        console.error("Add Product Error:", error);
-        res.status(500).json({ message: "Server error, item add nahi ho paya." });
-    }
-});
-
-// 🚀 EDIT PRODUCT API (Updated for Stock)
-app.put('/api/products/edit/:id', async (req, res) => {
-    try {
-        const { name, price, category, description, images, stockQuantity } = req.body;
-        const updateData = { name, price, category, description, stockQuantity };
-        
-        if (images && images.length >= 1 && images.length <= 5) {
-            updateData.images = images;
-        }
-
-        const updatedProduct = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
-        res.json({ message: "Product successfully update ho gaya!", product: updatedProduct });
-    } catch (error) {
-        console.error("Edit Error:", error);
-        res.status(500).json({ message: "Update karne me error aaya." });
     }
 });
 
