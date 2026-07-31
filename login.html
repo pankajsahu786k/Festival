@@ -59,12 +59,12 @@
                 <form id="loginForm" class="space-y-5">
                     
                     <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">WhatsApp Number</label>
+                        <label id="identifierLabel" class="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">WhatsApp Number</label>
                         <div class="flex rounded-xl border border-gray-200 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100 transition duration-200 overflow-hidden bg-gray-50/50">
-                            <span class="inline-flex items-center px-4 border-r border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium select-none">
+                            <span id="prefixSpan" class="inline-flex items-center px-4 border-r border-gray-200 bg-gray-50 text-gray-500 text-sm font-medium select-none">
                                 +91
                             </span>
-                            <input type="tel" id="mobileNumber" placeholder="9876543210" pattern="[0-9]{10}" required
+                            <input type="tel" id="identifierInput" placeholder="9876543210" pattern="[0-9]{10}" required
                                 class="w-full px-4 py-3.5 bg-transparent outline-none text-sm text-gray-900 font-medium tracking-wide">
                         </div>
                     </div>
@@ -92,7 +92,7 @@
                     
                 </form>
 
-                <p class="text-center text-xs text-gray-500 mt-6 font-medium">
+                <p id="signupLinkContainer" class="text-center text-xs text-gray-500 mt-6 font-medium">
                     New to SmartShop? <a href="signup.html" class="text-orange-600 font-bold hover:text-orange-700 transition">Create an account</a>
                 </p>
 
@@ -108,13 +108,36 @@
             selectedRole = role;
             const vendorBtn = document.getElementById('roleVendor');
             const adminBtn = document.getElementById('roleAdmin');
+            
+            const label = document.getElementById('identifierLabel');
+            const prefix = document.getElementById('prefixSpan');
+            const input = document.getElementById('identifierInput');
+            const signupLink = document.getElementById('signupLinkContainer');
+
+            input.value = ""; // Tab change par field clear karein
 
             if (role === 'vendor') {
+                // UI Changes for Vendor
                 vendorBtn.className = "w-1/2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-gray-900 shadow-sm";
                 adminBtn.className = "w-1/2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-900";
+                
+                label.innerText = "WhatsApp Number";
+                prefix.style.display = "inline-flex"; // Show +91
+                input.type = "tel";
+                input.pattern = "[0-9]{10}"; // Force 10 digit number
+                input.placeholder = "9876543210";
+                signupLink.style.display = "block";
             } else {
+                // UI Changes for Admin
                 adminBtn.className = "w-1/2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 bg-white text-gray-900 shadow-sm";
                 vendorBtn.className = "w-1/2 py-2 text-sm font-semibold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-900";
+                
+                label.innerText = "Admin Username";
+                prefix.style.display = "none"; // Hide +91
+                input.type = "text";
+                input.removeAttribute("pattern"); // Allow letters for username
+                input.placeholder = "Enter admin username";
+                signupLink.style.display = "none"; // Admins sign up nahi karte
             }
         }
 
@@ -126,33 +149,47 @@
             submitBtn.innerHTML = "Authenticating... ⏳";
             submitBtn.disabled = true;
 
-            const mobileNumber = document.getElementById('mobileNumber').value;
+            const identifier = document.getElementById('identifierInput').value;
             const password = document.getElementById('password').value;
 
             try {
-                // Live Render Login API par data bhejna (role ke saath)
-                const response = await fetch('https://festival-h6ff.onrender.com/api/vendor/login', {
+                let apiUrl = '';
+                let payload = {};
+
+                // Smartly Route Data based on Role
+                if (selectedRole === 'vendor') {
+                    apiUrl = 'https://festival-h6ff.onrender.com/api/vendor/login';
+                    payload = { mobileNumber: identifier, password: password };
+                } else {
+                    apiUrl = 'https://festival-h6ff.onrender.com/api/admin/login';
+                    payload = { username: identifier, password: password };
+                }
+
+                const response = await fetch(apiUrl, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ mobileNumber, password, role: selectedRole })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('userRole', data.role);
-                    localStorage.setItem('shopSlug', data.shopSlug);
-
                     alert(`Success: ${data.message}`);
                     
-                    // NAYA LOGIC: Check karein ki setup complete hai ya nahi
-                    if (!data.isSetupCompleted) {
-                        window.location.href = 'setup-shop.html'; // Setup page par bhejein
+                    if (selectedRole === 'vendor') {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('userRole', data.role);
+                        localStorage.setItem('shopSlug', data.shopSlug);
+                        
+                        if (!data.isSetupCompleted) {
+                            window.location.href = 'setup-shop.html';
+                        } else {
+                            window.location.href = 'dashboard.html';
+                        }
                     } else {
-                        window.location.href = 'dashboard.html'; // Dashboard par bhejein
+                        // Admin Panel Par Bhejein
+                        localStorage.setItem('adminToken', data.token);
+                        window.location.href = 'admin.html';
                     }
                 } else {
                     alert(`Error: ${data.message}`);
