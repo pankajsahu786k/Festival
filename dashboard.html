@@ -112,14 +112,18 @@
 
     <div id="editModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
-            <h3 class="text-lg font-bold text-gray-900">Edit Details & Photos</h3>
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900">Edit Details & Photos</h3>
+                <button onclick="closeEditModal()" class="text-gray-400 font-bold hover:text-gray-900">X</button>
+            </div>
+            
             <input type="hidden" id="editProdId">
             
-            <div class="bg-gray-50 p-3 rounded-xl border border-gray-100">
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200">
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-2">Manage Photos (Max 5)</label>
                 <div id="editImagesContainer" class="flex gap-3 mb-3 overflow-x-auto pb-2 no-scrollbar"></div>
                 
-                <label class="block text-[10px] font-bold text-orange-600 mb-1">Add More Photos:</label>
+                <label class="block text-[10px] font-bold text-orange-600 mb-1">Upload Additional Photo:</label>
                 <input type="file" id="editGalleryUpload" multiple accept="image/*" class="w-full px-2 py-1 text-xs border border-gray-200 rounded-lg bg-white">
                 <p id="editUploadStatus" class="text-[10px] font-bold text-blue-600 mt-1 hidden">Uploading to cloud... ⏳</p>
             </div>
@@ -142,10 +146,7 @@
                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Description</label>
                 <textarea id="editDesc" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-medium"></textarea>
             </div>
-            <div class="flex gap-3 pt-2">
-                <button onclick="closeEditModal()" class="flex-1 py-3 bg-gray-100 font-bold text-gray-600 rounded-xl text-sm hover:bg-gray-200">Cancel</button>
-                <button onclick="saveProductEdit()" id="saveEditBtn" class="flex-1 py-3 bg-orange-600 font-bold text-white rounded-xl text-sm hover:bg-orange-700">Save Changes</button>
-            </div>
+            <button onclick="saveProductEdit()" id="saveEditBtn" class="w-full py-3 bg-orange-600 font-bold text-white rounded-xl text-sm hover:bg-orange-700 transition mt-2">Save Changes</button>
         </div>
     </div>
 
@@ -172,7 +173,7 @@
             `;
         }
 
-        // 🚀 CLOUD UPLOAD FUNCTION
+        // 🚀 BULLETPROOF CLOUD UPLOAD VIA REAL BASE64 STRINGS
         const IMGBB_API_KEY = "c5890563d7bc34314bc8868dff6de3ca"; 
         
         const fileToBase64 = file => new Promise((resolve, reject) => {
@@ -195,14 +196,14 @@
             });
             const data = await res.json();
             
-            if(data.success) {
+            if(data.success && data.data && data.data.url) {
                 return data.data.url; 
             } else {
                 throw new Error("ImgBB Upload Failed");
             }
         };
 
-        // ➕ ADD PRODUCT
+        // Add Product Form
         document.getElementById('addProductForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('prodGallery');
@@ -218,8 +219,12 @@
             submitBtn.disabled = true;
 
             try {
-                const imagePromises = files.map(file => uploadToCloud(file));
-                const cloudUrls = await Promise.all(imagePromises); 
+                // Upload files correctly
+                const cloudUrls = [];
+                for(let file of files) {
+                    const url = await uploadToCloud(file);
+                    cloudUrls.push(url);
+                }
 
                 const name = document.getElementById('prodName').value;
                 const price = document.getElementById('prodPrice').value;
@@ -233,7 +238,7 @@
                 });
 
                 if (response.ok) {
-                    alert('Success: Item Cloud photos ke sath live ho gaya hai!');
+                    alert('Success: Listing Dynamic Cloud photos ke sath live ho gayi!');
                     document.getElementById('addProductForm').reset();
                     loadMyProducts(); 
                 } else {
@@ -241,7 +246,7 @@
                     alert(`Error: ${data.message}`);
                 }
             } catch (error) {
-                alert('Upload fail ho gaya. Kripya check karein.');
+                alert('Upload fail ho gaya. Kripya image size check karein.');
             } finally {
                 submitBtn.innerText = "Save to Live Store 🚀";
                 submitBtn.disabled = false;
@@ -257,40 +262,40 @@
                 myProductsList = await res.json();
 
                 if (myProductsList.length === 0) {
-                    listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi ki hai.</p>`;
+                    listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi kiya hai.</p>`;
                     return;
                 }
 
                 listEl.innerHTML = myProductsList.map(item => `
-                    <div class="bg-gray-50 border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-3 transition hover:shadow-md">
+                    <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm hover:shadow-md transition">
                         <div class="flex items-center gap-3 overflow-hidden">
-                            <img src="${item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=300&q=80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0">
-                            <div class="truncate">
+                            <img src="${item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&q=80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0 bg-gray-50">
+                            <div class="truncate flex-1">
                                 <h4 class="font-bold text-gray-900 text-sm truncate">${item.name}</h4>
-                                <p class="text-xs text-orange-600 font-bold mt-0.5">₹${item.price} • <span class="text-gray-500 font-normal">${item.category}</span></p>
-                                <p class="text-[10px] text-gray-400 font-medium mt-1">📷 ${item.images ? item.images.length : 0} Photos</p>
+                                <p class="text-xs text-orange-600 font-bold mt-0.5">₹${item.price} • <span class="text-gray-500 font-normal text-[11px]">${item.category}</span></p>
+                                <p class="text-[10px] text-gray-400 font-medium mt-1">📷 ${item.images ? item.images.length : 0} Photos Linked</p>
                             </div>
                         </div>
                         <div class="flex gap-2 mt-2 border-t border-gray-100 pt-3">
-                            <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100">Edit</button>
-                            <button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100">Delete</button>
+                            <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Edit</button>
+                            <button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>
                         </div>
                     </div>
                 `).join('');
             } catch (err) {
-                listEl.innerHTML = `<p class="text-red-500 text-sm">Failed to load items.</p>`;
+                listEl.innerHTML = `<p class="text-red-500 text-sm col-span-3">Failed to load items.</p>`;
             }
         }
 
         // ==========================================
-        // 🛠️ EDIT MANAGER & PHOTO LOGIC
+        // 🛠️ MOZILLA/MOBILE STABLE EDIT PHOTO LOGIC
         // ==========================================
         let editingImages = [];
 
         function renderEditImages() {
             const container = document.getElementById('editImagesContainer');
             if(editingImages.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400">No photos.</p>`;
+                container.innerHTML = `<p class="text-xs text-gray-400">No photos linked.</p>`;
                 return;
             }
             container.innerHTML = editingImages.map((img, index) => `
@@ -306,7 +311,6 @@
             renderEditImages();
         }
 
-        // Instantly upload new photos in edit modal
         document.getElementById('editGalleryUpload').addEventListener('change', async function(e) {
             const files = Array.from(e.target.files);
             if(editingImages.length + files.length > 5) {
@@ -322,16 +326,17 @@
             saveBtn.disabled = true;
 
             try {
-                const imagePromises = files.map(file => uploadToCloud(file));
-                const newUrls = await Promise.all(imagePromises);
-                editingImages = [...editingImages, ...newUrls];
+                for(let file of files) {
+                    const url = await uploadToCloud(file);
+                    editingImages.push(url);
+                }
                 renderEditImages();
             } catch (error) {
-                alert('Photo upload failed.');
+                alert('Cloud Upload failed.');
             } finally {
                 statusText.classList.add('hidden');
                 saveBtn.disabled = false;
-                this.value = ''; // clear input
+                this.value = ''; 
             }
         });
 
@@ -345,7 +350,6 @@
             document.getElementById('editCategory').value = item.category;
             document.getElementById('editDesc').value = item.description || '';
             
-            // Load existing images into editor
             editingImages = item.images ? [...item.images] : [];
             renderEditImages();
 
@@ -358,7 +362,7 @@
 
         async function saveProductEdit() {
             if(editingImages.length < 1 || editingImages.length > 5) {
-                alert("⚠️ Kripya item me 1 se 5 photos zaroor rakhein.");
+                alert("⚠️ Minimum 1 photo zaroor rakhein.");
                 return;
             }
 
