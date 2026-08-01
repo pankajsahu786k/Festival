@@ -36,46 +36,45 @@
                 <span class="text-[11px] text-gray-500 font-bold uppercase tracking-wider">Total Amount</span>
                 <span class="text-xl font-black text-gray-900" id="cartTotal">₹0</span>
             </div>
-            <button onclick="checkoutToWhatsApp()" class="bg-orange-600 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-orange-700 flex items-center gap-2">
+            <button onclick="openCheckoutModal()" class="bg-orange-600 text-white px-6 py-3.5 rounded-xl font-bold shadow-lg hover:bg-orange-700 flex items-center gap-2">
                 <span>Order Now</span> 📲
             </button>
         </div>
 
         <div id="productModal" class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300" style="transform: translateX(-50%) translateY(100%);">
-            
             <div class="sticky top-0 bg-white/80 backdrop-blur-md px-4 py-4 flex justify-between items-center z-10 border-b border-gray-100">
                 <button onclick="closeProductModal()" class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm">←</button>
                 <span class="font-bold text-gray-900">Item Details</span>
                 <div class="w-10"></div> 
             </div>
-
             <div id="modalContent" class="flex-1 overflow-y-auto pb-24"></div>
-
             <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex items-center justify-between gap-4">
                 <div class="flex flex-col">
                     <p class="text-xs text-gray-500 font-bold uppercase">Total Price</p>
                     <p id="modalPrice" class="text-2xl font-black text-gray-900">₹0</p>
                 </div>
-                
-                <div id="modalActionContainer" class="flex items-center">
-                    </div>
+                <div id="modalActionContainer" class="flex items-center"></div>
+            </div>
+        </div>
+
+        <div id="checkoutModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+            <div class="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900">Confirm Details</h3>
+                    <button onclick="closeCheckoutModal()" class="text-gray-400 font-black hover:text-gray-900">X</button>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">Kripya apna naam daalein taaki owner ko pata chal sake ki order kisne kiya hai.</p>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Customer Name</label>
+                    <input type="text" id="custName" placeholder="Enter your full name" required class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 outline-none focus:bg-white focus:border-orange-500 text-sm font-medium">
+                </div>
+                <button onclick="submitOrder()" id="finalOrderBtn" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl text-sm hover:bg-green-700 shadow-md transition flex justify-center items-center gap-2">
+                    Send via WhatsApp 🚀
+                </button>
             </div>
         </div>
 
     </div>
-    <div id="checkoutModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden transition-all duration-300">
-            <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-md p-6 shadow-2xl transform translate-y-0">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-gray-900">Confirm Your Order</h3>
-                    <button onclick="closeCheckoutModal()" class="text-gray-400 font-bold hover:text-gray-900 text-lg">X</button>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Please enter your name so the shop owner knows who is ordering.</p>
-                <input type="text" id="customerNameInput" placeholder="Your Full Name" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none mb-4">
-                <button onclick="processOrder()" class="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl hover:bg-green-700 shadow-md flex items-center justify-center gap-2">
-                    Send Order via WhatsApp 💬
-                </button>
-            </div>
-        </div>
 
     <script>
         const urlParams = new URLSearchParams(window.location.search);
@@ -110,7 +109,7 @@
                         id: p._id,
                         name: p.name,
                         price: p.price,
-                        stockQuantity: p.stockQuantity || 0, // 🚀 STOCK MAP KIYA GAYA HAI YAHAN
+                        stockQuantity: p.stockQuantity || 0, 
                         images: (p.images && p.images.length > 0) ? p.images : [fallbackImg],
                         description: p.description || "No description provided.",
                         category: p.category || "General"
@@ -120,57 +119,6 @@
                 }
                 renderProducts();
             } catch (error) { console.error(error); }
-        }
-        async function submitOrder() {
-            const customerName = document.getElementById('custName').value;
-            if(!customerName.trim()) { alert("Bhai, apna naam toh likho!"); return; }
-
-            // Button ko loading mode me daalna
-            const submitBtn = document.querySelector('#checkoutModal button');
-            const originalBtnText = submitBtn.innerText;
-            submitBtn.innerText = "Processing Order... ⏳";
-            submitBtn.disabled = true;
-
-            let total = 0;
-            let orderItems = [];
-            let waMessage = `*New Order Placed!* 🛍️\nCustomer: ${customerName}\nStore: ${realShopName}\n\n`;
-
-            for (const [id, qty] of Object.entries(cart)) {
-                const product = products.find(p => p.id == id);
-                if(product) {
-                    let itemTotal = product.price * qty;
-                    total += itemTotal;
-                    orderItems.push({ productId: id, name: product.name, price: product.price, quantity: qty });
-                    waMessage += `▪️ ${product.name} (x${qty}) - ₹${itemTotal}\n`;
-                }
-            }
-            waMessage += `\n*Total Amount: ₹${total}*\n\nPlease process my order.`;
-
-            try {
-                // 🚀 SERVER PAR ORDER SAVE KAR RAHE HAIN
-                const response = await fetch('https://festival-h6ff.onrender.com/api/orders/new', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shopSlug: storeId, customerName: customerName, items: orderItems, totalAmount: total })
-                });
-
-                const data = await response.json();
-
-                if(response.ok) {
-                    // ✅ Agar Database me save ho gaya, TABHI WhatsApp par bhejo!
-                    const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(waMessage)}`;
-                    window.location.href = whatsappUrl;
-                } else {
-                    // ❌ Agar Backend mana kar de, toh Error alert me dikhega
-                    alert("⚠️ Database me save nahi hua: " + data.message);
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                }
-            } catch (err) {
-                alert("⚠️ Order process nahi ho paya, kripya internet check karein.");
-                submitBtn.innerText = originalBtnText;
-                submitBtn.disabled = false;
-            }
         }
 
         let cart = {}; 
@@ -187,20 +135,14 @@
             products.forEach(product => {
                 const qty = cart[product.id] || 0;
                 const firstImg = product.images[0] || fallbackImg;
-                
-                // Out of stock check
                 const isOutOfStock = product.stockQuantity <= 0;
 
                 list.innerHTML += `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative ${isOutOfStock ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}" onclick="${isOutOfStock ? '' : `openProductModal('${product.id}')`}">
-                        
                         <div class="relative aspect-square overflow-hidden bg-gray-50">
                             <img src="${firstImg}" onerror="this.src='${fallbackImg}'" class="w-full h-full object-cover">
-                            
                             ${isOutOfStock ? `<div class="absolute inset-0 bg-white/50 flex items-center justify-center"><span class="bg-red-600 text-white px-3 py-1 text-[10px] font-black uppercase rounded shadow-sm">Out of Stock</span></div>` : ''}
-
                             ${qty > 0 ? `<div class="absolute top-2 right-2 bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs shadow-md z-10">${qty}</div>` : ''}
-
                             <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
                                 📷 ${product.images.length} Photos
                             </div>
@@ -233,21 +175,16 @@
         }
 
         function stopAutoSlider() {
-            if (autoSlideInterval) {
-                clearInterval(autoSlideInterval);
-                autoSlideInterval = null;
-            }
+            if (autoSlideInterval) { clearInterval(autoSlideInterval); autoSlideInterval = null; }
         }
 
         function updateSliderDots(index) {
             const dots = document.querySelectorAll('.slider-dot');
             dots.forEach((dot, i) => {
                 if (i === index) {
-                    dot.classList.remove('bg-gray-300', 'w-2');
-                    dot.classList.add('bg-orange-600', 'w-4');
+                    dot.classList.remove('bg-gray-300', 'w-2'); dot.classList.add('bg-orange-600', 'w-4');
                 } else {
-                    dot.classList.remove('bg-orange-600', 'w-4');
-                    dot.classList.add('bg-gray-300', 'w-2');
+                    dot.classList.remove('bg-orange-600', 'w-4'); dot.classList.add('bg-gray-300', 'w-2');
                 }
             });
         }
@@ -256,13 +193,8 @@
             const product = products.find(p => p.id === id);
             if(!product) return;
 
-            let imagesHtml = product.images.map(img => `
-                <img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">
-            `).join('');
-
-            let dotsHtml = product.images.map((_, i) => `
-                <span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>
-            `).join('');
+            let imagesHtml = product.images.map(img => `<img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">`).join('');
+            let dotsHtml = product.images.map((_, i) => `<span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>`).join('');
 
             document.getElementById('modalContent').innerHTML = `
                 <div class="relative">
@@ -273,14 +205,12 @@
                         ${dotsHtml}
                     </div>
                 </div>
-
                 <div class="p-5">
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <h2 class="text-2xl font-extrabold text-gray-900 leading-tight">${product.name}</h2>
                         <span class="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm flex-shrink-0">📦 Stock: ${product.stockQuantity}</span>
                     </div>
                     <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">${product.category}</span>
-                    
                     <div class="border-t border-gray-100 pt-4 mt-4">
                         <h3 class="font-bold text-gray-900 mb-2">Description</h3>
                         <p class="text-gray-600 text-sm leading-relaxed whitespace-pre-line">${product.description}</p>
@@ -289,7 +219,6 @@
             `;
             
             updateModalFooterControls(product.id);
-
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(0)';
             startAutoSlider(product.images.length);
@@ -301,13 +230,11 @@
             });
         }
 
-        // 🚀 SMART MODAL CONTROLS (PRICE UPDATE & STOCK LIMITS)
         function updateModalFooterControls(productId) {
             const container = document.getElementById('modalActionContainer');
             const product = products.find(p => p.id === productId);
             const qty = cart[productId] || 0;
 
-            // Update Total Price Dynamically!
             const displayPrice = qty > 0 ? (product.price * qty) : product.price;
             document.getElementById('modalPrice').innerText = `₹${displayPrice}`;
 
@@ -328,14 +255,11 @@
             }
         }
 
-        // 🚀 STOCK LIMIT CHECKER FUNCTION
         function changeQuantityFromModal(productId, change) {
             const product = products.find(p => p.id === productId);
             if(!cart[productId]) cart[productId] = 0;
             
             const newQty = cart[productId] + change;
-
-            // Agar quantity stock se zyada ho rahi hai, toh alert dikhao aur function rok do!
             if (newQty > product.stockQuantity) {
                 alert(`⚠️ Maaf kijiye, is item ka sirf ${product.stockQuantity} stock hi bacha hai.`);
                 return;
@@ -373,6 +297,7 @@
             }
         }
 
+        // 🚀 OPEN CONFIRMATION MODAL FUNCTION
         function openCheckoutModal() {
             if (Object.keys(cart).length === 0) return;
             document.getElementById('checkoutModal').classList.remove('hidden');
@@ -382,17 +307,19 @@
             document.getElementById('checkoutModal').classList.add('hidden');
         }
 
-        async function processOrder() {
-            const customerName = document.getElementById('customerNameInput').value;
-            if(!customerName.trim()) { alert("Please enter your name!"); return; }
+        // 🚀 SMART BLOCKING ORDER SUBMIT
+        async function submitOrder() {
+            const customerName = document.getElementById('custName').value;
+            if(!customerName.trim()) { alert("Bhai, apna naam toh likho!"); return; }
 
-            const btn = document.querySelector('#checkoutModal button');
-            btn.innerText = "Processing... ⏳";
-            btn.disabled = true;
+            const submitBtn = document.getElementById('finalOrderBtn');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Processing Order... ⏳";
+            submitBtn.disabled = true;
 
             let total = 0;
             let orderItems = [];
-            let waMessage = `*New Order Confirmed!* 🛍️\nCustomer: ${customerName}\nStore: ${realShopName}\n\n`;
+            let waMessage = `*New Order Placed!* 🛍️\nCustomer: ${customerName}\nStore: ${realShopName}\n\n`;
 
             for (const [id, qty] of Object.entries(cart)) {
                 const product = products.find(p => p.id == id);
@@ -405,25 +332,29 @@
             }
             waMessage += `\n*Total Amount: ₹${total}*\n\nPlease process my order.`;
 
-            // 1. SAVE TO DATABASE (CART SYSTEM)
             try {
-                await fetch('https://festival-h6ff.onrender.com/api/orders/new', {
+                const response = await fetch('https://festival-h6ff.onrender.com/api/orders/new', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shopSlug: storeId, customerName: customerName, items: orderItems, totalAmount: total })
                 });
+
+                const data = await response.json();
+
+                if(response.ok) {
+                    const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(waMessage)}`;
+                    window.location.href = whatsappUrl;
+                } else {
+                    alert("⚠️ Database me save nahi hua: " + data.message);
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                }
             } catch (err) {
-                console.error("Order save failed on server", err);
+                alert("⚠️ Order process nahi ho paya, kripya internet check karein.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
             }
-
-            // 2. REDIRECT TO WHATSAPP
-            const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(waMessage)}`;
-            window.location.href = whatsappUrl;
         }
-
-        // Aur apne Cart bar ke button ko update karke aisa kar dijiye:
-        // Puraana: <button onclick="checkoutToWhatsApp()">...
-        // Naya: <button onclick="openCheckoutModal()">...
 
         fetchShopDetails();
         fetchProducts();
