@@ -22,7 +22,17 @@ app.use(express.static(path.join(__dirname, '../')));
 const MONGO_URI = process.env.MONGO_URI; 
 
 mongoose.connect(MONGO_URI)
-    .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
+    .then(async () => {
+        console.log('✅ Live MongoDB Atlas Connected Successfully!');
+        
+        // 🚀 NAYA FIX: Yeh code purane 'unique' rule ko database se auto-delete kar dega
+        try {
+            await mongoose.connection.collection('vendors').dropIndex('shopSlug_1');
+            console.log('🧹 Purana ShopSlug unique index clean ho gaya!');
+        } catch(e) {
+            // Agar pehle se delete hai toh ignore karo
+        }
+    })
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
 app.get('/', (req, res) => {
