@@ -22,17 +22,7 @@ app.use(express.static(path.join(__dirname, '../')));
 const MONGO_URI = process.env.MONGO_URI; 
 
 mongoose.connect(MONGO_URI)
-    .then(async () => {
-        console.log('✅ Live MongoDB Atlas Connected Successfully!');
-        
-        // 🚀 NAYA FIX: Yeh code purane 'unique' rule ko database se auto-delete kar dega
-        try {
-            await mongoose.connection.collection('vendors').dropIndex('shopSlug_1');
-            console.log('🧹 Purana ShopSlug unique index clean ho gaya!');
-        } catch(e) {
-            // Agar pehle se delete hai toh ignore karo
-        }
-    })
+    .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
 app.get('/', (req, res) => {
@@ -60,7 +50,7 @@ app.post('/api/vendor/register', async (req, res) => {
         const shopSlug = shopName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
         const newVendor = new Vendor({
-            shopName, ownerName, mobileNumber, password: hashedPassword, shopSlug, role: 'vendor' // 🚀 Role Vendor set kiya
+            shopName, ownerName, mobileNumber, password: hashedPassword, shopSlug, role: 'vendor'
         });
 
         await newVendor.save();
@@ -122,7 +112,6 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
 
 app.get('/api/shop/:slug', async (req, res) => {
     try {
-        // 🚀 Ensure sirf OWNER (vendor) ka hi profile fetch ho
         const shop = await Vendor.findOne({ shopSlug: req.params.slug, role: 'vendor' });
         if (!shop) return res.status(404).json({ message: "Dukan nahi mili" });
 
@@ -138,12 +127,14 @@ app.get('/api/shop/:slug', async (req, res) => {
 });
 
 // ==========================================
-// 🚀 1.5 AGENT MANAGEMENT APIS (NEW)
+// 🚀 1.5 AGENT MANAGEMENT APIS
 // ==========================================
 
-// Add Agent
 app.post('/api/vendor/add-agent', async (req, res) => {
     try {
+        // 🛠️ YEH LINE ERROR KO FIX KAREGI: Database ka purana lock hata degi
+        try { await mongoose.connection.collection('vendors').dropIndex('shopSlug_1'); } catch(e) {}
+
         const { shopSlug, agentName, mobileNumber, password } = req.body;
         let existingUser = await Vendor.findOne({ mobileNumber });
         if (existingUser) return res.status(400).json({ message: "Yeh mobile number pehle se used hai." });
@@ -152,17 +143,23 @@ app.post('/api/vendor/add-agent', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, salt);
 
         const newAgent = new Vendor({
-            shopName: "Agent Account", ownerName: agentName, mobileNumber, password: hashedPassword, shopSlug, role: 'agent', isSetupCompleted: true
+            shopName: "Agent Account", 
+            ownerName: agentName, 
+            mobileNumber, 
+            password: hashedPassword, 
+            shopSlug, 
+            role: 'agent', 
+            isSetupCompleted: true
         });
 
         await newAgent.save();
         res.status(201).json({ message: "✅ Agent successfully add ho gaya!" });
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        console.error("Add Agent Error: ", error);
+        res.status(500).json({ message: "Server Error: " + error.message });
     }
 });
 
-// Get Agents List
 app.get('/api/vendor/agents/:shopSlug', async (req, res) => {
     try {
         const agents = await Vendor.find({ shopSlug: req.params.shopSlug, role: 'agent' }).sort({ createdAt: -1 });
@@ -172,7 +169,6 @@ app.get('/api/vendor/agents/:shopSlug', async (req, res) => {
     }
 });
 
-// Delete Agent
 app.delete('/api/vendor/agent/:id', async (req, res) => {
     try {
         await Vendor.findByIdAndDelete(req.params.id);
@@ -181,7 +177,6 @@ app.delete('/api/vendor/agent/:id', async (req, res) => {
         res.status(500).json({ message: "Delete karne me error aaya." });
     }
 });
-
 
 // ==========================================
 // 2. PRODUCT APIS
@@ -305,7 +300,6 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/vendors', async (req, res) => {
     try {
-        // 🚀 Ensure only actual shop owners show up in admin panel
         const vendors = await Vendor.find({ role: 'vendor' }).sort({ createdAt: -1 });
         res.json(vendors);
     } catch (error) {
@@ -327,7 +321,7 @@ app.put('/api/admin/vendor/toggle-status/:id', async (req, res) => {
         const vendor = await Vendor.findById(req.params.id);
         if (!vendor) return res.status(404).json({ message: "Vendor nahi mila." });
         
-        vendor.isSuspended = !vendor.isSuspended; // Flip status
+        vendor.isSuspended = !vendor.isSuspended; 
         await vendor.save();
         
         const statusMsg = vendor.isSuspended ? "Suspend (Band)" : "Resume (Chalu)";
@@ -340,7 +334,6 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
         const vendor = await Vendor.findByIdAndDelete(req.params.id);
         if (vendor) {
             await Product.deleteMany({ shopSlug: vendor.shopSlug });
-            // 🚀 Also delete all agents attached to this shop
             await Vendor.deleteMany({ shopSlug: vendor.shopSlug, role: 'agent' });
         }
         res.json({ message: "Vendor aur uske items safalta purvak delete ho gaye!" });
@@ -349,9 +342,6 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// SERVER START
-// ==========================================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`🚀 Server is running on port ${PORT}`);

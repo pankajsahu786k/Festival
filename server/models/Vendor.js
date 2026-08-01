@@ -5,14 +5,14 @@ const vendorSchema = new mongoose.Schema({
     ownerName: { type: String, required: true },
     mobileNumber: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    shopSlug: { type: String, required: true }, // 🚀 Yahan se 'unique: true' HATA DIYA HAI
+    shopSlug: { type: String, required: true }, // 🚀 YAHAN SE 'unique: true' HATA DIYA HAI
     role: { type: String, default: 'vendor' },
     category: { type: String, default: '' },
     address: { type: String, default: '' },
     upiId: { type: String, default: '' },
     description: { type: String, default: '' },
     isSetupCompleted: { type: Boolean, default: false },
-    isSuspended: { type: Boolean, default: false }, 
+    isSuspended: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now }
 });
 

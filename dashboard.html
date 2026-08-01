@@ -196,10 +196,17 @@
 
     <script>
         const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
+        if (!token) window.location.href = 'Index.html';
+
+        // 🚀 SMART FIX: Direct Token se Role nikal rahe hain!
+        function parseJwt(t) {
+            try { return JSON.parse(atob(t.split('.')[1])); } 
+            catch (e) { return null; }
+        }
+        const decodedData = parseJwt(token);
+        const userRole = (decodedData && decodedData.role) ? decodedData.role : 'vendor'; 
 
         const shopSlug = localStorage.getItem('shopSlug');
-        const userRole = localStorage.getItem('role') || 'vendor'; // 🚀 Role Check
         
         const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
 
@@ -208,7 +215,7 @@
             document.getElementById('storeLinkBtn').href = shopUrl;
         }
 
-        // 🚀 RBAC: Agar agent login kare toh hide items
+        // 🚀 RBAC: Agar agent login kare toh usse owner ke options hide ho jayenge
         if(userRole === 'agent') {
             document.querySelectorAll('.owner-only').forEach(el => el.style.display = 'none');
             document.getElementById('headerTitle').innerText = "Welcome Agent! 👋 Orders manage karein.";
@@ -241,7 +248,7 @@
             `;
         }
 
-        // CLOUD UPLOAD VIA BASE64 STRINGS
+        // CLOUD UPLOAD
         const IMGBB_API_KEY = "c5890563d7bc34314bc8868dff6de3ca"; 
         const fileToBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
@@ -282,9 +289,7 @@
             });
         }
 
-        // ==========================================
-        // AGENT MANAGEMENT (OWNER ONLY)
-        // ==========================================
+        // AGENT MANAGEMENT (Owner Only)
         if(document.getElementById('addAgentForm')) {
             document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -324,11 +329,9 @@
         let myProductsList = [];
         async function loadMyProducts() {
             const listEl = document.getElementById('myProductsList');
-            listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Fetching...</p>`;
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/${shopSlug}`);
                 myProductsList = await res.json();
-
                 if (myProductsList.length === 0) { listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi kiya hai.</p>`; return; }
 
                 listEl.innerHTML = myProductsList.map(item => `
@@ -352,13 +355,13 @@
                         </div>` : '<div class="text-center text-[10px] text-gray-400 mt-2 border-t border-gray-100 pt-2">Only Owner Can Edit</div>'}
                     </div>
                 `).join('');
-            } catch (err) { listEl.innerHTML = `<p class="text-red-500 text-sm col-span-3">Failed to load items.</p>`; }
+            } catch (err) {}
         }
 
-        // ⚡ QUICK REFILL STOCK
+        // QUICK REFILL STOCK
         async function quickRefillStock(id, currentStock) {
             const inputVal = prompt(`Abhi current stock: ${currentStock} Pcs hai.\nKitna NAYA stock aaya hai?`, "10");
-            if (inputVal === null || inputVal.trim() === "") return;
+            if (!inputVal) return;
             const addedQty = Number(inputVal);
             if (isNaN(addedQty) || addedQty < 0) { alert("⚠️ Kripya sahi number daalein!"); return; }
             const newTotalStock = Number(currentStock) + addedQty;
@@ -367,11 +370,10 @@
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: item.name, price: item.price, category: item.category, description: item.description, images: item.images, stockQuantity: newTotalStock })
+                    body: JSON.stringify({ stockQuantity: newTotalStock })
                 });
-                if (res.ok) { alert(`✅ Super! Stock update ho gaya. Naya Total Stock: ${newTotalStock} Pcs`); loadMyProducts(); } 
-                else { alert('⚠️ Update fail ho gaya.'); }
-            } catch (err) { alert('⚠️ Network error!'); }
+                if (res.ok) { alert(`✅ Stock updated!`); loadMyProducts(); } 
+            } catch (err) { alert('⚠️ Error!'); }
         }
 
         let editingImages = [];
@@ -384,11 +386,11 @@
 
         document.getElementById('editGalleryUpload').addEventListener('change', async function(e) {
             const files = Array.from(e.target.files);
-            if(editingImages.length + files.length > 5) { alert("⚠️ Maximum 5 photos allowed in total!"); this.value = ''; return; }
+            if(editingImages.length + files.length > 5) { alert("⚠️ Max 5 photos!"); this.value = ''; return; }
             const statusText = document.getElementById('editUploadStatus'); const saveBtn = document.getElementById('saveEditBtn');
             statusText.classList.remove('hidden'); saveBtn.disabled = true;
             try { for(let file of files) { editingImages.push(await uploadToCloud(file)); } renderEditImages(); } 
-            catch (error) { alert('Cloud Upload failed.'); } 
+            catch (error) { alert('Upload failed.'); } 
             finally { statusText.classList.add('hidden'); saveBtn.disabled = false; this.value = ''; }
         });
 
@@ -400,7 +402,6 @@
         function closeEditModal() { document.getElementById('editModal').classList.add('hidden'); }
 
         async function saveProductEdit() {
-            if(editingImages.length < 1 || editingImages.length > 5) { alert("⚠️ Minimum 1 photo zaroor rakhein."); return; }
             const id = document.getElementById('editProdId').value; const saveBtn = document.getElementById('saveEditBtn');
             saveBtn.innerText = "Saving... ⏳"; saveBtn.disabled = true;
             try {
@@ -408,22 +409,18 @@
                     method: 'PUT', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: document.getElementById('editName').value, price: Number(document.getElementById('editPrice').value), category: document.getElementById('editCategory').value, stockQuantity: Number(document.getElementById('editStock').value), description: document.getElementById('editDesc').value, images: editingImages })
                 });
-                if (res.ok) { alert('Changes save ho gaye!'); closeEditModal(); loadMyProducts(); } 
-                else { alert('Update error.'); }
-            } catch (err) { alert('Network error!'); } 
-            finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
+                if (res.ok) { alert('Saved!'); closeEditModal(); loadMyProducts(); } 
+            } catch (err) {} finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
         }
 
         async function deleteProduct(id) {
-            if(!confirm("Kya aap sach me is listing ko delete karna chahte hain?")) return;
-            try { const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' }); if (res.ok) loadMyProducts(); } catch (err) { alert('Delete error.'); }
+            if(!confirm("Kya sach me delete karna hai?")) return;
+            try { const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' }); if (res.ok) loadMyProducts(); } catch (err) {}
         }
 
         function logout() { localStorage.clear(); window.location.href = 'Index.html'; }
 
-        // ==========================================
-        // 🚀 AUTOMATIC 10-SECOND BACKGROUND REFRESH
-        // ==========================================
+        // AUTOMATIC BACKGROUND REFRESH
         loadMyProducts(); 
         setInterval(() => {
             const editModal = document.getElementById('editModal');
@@ -456,7 +453,7 @@
                         </div>` : '<div class="text-center text-[10px] text-gray-400 mt-2 border-t border-gray-100 pt-2">Only Owner Can Edit</div>'}
                     </div>
                 `).join('');
-            } catch (err) { console.log("Background sync skipped this turn..."); }
+            } catch (err) {}
         }
     </script>
 </body>
