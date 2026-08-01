@@ -87,12 +87,12 @@
                                 <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-bold">
                                     <th class="p-4">Shop Name</th>
                                     <th class="p-4">Owner Number</th>
-                                    <th class="p-4">Shop Link</th>
-                                    <th class="p-4 text-right">Action</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="vendorTableBody" class="text-sm">
-                                </tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -110,7 +110,6 @@
     <script>
         const API_URL = 'https://festival-h6ff.onrender.com';
         
-        // Check if already logged in
         if (localStorage.getItem('adminToken')) {
             document.getElementById('adminLoginScreen').classList.add('hidden');
             document.getElementById('adminDashboardScreen').classList.remove('hidden');
@@ -170,36 +169,38 @@
         // ==========================================
         async function fetchAdminData() {
             try {
-                // Fetch Vendors
                 const vRes = await fetch(`${API_URL}/api/admin/vendors`);
                 const vendors = await vRes.json();
                 
-                // Fetch Products
                 const pRes = await fetch(`${API_URL}/api/admin/products`);
                 const products = await pRes.json();
 
-                // Update Stats
                 document.getElementById('statVendors').innerText = vendors.length;
                 document.getElementById('statProducts').innerText = products.length;
 
-                // Render Vendors Table
                 const tbody = document.getElementById('vendorTableBody');
                 if(vendors.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-500">Koi dukandaar nahi mila.</td></tr>`;
                 } else {
                     tbody.innerHTML = vendors.map(v => `
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-900">${v.shopName}</td>
+                            <td class="p-4 font-bold text-gray-900">${v.shopName} <br><a href="shop.html?store=${v.shopSlug}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline">View Live Store 🔗</a></td>
                             <td class="p-4 text-gray-600 font-medium">${v.mobileNumber}</td>
-                            <td class="p-4"><a href="shop.html?store=${v.shopSlug}" target="_blank" class="text-blue-600 text-xs font-bold hover:underline">View Shop 🔗</a></td>
-                            <td class="p-4 text-right">
-                                <button onclick="deleteVendor('${v._id}', '${v.shopName}')" class="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-200 transition">Delete Vendor</button>
+                            <td class="p-4">
+                                <span class="px-3 py-1 text-[11px] font-black rounded-full uppercase ${v.isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
+                                    ${v.isSuspended ? '🚫 Suspended' : '✅ Active'}
+                                </span>
+                            </td>
+                            <td class="p-4 text-right space-x-2">
+                                <button onclick="toggleSuspend('${v._id}')" class="px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm transition ${v.isSuspended ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-orange-500 text-white hover:bg-orange-600'}">
+                                    ${v.isSuspended ? 'Resume Account' : 'Suspend Account'}
+                                </button>
+                                <button onclick="deleteVendor('${v._id}', '${v.shopName}')" class="px-3 py-1.5 bg-red-50 text-red-700 text-xs font-bold rounded-lg hover:bg-red-200 transition">Delete</button>
                             </td>
                         </tr>
                     `).join('');
                 }
 
-                // Render All Products Grid
                 const plist = document.getElementById('allProductsList');
                 if(products.length === 0) {
                     plist.innerHTML = `<div class="col-span-3 text-gray-500">Koi property/item list nahi hui hai.</div>`;
@@ -207,7 +208,7 @@
                     plist.innerHTML = products.map(p => `
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex flex-col gap-3">
                             <div class="flex gap-3">
-                                <img src="${p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/80'}" class="w-16 h-16 object-cover rounded-lg">
+                                <img src="${p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-100">
                                 <div>
                                     <h4 class="font-bold text-gray-900 text-sm line-clamp-1">${p.name}</h4>
                                     <p class="text-xs text-gray-500 mt-1">₹${p.price} • ${p.category}</p>
@@ -220,26 +221,34 @@
                     `).join('');
                 }
 
-            } catch(err) {
-                console.error("Admin data fetch error", err);
-            }
+            } catch(err) { console.error("Admin data fetch error", err); }
         }
 
         // ==========================================
-        // 🗑️ DELETE VENDOR ACTION
+        // 🚀 SUSPEND / RESUME VENDOR
+        // ==========================================
+        async function toggleSuspend(id) {
+            if(!confirm("Kya aap sach me is dukandaar ka account status badalna chahte hain?")) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/vendor/toggle-status/${id}`, { method: 'PUT' });
+                const data = await res.json();
+                alert(data.message);
+                fetchAdminData(); // Refresh Data
+            } catch (err) { alert("Error changing status."); }
+        }
+
+        // ==========================================
+        // 🗑️ DELETE VENDOR
         // ==========================================
         async function deleteVendor(vendorId, shopName) {
             if(!confirm(`WARNING: Kya aap sach me '${shopName}' dukan aur uske SAARE items delete karna chahte hain? Yeh wapas nahi aayega!`)) return;
-            
             try {
                 const res = await fetch(`${API_URL}/api/admin/vendor/${vendorId}`, { method: 'DELETE' });
                 if(res.ok) {
                     alert('Vendor aur uske items delete ho gaye!');
-                    fetchAdminData(); // Refresh Data
+                    fetchAdminData();
                 }
-            } catch(err) {
-                alert('Delete karne me error aayi.');
-            }
+            } catch(err) { alert('Delete karne me error aayi.'); }
         }
     </script>
 </body>
