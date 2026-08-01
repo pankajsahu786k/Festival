@@ -50,7 +50,7 @@ app.post('/api/vendor/register', async (req, res) => {
         const shopSlug = shopName.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, '');
 
         const newVendor = new Vendor({
-            shopName, ownerName, mobileNumber, password: hashedPassword, shopSlug
+            shopName, ownerName, mobileNumber, password: hashedPassword, shopSlug, role: 'vendor' // 🚀 Role Vendor set kiya
         });
 
         await newVendor.save();
@@ -69,7 +69,6 @@ app.post('/api/vendor/login', async (req, res) => {
         
         if (!user) return res.status(400).json({ message: "Yeh number register nahi hai. Pehle account banayein." });
 
-        // 🚀 ADMIN POWER: Agar account suspended hai toh login rok do
         if (user.isSuspended) {
             return res.status(403).json({ message: "🚫 Aapka account Admin dwara Suspend kar diya gaya hai! Kripya support se sampark karein." });
         }
@@ -113,10 +112,10 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
 
 app.get('/api/shop/:slug', async (req, res) => {
     try {
-        const shop = await Vendor.findOne({ shopSlug: req.params.slug });
+        // 🚀 Ensure sirf OWNER (vendor) ka hi profile fetch ho
+        const shop = await Vendor.findOne({ shopSlug: req.params.slug, role: 'vendor' });
         if (!shop) return res.status(404).json({ message: "Dukan nahi mili" });
 
-        // 🚀 ADMIN POWER: Agar account suspended hai toh Customer ko dukan nahi dikhegi
         if (shop.isSuspended) {
             return res.status(403).json({ message: "Yeh dukan abhi temporary band (Suspended) hai." });
         }
@@ -127,6 +126,52 @@ app.get('/api/shop/:slug', async (req, res) => {
         res.status(500).json({ message: "Server error" });
     }
 });
+
+// ==========================================
+// 🚀 1.5 AGENT MANAGEMENT APIS (NEW)
+// ==========================================
+
+// Add Agent
+app.post('/api/vendor/add-agent', async (req, res) => {
+    try {
+        const { shopSlug, agentName, mobileNumber, password } = req.body;
+        let existingUser = await Vendor.findOne({ mobileNumber });
+        if (existingUser) return res.status(400).json({ message: "Yeh mobile number pehle se used hai." });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newAgent = new Vendor({
+            shopName: "Agent Account", ownerName: agentName, mobileNumber, password: hashedPassword, shopSlug, role: 'agent', isSetupCompleted: true
+        });
+
+        await newAgent.save();
+        res.status(201).json({ message: "✅ Agent successfully add ho gaya!" });
+    } catch (error) {
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+// Get Agents List
+app.get('/api/vendor/agents/:shopSlug', async (req, res) => {
+    try {
+        const agents = await Vendor.find({ shopSlug: req.params.shopSlug, role: 'agent' }).sort({ createdAt: -1 });
+        res.json(agents);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching agents" });
+    }
+});
+
+// Delete Agent
+app.delete('/api/vendor/agent/:id', async (req, res) => {
+    try {
+        await Vendor.findByIdAndDelete(req.params.id);
+        res.json({ message: "Agent successfully deleted!" });
+    } catch (error) {
+        res.status(500).json({ message: "Delete karne me error aaya." });
+    }
+});
+
 
 // ==========================================
 // 2. PRODUCT APIS
@@ -250,7 +295,8 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/vendors', async (req, res) => {
     try {
-        const vendors = await Vendor.find().sort({ createdAt: -1 });
+        // 🚀 Ensure only actual shop owners show up in admin panel
+        const vendors = await Vendor.find({ role: 'vendor' }).sort({ createdAt: -1 });
         res.json(vendors);
     } catch (error) {
         res.status(500).json({ message: "Vendors fetch karne me error aaya." });
@@ -266,7 +312,6 @@ app.get('/api/admin/products', async (req, res) => {
     }
 });
 
-// 🚀 NAYI API: Toggle Suspend & Resume
 app.put('/api/admin/vendor/toggle-status/:id', async (req, res) => {
     try {
         const vendor = await Vendor.findById(req.params.id);
@@ -285,6 +330,8 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
         const vendor = await Vendor.findByIdAndDelete(req.params.id);
         if (vendor) {
             await Product.deleteMany({ shopSlug: vendor.shopSlug });
+            // 🚀 Also delete all agents attached to this shop
+            await Vendor.deleteMany({ shopSlug: vendor.shopSlug, role: 'agent' });
         }
         res.json({ message: "Vendor aur uske items safalta purvak delete ho gaye!" });
     } catch (error) {
