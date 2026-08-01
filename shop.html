@@ -121,6 +121,57 @@
                 renderProducts();
             } catch (error) { console.error(error); }
         }
+        async function submitOrder() {
+            const customerName = document.getElementById('custName').value;
+            if(!customerName.trim()) { alert("Bhai, apna naam toh likho!"); return; }
+
+            // Button ko loading mode me daalna
+            const submitBtn = document.querySelector('#checkoutModal button');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Processing Order... ⏳";
+            submitBtn.disabled = true;
+
+            let total = 0;
+            let orderItems = [];
+            let waMessage = `*New Order Placed!* 🛍️\nCustomer: ${customerName}\nStore: ${realShopName}\n\n`;
+
+            for (const [id, qty] of Object.entries(cart)) {
+                const product = products.find(p => p.id == id);
+                if(product) {
+                    let itemTotal = product.price * qty;
+                    total += itemTotal;
+                    orderItems.push({ productId: id, name: product.name, price: product.price, quantity: qty });
+                    waMessage += `▪️ ${product.name} (x${qty}) - ₹${itemTotal}\n`;
+                }
+            }
+            waMessage += `\n*Total Amount: ₹${total}*\n\nPlease process my order.`;
+
+            try {
+                // 🚀 SERVER PAR ORDER SAVE KAR RAHE HAIN
+                const response = await fetch('https://festival-h6ff.onrender.com/api/orders/new', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopSlug: storeId, customerName: customerName, items: orderItems, totalAmount: total })
+                });
+
+                const data = await response.json();
+
+                if(response.ok) {
+                    // ✅ Agar Database me save ho gaya, TABHI WhatsApp par bhejo!
+                    const whatsappUrl = `https://wa.me/${dynamicVendorPhone}?text=${encodeURIComponent(waMessage)}`;
+                    window.location.href = whatsappUrl;
+                } else {
+                    // ❌ Agar Backend mana kar de, toh Error alert me dikhega
+                    alert("⚠️ Database me save nahi hua: " + data.message);
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            } catch (err) {
+                alert("⚠️ Order process nahi ho paya, kripya internet check karein.");
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        }
 
         let cart = {}; 
 
