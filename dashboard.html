@@ -27,6 +27,10 @@
                     <span>📦 Manage Orders</span>
                     <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
                 </a>
+
+                <a href="#agentsSection" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex items-center gap-2 text-white">
+                    <span>👥 Manage Staff / Agents</span>
+                </a>
             </nav>
             <div class="p-4 border-t border-gray-800">
                 <button onclick="logout()" class="w-full px-4 py-3 bg-gray-800 hover:bg-red-600 rounded-xl font-medium transition text-left flex items-center gap-2">🚪 Logout</button>
@@ -43,8 +47,8 @@
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Leads</p>
-                        <h3 class="text-4xl font-black text-gray-900 mt-2">0</h3>
+                        <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Staff / Agents</p>
+                        <h3 class="text-4xl font-black text-gray-900 mt-2" id="agentCountDisplay">0</h3>
                     </div>
                     <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
                         <div class="flex justify-between items-center mb-3">
@@ -105,6 +109,38 @@
                         </div>
                     </div>
 
+                </div>
+
+                <div id="agentsSection" class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">👥 Staff / Agent Management</h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-sm text-gray-800 mb-3">➕ Add New Staff / Agent</h4>
+                            <form id="addAgentForm" class="space-y-3">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Agent Name</label>
+                                    <input type="text" id="agentName" placeholder="Rahul Sharma" required class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Mobile Number</label>
+                                    <input type="tel" id="agentMobile" placeholder="9876543210" required class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Set Password</label>
+                                    <input type="password" id="agentPassword" placeholder="••••••••" required class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-xs font-medium outline-none">
+                                </div>
+                                <button type="submit" id="addAgentBtn" class="w-full bg-gray-900 text-white font-bold text-xs py-2.5 rounded-lg hover:bg-black transition shadow-sm">Add Agent 🚀</button>
+                            </form>
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <h4 class="font-bold text-sm text-gray-800 mb-3">Active Agents List</h4>
+                            <div id="agentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <p class="text-xs text-gray-400">Loading agents...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -186,6 +222,80 @@
                 </div>
                 <a href="${qrApiUrl}" target="_blank" class="mt-3 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
             `;
+        }
+
+        // ==========================================
+        // 👥 AGENT MANAGEMENT FUNCTIONS
+        // ==========================================
+        async function loadAgents() {
+            const listEl = document.getElementById('agentsList');
+            try {
+                const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agents/${shopSlug}`);
+                const agents = await res.json();
+
+                document.getElementById('agentCountDisplay').innerText = agents.length;
+
+                if(agents.length === 0) {
+                    listEl.innerHTML = `<p class="text-xs text-gray-400 col-span-2">Koi staff/agent add nahi hua hai.</p>`;
+                    return;
+                }
+
+                listEl.innerHTML = agents.map(agent => `
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                        <div>
+                            <h5 class="font-bold text-xs text-gray-900">${agent.ownerName}</h5>
+                            <p class="text-[11px] text-gray-500">📱 ${agent.mobileNumber}</p>
+                        </div>
+                        <button onclick="deleteAgent('${agent._id}')" class="bg-red-50 text-red-600 p-1.5 rounded-md hover:bg-red-100 text-xs font-bold transition">🗑️ Delete</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                listEl.innerHTML = `<p class="text-xs text-red-500">Agents load nahi ho paaye.</p>`;
+            }
+        }
+
+        document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const agentName = document.getElementById('agentName').value;
+            const mobileNumber = document.getElementById('agentMobile').value;
+            const password = document.getElementById('agentPassword').value;
+            const btn = document.getElementById('addAgentBtn');
+
+            btn.innerText = "Adding... ⏳";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('https://festival-h6ff.onrender.com/api/vendor/add-agent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ shopSlug, agentName, mobileNumber, password })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert('✅ Agent Successfully Add Ho Gaya!');
+                    document.getElementById('addAgentForm').reset();
+                    loadAgents();
+                } else {
+                    alert(`⚠️ ${data.message}`);
+                }
+            } catch (err) {
+                alert('⚠️ Server error!');
+            } finally {
+                btn.innerText = "Add Agent 🚀";
+                btn.disabled = false;
+            }
+        });
+
+        async function deleteAgent(id) {
+            if(!confirm("Kya aap sach me is agent ko remove karna chahte hain?")) return;
+            try {
+                const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agent/${id}`, { method: 'DELETE' });
+                if(res.ok) {
+                    alert("Agent deleted!");
+                    loadAgents();
+                }
+            } catch (err) { alert('Delete failed'); }
         }
 
         // CLOUD UPLOAD VIA BASE64 STRINGS
@@ -306,17 +416,11 @@
             }
         }
 
-        // ⚡ QUICK REFILL STOCK FUNCTION (Directly adds stock)
         async function quickRefillStock(id, currentStock) {
-            const inputVal = prompt(`Abhi current stock: ${currentStock} Pcs hai.\nKitna NAYA stock aaya hai? (Jaise 10 likhne par total ${Number(currentStock) + 10} ho jayega):`, "10");
-            
+            const inputVal = prompt(`Abhi current stock: ${currentStock} Pcs hai.\nKitna NAYA stock aaya hai?:`, "10");
             if (inputVal === null || inputVal.trim() === "") return;
-            
             const addedQty = Number(inputVal);
-            if (isNaN(addedQty) || addedQty < 0) {
-                alert("⚠️ Kripya sahi number daalein!");
-                return;
-            }
+            if (isNaN(addedQty) || addedQty < 0) { alert("⚠️ Kripya sahi number daalein!"); return; }
 
             const newTotalStock = Number(currentStock) + addedQty;
             const item = myProductsList.find(p => p._id === id);
@@ -327,29 +431,18 @@
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: item.name,
-                        price: item.price,
-                        category: item.category,
-                        description: item.description,
-                        images: item.images,
-                        stockQuantity: newTotalStock
+                        name: item.name, price: item.price, category: item.category, description: item.description, images: item.images, stockQuantity: newTotalStock
                     })
                 });
 
                 if (res.ok) {
                     alert(`✅ Super! Stock update ho gaya. Naya Total Stock: ${newTotalStock} Pcs`);
                     loadMyProducts();
-                } else {
-                    alert('⚠️ Update fail ho gaya.');
                 }
-            } catch (err) {
-                alert('⚠️ Network error!');
-            }
+            } catch (err) { alert('⚠️ Network error!'); }
         }
 
-        // EDIT PHOTO LOGIC
         let editingImages = [];
-
         function renderEditImages() {
             const container = document.getElementById('editImagesContainer');
             if(editingImages.length === 0) {
@@ -379,7 +472,6 @@
             
             const statusText = document.getElementById('editUploadStatus');
             const saveBtn = document.getElementById('saveEditBtn');
-            
             statusText.classList.remove('hidden');
             saveBtn.disabled = true;
 
@@ -389,9 +481,8 @@
                     editingImages.push(url);
                 }
                 renderEditImages();
-            } catch (error) {
-                alert('Cloud Upload failed.');
-            } finally {
+            } catch (error) { alert('Cloud Upload failed.'); }
+            finally {
                 statusText.classList.add('hidden');
                 saveBtn.disabled = false;
                 this.value = ''; 
@@ -411,7 +502,6 @@
             
             editingImages = item.images ? [...item.images] : [];
             renderEditImages();
-
             document.getElementById('editModal').classList.remove('hidden');
         }
 
@@ -447,12 +537,9 @@
                     alert('Changes save ho gaye!');
                     closeEditModal();
                     loadMyProducts();
-                } else {
-                    alert('Update error.');
                 }
-            } catch (err) {
-                alert('Network error!');
-            } finally {
+            } catch (err) { alert('Network error!'); }
+            finally {
                 saveBtn.innerText = "Save Changes";
                 saveBtn.disabled = false;
             }
@@ -471,7 +558,9 @@
             window.location.href = 'Index.html';
         }
 
+        // INITIAL LOAD
         loadMyProducts();
+        loadAgents();
     </script>
 </body>
 </html>
