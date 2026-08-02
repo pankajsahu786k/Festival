@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vendor Dashboard - SmartShop</title>
+    <title>Dashboard - SmartShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -17,8 +17,9 @@
     <div class="flex h-screen overflow-hidden">
         
         <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
-            <div class="p-6 border-b border-gray-800">
+            <div class="p-6 border-b border-gray-800 flex justify-between items-center">
                 <h1 class="text-2xl font-extrabold tracking-tight">Smart<span class="text-orange-500">Shop</span></h1>
+                <span id="roleBadge" class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-orange-600 text-white">Owner</span>
             </div>
             <nav class="flex-1 px-4 py-6 space-y-2">
                 <a href="dashboard.html" class="block px-4 py-3 bg-orange-600 rounded-xl font-semibold shadow-md text-white">📊 Dashboard</a>
@@ -28,7 +29,7 @@
                     <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
                 </a>
 
-                <a href="#agentsSection" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex items-center gap-2 text-white">
+                <a href="#agentsSection" id="agentsNavBtn" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex items-center gap-2 text-white">
                     <span>👥 Manage Staff / Agents</span>
                 </a>
             </nav>
@@ -40,13 +41,16 @@
         <main class="flex-1 flex flex-col h-screen overflow-y-auto">
             
             <header class="bg-white shadow-sm border-b border-gray-200 px-8 py-5 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-xl font-bold text-gray-800">Welcome to your Dashboard! 👋</h2>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800" id="welcomeMsg">Welcome to Dashboard! 👋</h2>
+                    <p class="text-xs text-gray-500" id="userRoleText">Owner Access Mode</p>
+                </div>
             </header>
 
             <div class="p-8 space-y-8">
                 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm" id="agentStatCard">
                         <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Total Staff / Agents</p>
                         <h3 class="text-4xl font-black text-gray-900 mt-2" id="agentCountDisplay">0</h3>
                     </div>
@@ -71,17 +75,17 @@
                         <form id="addProductForm" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Title</label>
-                                <input type="text" id="prodName" placeholder="E.g. 2 BHK Flat MP Nagar" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                <input type="text" id="prodName" placeholder="E.g. Fresh Apples 1kg" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                             </div>
                             
                             <div class="grid grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Price (₹)</label>
-                                    <input type="number" id="prodPrice" placeholder="15000" required class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                    <input type="number" id="prodPrice" placeholder="120" required class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Category</label>
-                                    <input type="text" id="prodCategory" placeholder="Rent / Sell" required class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
+                                    <input type="text" id="prodCategory" placeholder="Fruits" required class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium">
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Initial Stock</label>
@@ -95,7 +99,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Description</label>
-                                <textarea id="prodDesc" rows="2" placeholder="Facilities, Location..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium"></textarea>
+                                <textarea id="prodDesc" rows="2" placeholder="Quality details..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white outline-none text-sm font-medium"></textarea>
                             </div>
                             <button type="submit" class="w-full bg-orange-600 text-white font-bold text-sm py-3 rounded-xl hover:bg-orange-700 transition shadow-md">Save to Live Store 🚀</button>
                         </form>
@@ -103,7 +107,7 @@
 
                     <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center items-center text-center">
                         <div class="relative z-10 w-full" id="qrCodeContainer">
-                            <h3 class="text-2xl font-extrabold mb-2">Get Your Smart QR</h3>
+                            <h3 class="text-2xl font-extrabold mb-2">Get Store QR</h3>
                             <p class="text-orange-100 text-sm mb-6 leading-relaxed">Grahak ise scan karke aapke saare listings dekh sakte hain.</p>
                             <button onclick="generateQR()" class="bg-white text-orange-600 font-extrabold px-6 py-3 rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all">Generate QR Code 🪄</button>
                         </div>
@@ -205,8 +209,25 @@
         const token = localStorage.getItem('token');
         if (!token) window.location.href = 'login.html';
 
+        const userRole = localStorage.getItem('role') || 'vendor'; // 'vendor' ya 'agent'
         const shopSlug = localStorage.getItem('shopSlug');
         const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
+
+        // 🔒 ROLE BASED ACCESS CONTROL (RBAC) LOGIC
+        if (userRole === 'agent') {
+            // Agent Restrictions
+            document.getElementById('agentsNavBtn').style.display = 'none'; // Sidebar link hide
+            document.getElementById('agentsSection').style.display = 'none'; // Agent management section hide
+            document.getElementById('agentStatCard').style.display = 'none'; // Agent count card hide
+            
+            document.getElementById('roleBadge').innerText = 'Agent / Staff';
+            document.getElementById('roleBadge').className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
+            document.getElementById('welcomeMsg').innerText = 'Welcome Staff Member! 👤';
+            document.getElementById('userRoleText').innerText = 'Staff Restricted Access Mode';
+        } else {
+            // Owner Access
+            loadAgents();
+        }
 
         if(shopSlug) {
             document.getElementById('fullStoreLink').innerText = shopUrl;
@@ -216,7 +237,7 @@
         function generateQR() {
             const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
             document.getElementById('qrCodeContainer').innerHTML = `
-                <h3 class="text-xl font-extrabold mb-4">Aapka Smart QR Code</h3>
+                <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
                 <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
                     <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48">
                 </div>
@@ -224,9 +245,6 @@
             `;
         }
 
-        // ==========================================
-        // 👥 AGENT MANAGEMENT FUNCTIONS
-        // ==========================================
         async function loadAgents() {
             const listEl = document.getElementById('agentsList');
             try {
@@ -407,7 +425,7 @@
 
                         <div class="flex gap-2 mt-2 border-t border-gray-100 pt-3">
                             <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Edit Details</button>
-                            <button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>
+                            ${userRole === 'vendor' ? `<button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -546,6 +564,10 @@
         }
 
         async function deleteProduct(id) {
+            if(userRole !== 'vendor') {
+                alert("🚫 Delete permission sirf Owner ke paas hai!");
+                return;
+            }
             if(!confirm("Kya aap sach me is listing ko delete karna chahte hain?")) return;
             try {
                 const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' });
@@ -560,7 +582,6 @@
 
         // INITIAL LOAD
         loadMyProducts();
-        loadAgents();
     </script>
 </body>
 </html>
