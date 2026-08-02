@@ -206,382 +206,387 @@
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if (!token) window.location.href = 'login.html';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
 
-        const userRole = localStorage.getItem('role') || 'vendor'; // 'vendor' ya 'agent'
-        const shopSlug = localStorage.getItem('shopSlug');
-        const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
+    // 🎯 FIX: Dono keys 'userRole' aur 'role' ko check kar rahe hain taaki mismatch na ho
+    const userRole = localStorage.getItem('userRole') || localStorage.getItem('role') || 'vendor';
+    const shopSlug = localStorage.getItem('shopSlug');
+    const shopUrl = `https://festival-h6ff.onrender.com/shop.html?store=${shopSlug}`;
 
-        // 🔒 ROLE BASED ACCESS CONTROL (RBAC) LOGIC
-        if (userRole === 'agent') {
-            // Agent Restrictions
-            document.getElementById('agentsNavBtn').style.display = 'none'; // Sidebar link hide
-            document.getElementById('agentsSection').style.display = 'none'; // Agent management section hide
-            document.getElementById('agentStatCard').style.display = 'none'; // Agent count card hide
-            
-            document.getElementById('roleBadge').innerText = 'Agent / Staff';
-            document.getElementById('roleBadge').className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
-            document.getElementById('welcomeMsg').innerText = 'Welcome Staff Member! 👤';
-            document.getElementById('userRoleText').innerText = 'Staff Restricted Access Mode';
-        } else {
-            // Owner Access
-            loadAgents();
-        }
+    // 🔒 ROLE BASED ACCESS CONTROL (RBAC) LOGIC
+    if (userRole === 'agent') {
+        // Agent / Staff Restrictions
+        const agentsNav = document.getElementById('agentsNavBtn');
+        const agentsSec = document.getElementById('agentsSection');
+        const agentStat = document.getElementById('agentStatCard');
 
-        if(shopSlug) {
-            document.getElementById('fullStoreLink').innerText = shopUrl;
-            document.getElementById('storeLinkBtn').href = shopUrl;
-        }
-
-        function generateQR() {
-            const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
-            document.getElementById('qrCodeContainer').innerHTML = `
-                <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
-                <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
-                    <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48">
-                </div>
-                <a href="${qrApiUrl}" target="_blank" class="mt-3 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
-            `;
-        }
-
-        async function loadAgents() {
-            const listEl = document.getElementById('agentsList');
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agents/${shopSlug}`);
-                const agents = await res.json();
-
-                document.getElementById('agentCountDisplay').innerText = agents.length;
-
-                if(agents.length === 0) {
-                    listEl.innerHTML = `<p class="text-xs text-gray-400 col-span-2">Koi staff/agent add nahi hua hai.</p>`;
-                    return;
-                }
-
-                listEl.innerHTML = agents.map(agent => `
-                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
-                        <div>
-                            <h5 class="font-bold text-xs text-gray-900">${agent.ownerName}</h5>
-                            <p class="text-[11px] text-gray-500">📱 ${agent.mobileNumber}</p>
-                        </div>
-                        <button onclick="deleteAgent('${agent._id}')" class="bg-red-50 text-red-600 p-1.5 rounded-md hover:bg-red-100 text-xs font-bold transition">🗑️ Delete</button>
-                    </div>
-                `).join('');
-            } catch (error) {
-                listEl.innerHTML = `<p class="text-xs text-red-500">Agents load nahi ho paaye.</p>`;
-            }
-        }
-
-        document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const agentName = document.getElementById('agentName').value;
-            const mobileNumber = document.getElementById('agentMobile').value;
-            const password = document.getElementById('agentPassword').value;
-            const btn = document.getElementById('addAgentBtn');
-
-            btn.innerText = "Adding... ⏳";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('https://festival-h6ff.onrender.com/api/vendor/add-agent', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shopSlug, agentName, mobileNumber, password })
-                });
-
-                const data = await res.json();
-                if (res.ok) {
-                    alert('✅ Agent Successfully Add Ho Gaya!');
-                    document.getElementById('addAgentForm').reset();
-                    loadAgents();
-                } else {
-                    alert(`⚠️ ${data.message}`);
-                }
-            } catch (err) {
-                alert('⚠️ Server error!');
-            } finally {
-                btn.innerText = "Add Agent 🚀";
-                btn.disabled = false;
-            }
-        });
-
-        async function deleteAgent(id) {
-            if(!confirm("Kya aap sach me is agent ko remove karna chahte hain?")) return;
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agent/${id}`, { method: 'DELETE' });
-                if(res.ok) {
-                    alert("Agent deleted!");
-                    loadAgents();
-                }
-            } catch (err) { alert('Delete failed'); }
-        }
-
-        // CLOUD UPLOAD VIA BASE64 STRINGS
-        const IMGBB_API_KEY = "c5890563d7bc34314bc8868dff6de3ca"; 
+        if(agentsNav) agentsNav.style.display = 'none'; // Sidebar Staff option hide
+        if(agentsSec) agentsSec.style.display = 'none'; // Staff Add/List section hide
+        if(agentStat) agentStat.style.display = 'none'; // Agent count card hide
         
-        const fileToBase64 = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = error => reject(error);
-        });
+        document.getElementById('roleBadge').innerText = 'Agent / Staff';
+        document.getElementById('roleBadge').className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
+        document.getElementById('welcomeMsg').innerText = 'Welcome Staff Member! 👤';
+        document.getElementById('userRoleText').innerText = 'Staff Restricted Access Mode';
+    } else {
+        // Owner Access
+        loadAgents();
+    }
 
-        const uploadToCloud = async (file) => {
-            const base64 = await fileToBase64(file);
-            const base64Data = base64.split(',')[1]; 
-            const formData = new FormData();
-            formData.append('image', base64Data);
+    if(shopSlug) {
+        document.getElementById('fullStoreLink').innerText = shopUrl;
+        document.getElementById('storeLinkBtn').href = shopUrl;
+    }
 
-            const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
-                method: 'POST', body: formData
-            });
-            const data = await res.json();
-            
-            if(data.success && data.data && data.data.url) return data.data.url; 
-            throw new Error("ImgBB Upload Failed");
-        };
+    function generateQR() {
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
+        document.getElementById('qrCodeContainer').innerHTML = `
+            <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
+            <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
+                <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48">
+            </div>
+            <a href="${qrApiUrl}" target="_blank" class="mt-3 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
+        `;
+    }
 
-        // ADD PRODUCT
-        document.getElementById('addProductForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const fileInput = document.getElementById('prodGallery');
-            const files = Array.from(fileInput.files);
+    async function loadAgents() {
+        const listEl = document.getElementById('agentsList');
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agents/${shopSlug}`);
+            const agents = await res.json();
 
-            if (files.length < 1 || files.length > 5) {
-                alert("⚠️ Kripya 1 se 5 photos upload karein!");
+            document.getElementById('agentCountDisplay').innerText = agents.length;
+
+            if(agents.length === 0) {
+                listEl.innerHTML = `<p class="text-xs text-gray-400 col-span-2">Koi staff/agent add nahi hua hai.</p>`;
                 return;
             }
 
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerText = "Uploading to Cloud... ⏳";
-            submitBtn.disabled = true;
-
-            try {
-                const cloudUrls = [];
-                for(let file of files) {
-                    const url = await uploadToCloud(file);
-                    cloudUrls.push(url);
-                }
-
-                const name = document.getElementById('prodName').value;
-                const price = Number(document.getElementById('prodPrice').value);
-                const category = document.getElementById('prodCategory').value;
-                const stockQuantity = Number(document.getElementById('prodStock').value) || 1;
-                const description = document.getElementById('prodDesc').value;
-
-                const response = await fetch('https://festival-h6ff.onrender.com/api/products/add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ shopSlug, name, price, category, stockQuantity, description, images: cloudUrls })
-                });
-
-                if (response.ok) {
-                    alert('Success: Listing Stock ke sath live ho gayi!');
-                    document.getElementById('addProductForm').reset();
-                    loadMyProducts(); 
-                } else {
-                    const data = await response.json();
-                    alert(`Error: ${data.message}`);
-                }
-            } catch (error) {
-                alert('Upload fail ho gaya. Kripya image size check karein.');
-            } finally {
-                submitBtn.innerText = "Save to Live Store 🚀";
-                submitBtn.disabled = false;
-            }
-        });
-
-        let myProductsList = [];
-        async function loadMyProducts() {
-            const listEl = document.getElementById('myProductsList');
-            listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Fetching...</p>`;
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/products/${shopSlug}`);
-                myProductsList = await res.json();
-
-                if (myProductsList.length === 0) {
-                    listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi kiya hai.</p>`;
-                    return;
-                }
-
-                listEl.innerHTML = myProductsList.map(item => `
-                    <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm hover:shadow-md transition relative">
-                        <div class="flex justify-between items-center">
-                            <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-blue-100">
-                                📦 Stock Available: ${item.stockQuantity || 0}
-                            </span>
-                            <button onclick="quickRefillStock('${item._id}', ${item.stockQuantity || 0})" class="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-2.5 py-1 rounded-md text-[11px] font-black transition">
-                                ⚡ + Refill Stock
-                            </button>
-                        </div>
-
-                        <div class="flex items-center gap-3 overflow-hidden mt-1">
-                            <img src="${item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&q=80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0 bg-gray-50">
-                            <div class="truncate flex-1">
-                                <h4 class="font-bold text-gray-900 text-sm truncate">${item.name}</h4>
-                                <p class="text-xs text-orange-600 font-bold mt-0.5">₹${item.price} • <span class="text-gray-500 font-normal text-[11px]">${item.category}</span></p>
-                            </div>
-                        </div>
-
-                        <div class="flex gap-2 mt-2 border-t border-gray-100 pt-3">
-                            <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Edit Details</button>
-                            ${userRole === 'vendor' ? `<button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>` : ''}
-                        </div>
+            listEl.innerHTML = agents.map(agent => `
+                <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center">
+                    <div>
+                        <h5 class="font-bold text-xs text-gray-900">${agent.ownerName}</h5>
+                        <p class="text-[11px] text-gray-500">📱 ${agent.mobileNumber}</p>
                     </div>
-                `).join('');
-            } catch (err) {
-                listEl.innerHTML = `<p class="text-red-500 text-sm col-span-3">Failed to load items.</p>`;
-            }
-        }
-
-        async function quickRefillStock(id, currentStock) {
-            const inputVal = prompt(`Abhi current stock: ${currentStock} Pcs hai.\nKitna NAYA stock aaya hai?:`, "10");
-            if (inputVal === null || inputVal.trim() === "") return;
-            const addedQty = Number(inputVal);
-            if (isNaN(addedQty) || addedQty < 0) { alert("⚠️ Kripya sahi number daalein!"); return; }
-
-            const newTotalStock = Number(currentStock) + addedQty;
-            const item = myProductsList.find(p => p._id === id);
-            if (!item) return;
-
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: item.name, price: item.price, category: item.category, description: item.description, images: item.images, stockQuantity: newTotalStock
-                    })
-                });
-
-                if (res.ok) {
-                    alert(`✅ Super! Stock update ho gaya. Naya Total Stock: ${newTotalStock} Pcs`);
-                    loadMyProducts();
-                }
-            } catch (err) { alert('⚠️ Network error!'); }
-        }
-
-        let editingImages = [];
-        function renderEditImages() {
-            const container = document.getElementById('editImagesContainer');
-            if(editingImages.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-400">No photos linked.</p>`;
-                return;
-            }
-            container.innerHTML = editingImages.map((img, index) => `
-                <div class="relative w-16 h-16 flex-shrink-0">
-                    <img src="${img}" class="w-full h-full object-cover rounded-lg border border-gray-200">
-                    <button type="button" onclick="removeEditImage(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-600">X</button>
+                    <button onclick="deleteAgent('${agent._id}')" class="bg-red-50 text-red-600 p-1.5 rounded-md hover:bg-red-100 text-xs font-bold transition">🗑️ Delete</button>
                 </div>
             `).join('');
+        } catch (error) {
+            listEl.innerHTML = `<p class="text-xs text-red-500">Agents load nahi ho paaye.</p>`;
         }
+    }
 
-        function removeEditImage(index) {
-            editingImages.splice(index, 1);
-            renderEditImages();
+    document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const agentName = document.getElementById('agentName').value;
+        const mobileNumber = document.getElementById('agentMobile').value;
+        const password = document.getElementById('agentPassword').value;
+        const btn = document.getElementById('addAgentBtn');
+
+        btn.innerText = "Adding... ⏳";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('https://festival-h6ff.onrender.com/api/vendor/add-agent', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shopSlug, agentName, mobileNumber, password })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert('✅ Agent Successfully Add Ho Gaya!');
+                document.getElementById('addAgentForm').reset();
+                loadAgents();
+            } else {
+                alert(`⚠️ ${data.message}`);
+            }
+        } catch (err) {
+            alert('⚠️ Server error!');
+        } finally {
+            btn.innerText = "Add Agent 🚀";
+            btn.disabled = false;
         }
+    });
 
-        document.getElementById('editGalleryUpload').addEventListener('change', async function(e) {
-            const files = Array.from(e.target.files);
-            if(editingImages.length + files.length > 5) {
-                alert("⚠️ Maximum 5 photos allowed in total!");
-                this.value = '';
-                return;
+    async function deleteAgent(id) {
+        if(!confirm("Kya aap sach me is agent ko remove karna chahte hain?")) return;
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/vendor/agent/${id}`, { method: 'DELETE' });
+            if(res.ok) {
+                alert("Agent deleted!");
+                loadAgents();
             }
-            
-            const statusText = document.getElementById('editUploadStatus');
-            const saveBtn = document.getElementById('saveEditBtn');
-            statusText.classList.remove('hidden');
-            saveBtn.disabled = true;
+        } catch (err) { alert('Delete failed'); }
+    }
 
-            try {
-                for(let file of files) {
-                    const url = await uploadToCloud(file);
-                    editingImages.push(url);
-                }
-                renderEditImages();
-            } catch (error) { alert('Cloud Upload failed.'); }
-            finally {
-                statusText.classList.add('hidden');
-                saveBtn.disabled = false;
-                this.value = ''; 
-            }
+    // CLOUD UPLOAD VIA BASE64 STRINGS
+    const IMGBB_API_KEY = "c5890563d7bc34314bc8868dff6de3ca"; 
+    
+    const fileToBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+
+    const uploadToCloud = async (file) => {
+        const base64 = await fileToBase64(file);
+        const base64Data = base64.split(',')[1]; 
+        const formData = new FormData();
+        formData.append('image', base64Data);
+
+        const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
+            method: 'POST', body: formData
         });
+        const data = await res.json();
+        
+        if(data.success && data.data && data.data.url) return data.data.url; 
+        throw new Error("ImgBB Upload Failed");
+    };
 
-        function openEditModal(id) {
-            const item = myProductsList.find(p => p._id === id);
-            if (!item) return;
+    // ADD PRODUCT
+    document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('prodGallery');
+        const files = Array.from(fileInput.files);
 
-            document.getElementById('editProdId').value = item._id;
-            document.getElementById('editName').value = item.name;
-            document.getElementById('editPrice').value = item.price;
-            document.getElementById('editCategory').value = item.category;
-            document.getElementById('editStock').value = Number(item.stockQuantity) || 1;
-            document.getElementById('editDesc').value = item.description || '';
-            
-            editingImages = item.images ? [...item.images] : [];
+        if (files.length < 1 || files.length > 5) {
+            alert("⚠️ Kripya 1 se 5 photos upload karein!");
+            return;
+        }
+
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerText = "Uploading to Cloud... ⏳";
+        submitBtn.disabled = true;
+
+        try {
+            const cloudUrls = [];
+            for(let file of files) {
+                const url = await uploadToCloud(file);
+                cloudUrls.push(url);
+            }
+
+            const name = document.getElementById('prodName').value;
+            const price = Number(document.getElementById('prodPrice').value);
+            const category = document.getElementById('prodCategory').value;
+            const stockQuantity = Number(document.getElementById('prodStock').value) || 1;
+            const description = document.getElementById('prodDesc').value;
+
+            const response = await fetch('https://festival-h6ff.onrender.com/api/products/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shopSlug, name, price, category, stockQuantity, description, images: cloudUrls })
+            });
+
+            if (response.ok) {
+                alert('Success: Listing Stock ke sath live ho gayi!');
+                document.getElementById('addProductForm').reset();
+                loadMyProducts(); 
+            } else {
+                const data = await response.json();
+                alert(`Error: ${data.message}`);
+            }
+        } catch (error) {
+            alert('Upload fail ho gaya. Kripya image size check karein.');
+        } finally {
+            submitBtn.innerText = "Save to Live Store 🚀";
+            submitBtn.disabled = false;
+        }
+    });
+
+    let myProductsList = [];
+    async function loadMyProducts() {
+        const listEl = document.getElementById('myProductsList');
+        listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Fetching...</p>`;
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/products/${shopSlug}`);
+            myProductsList = await res.json();
+
+            if (myProductsList.length === 0) {
+                listEl.innerHTML = `<p class="text-gray-400 text-sm col-span-3">Abhi tak koi item list nahi kiya hai.</p>`;
+                return;
+            }
+
+            listEl.innerHTML = myProductsList.map(item => `
+                <div class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-sm hover:shadow-md transition relative">
+                    <div class="flex justify-between items-center">
+                        <span class="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-md text-[11px] font-extrabold border border-blue-100">
+                            📦 Stock Available: ${item.stockQuantity || 0}
+                        </span>
+                        <button onclick="quickRefillStock('${item._id}', ${item.stockQuantity || 0})" class="bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 px-2.5 py-1 rounded-md text-[11px] font-black transition">
+                            ⚡ + Refill Stock
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-3 overflow-hidden mt-1">
+                        <img src="${item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&q=80'}" class="w-16 h-16 object-cover rounded-lg border border-gray-200 flex-shrink-0 bg-gray-50">
+                        <div class="truncate flex-1">
+                            <h4 class="font-bold text-gray-900 text-sm truncate">${item.name}</h4>
+                            <p class="text-xs text-orange-600 font-bold mt-0.5">₹${item.price} • <span class="text-gray-500 font-normal text-[11px]">${item.category}</span></p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-2 border-t border-gray-100 pt-3">
+                        <button onclick="openEditModal('${item._id}')" class="flex-1 bg-blue-50 text-blue-600 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition">Edit Details</button>
+                        ${userRole === 'vendor' ? `<button onclick="deleteProduct('${item._id}')" class="flex-1 bg-red-50 text-red-600 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 transition">Delete</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            listEl.innerHTML = `<p class="text-red-500 text-sm col-span-3">Failed to load items.</p>`;
+        }
+    }
+
+    async function quickRefillStock(id, currentStock) {
+        const inputVal = prompt(`Abhi current stock: ${currentStock} Pcs hai.\nKitna NAYA stock aaya hai?:`, "10");
+        if (inputVal === null || inputVal.trim() === "") return;
+        const addedQty = Number(inputVal);
+        if (isNaN(addedQty) || addedQty < 0) { alert("⚠️ Kripya sahi number daalein!"); return; }
+
+        const newTotalStock = Number(currentStock) + addedQty;
+        const item = myProductsList.find(p => p._id === id);
+        if (!item) return;
+
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: item.name, price: item.price, category: item.category, description: item.description, images: item.images, stockQuantity: newTotalStock
+                })
+            });
+
+            if (res.ok) {
+                alert(`✅ Super! Stock update ho gaya. Naya Total Stock: ${newTotalStock} Pcs`);
+                loadMyProducts();
+            }
+        } catch (err) { alert('⚠️ Network error!'); }
+    }
+
+    let editingImages = [];
+    function renderEditImages() {
+        const container = document.getElementById('editImagesContainer');
+        if(editingImages.length === 0) {
+            container.innerHTML = `<p class="text-xs text-gray-400">No photos linked.</p>`;
+            return;
+        }
+        container.innerHTML = editingImages.map((img, index) => `
+            <div class="relative w-16 h-16 flex-shrink-0">
+                <img src="${img}" class="w-full h-full object-cover rounded-lg border border-gray-200">
+                <button type="button" onclick="removeEditImage(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shadow-md cursor-pointer hover:bg-red-600">X</button>
+            </div>
+        `).join('');
+    }
+
+    function removeEditImage(index) {
+        editingImages.splice(index, 1);
+        renderEditImages();
+    }
+
+    document.getElementById('editGalleryUpload').addEventListener('change', async function(e) {
+        const files = Array.from(e.target.files);
+        if(editingImages.length + files.length > 5) {
+            alert("⚠️ Maximum 5 photos allowed in total!");
+            this.value = '';
+            return;
+        }
+        
+        const statusText = document.getElementById('editUploadStatus');
+        const saveBtn = document.getElementById('saveEditBtn');
+        statusText.classList.remove('hidden');
+        saveBtn.disabled = true;
+
+        try {
+            for(let file of files) {
+                const url = await uploadToCloud(file);
+                editingImages.push(url);
+            }
             renderEditImages();
-            document.getElementById('editModal').classList.remove('hidden');
+        } catch (error) { alert('Cloud Upload failed.'); }
+        finally {
+            statusText.classList.add('hidden');
+            saveBtn.disabled = false;
+            this.value = ''; 
+        }
+    });
+
+    function openEditModal(id) {
+        const item = myProductsList.find(p => p._id === id);
+        if (!item) return;
+
+        document.getElementById('editProdId').value = item._id;
+        document.getElementById('editName').value = item.name;
+        document.getElementById('editPrice').value = item.price;
+        document.getElementById('editCategory').value = item.category;
+        document.getElementById('editStock').value = Number(item.stockQuantity) || 1;
+        document.getElementById('editDesc').value = item.description || '';
+        
+        editingImages = item.images ? [...item.images] : [];
+        renderEditImages();
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.add('hidden');
+    }
+
+    async function saveProductEdit() {
+        if(editingImages.length < 1 || editingImages.length > 5) {
+            alert("⚠️ Minimum 1 photo zaroor rakhein.");
+            return;
         }
 
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
+        const id = document.getElementById('editProdId').value;
+        const name = document.getElementById('editName').value;
+        const price = Number(document.getElementById('editPrice').value);
+        const category = document.getElementById('editCategory').value;
+        const stockQuantity = Number(document.getElementById('editStock').value);
+        const description = document.getElementById('editDesc').value;
+        const saveBtn = document.getElementById('saveEditBtn');
 
-        async function saveProductEdit() {
-            if(editingImages.length < 1 || editingImages.length > 5) {
-                alert("⚠️ Minimum 1 photo zaroor rakhein.");
-                return;
+        saveBtn.innerText = "Saving... ⏳";
+        saveBtn.disabled = true;
+
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price, category, stockQuantity, description, images: editingImages })
+            });
+
+            if (res.ok) {
+                alert('Changes save ho gaye!');
+                closeEditModal();
+                loadMyProducts();
             }
-
-            const id = document.getElementById('editProdId').value;
-            const name = document.getElementById('editName').value;
-            const price = Number(document.getElementById('editPrice').value);
-            const category = document.getElementById('editCategory').value;
-            const stockQuantity = Number(document.getElementById('editStock').value);
-            const description = document.getElementById('editDesc').value;
-            const saveBtn = document.getElementById('saveEditBtn');
-
-            saveBtn.innerText = "Saving... ⏳";
-            saveBtn.disabled = true;
-
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/products/edit/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, price, category, stockQuantity, description, images: editingImages })
-                });
-
-                if (res.ok) {
-                    alert('Changes save ho gaye!');
-                    closeEditModal();
-                    loadMyProducts();
-                }
-            } catch (err) { alert('Network error!'); }
-            finally {
-                saveBtn.innerText = "Save Changes";
-                saveBtn.disabled = false;
-            }
+        } catch (err) { alert('Network error!'); }
+        finally {
+            saveBtn.innerText = "Save Changes";
+            saveBtn.disabled = false;
         }
+    }
 
-        async function deleteProduct(id) {
-            if(userRole !== 'vendor') {
-                alert("🚫 Delete permission sirf Owner ke paas hai!");
-                return;
-            }
-            if(!confirm("Kya aap sach me is listing ko delete karna chahte hain?")) return;
-            try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' });
-                if (res.ok) loadMyProducts(); 
-            } catch (err) { alert('Delete error.'); }
+    async function deleteProduct(id) {
+        if(userRole !== 'vendor') {
+            alert("🚫 Delete permission sirf Owner ke paas hai!");
+            return;
         }
+        if(!confirm("Kya aap sach me is listing ko delete karna chahte hain?")) return;
+        try {
+            const res = await fetch(`https://festival-h6ff.onrender.com/api/products/delete/${id}`, { method: 'DELETE' });
+            if (res.ok) loadMyProducts(); 
+        } catch (err) { alert('Delete error.'); }
+    }
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'Index.html';
-        }
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'Index.html';
+    }
 
-        // INITIAL LOAD
-        loadMyProducts();
-    </script>
+    // INITIAL LOAD
+    loadMyProducts();
+</script>
 </body>
 </html>
