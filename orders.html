@@ -55,7 +55,7 @@
         async function loadOrders() {
             const container = document.getElementById('ordersContainer');
             try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/orders/${shopSlug}`);
+                const res = await fetch(`https://smart-shop-19.onrender.com/api/orders/${shopSlug}`);
                 const orders = await res.json();
                 if(orders.length === 0) { container.innerHTML = `<p class="text-gray-400 col-span-3">Abhi tak koi order nahi aaya hai.</p>`; return; }
 
@@ -92,7 +92,7 @@
             if(!confirm(confirmMsg)) return;
 
             try {
-                const res = await fetch(`https://festival-h6ff.onrender.com${endpoint}`, { method: 'PUT' });
+                const res = await fetch(`https://smart-shop-19.onrender.com${endpoint}`, { method: 'PUT' });
                 if(res.ok) { loadOrders(); }
             } catch (err) { alert("Error."); }
         }
@@ -106,7 +106,7 @@
         async function loadOrdersBackground() {
             const container = document.getElementById('ordersContainer');
             try {
-                const res = await fetch(`https://festival-h6ff.onrender.com/api/orders/${shopSlug}`);
+                const res = await fetch(`https://smart-shop-19.onrender.com/api/orders/${shopSlug}`);
                 const orders = await res.json(); if(orders.length === 0) return;
 
                 container.innerHTML = orders.map(o => `

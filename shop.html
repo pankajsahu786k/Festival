@@ -88,7 +88,7 @@
         async function fetchShopDetails() {
             if(!storeId) return;
             try {
-                const response = await fetch(`https://festival-h6ff.onrender.com/api/shop/${storeId}`);
+                const response = await fetch(`https://smart-shop-19.onrender.com/api/shop/${storeId}`);
                 const data = await response.json();
                 if(response.ok) {
                     realShopName = data.shopName;
@@ -101,7 +101,7 @@
         async function fetchProducts() {
             if(!storeId) return;
             try {
-                const response = await fetch(`https://festival-h6ff.onrender.com/api/products/${storeId}`);
+                const response = await fetch(`https://smart-shop-19.onrender.com/api/products/${storeId}`);
                 const data = await response.json();
                 
                 if(response.ok && data.length > 0) {
@@ -376,7 +376,7 @@
             waMessage += `\n*Total Amount: ₹${total}*\n\nPlease process my order.`;
 
             try {
-                const response = await fetch('https://festival-h6ff.onrender.com/api/orders/new', {
+                const response = await fetch('https://smart-shop-19.onrender.com/api/orders/new', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ shopSlug: storeId, customerName: customerName, items: orderItems, totalAmount: total })
