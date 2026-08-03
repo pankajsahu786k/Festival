@@ -17,7 +17,7 @@
         }
         html, body {
             width: 100%;
-            min-height: 100vh; /* 👈 Fix: min-h-screen ki jagah standard CSS syntax */
+            min-height: 100vh;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
         }
@@ -226,44 +226,35 @@
     const token = localStorage.getItem('token');
     if (!token) window.location.href = 'login.html';
 
-    // 🎯 FIX: Dono keys 'userRole' aur 'role' ko check kar rahe hain taaki mismatch na ho
     const userRole = localStorage.getItem('userRole') || localStorage.getItem('role') || 'vendor';
     const shopSlug = localStorage.getItem('shopSlug');
     const shopUrl = `/shop.html?store=${shopSlug}`;
 
-    // 🔒 ROLE BASED ACCESS CONTROL (RBAC) LOGIC
     if (userRole === 'agent') {
-        // Agent / Staff Restrictions
         const agentsNav = document.getElementById('agentsNavBtn');
         const agentsSec = document.getElementById('agentsSection');
         const agentStat = document.getElementById('agentStatCard');
 
-        if(agentsNav) agentsNav.style.display = 'none'; // Sidebar Staff option hide
-        if(agentsSec) agentsSec.style.display = 'none'; // Staff Add/List section hide
-        if(agentStat) agentStat.style.display = 'none'; // Agent count card hide
+        if(agentsNav) agentsNav.style.display = 'none'; 
+        if(agentsSec) agentsSec.style.display = 'none'; 
+        if(agentStat) agentStat.style.display = 'none'; 
         
         document.getElementById('roleBadge').innerText = 'Agent / Staff';
         document.getElementById('roleBadge').className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
         document.getElementById('welcomeMsg').innerText = 'Welcome Staff Member! 👤';
         document.getElementById('userRoleText').innerText = 'Staff Restricted Access Mode';
     } else {
-        // Owner Access
         loadAgents();
     }
 
     if(shopSlug) {
-    // Ye line base domain (jaise https://smart-shop-19.onrender.com) ko path ke sath jod degi
-    const completeUrl = window.location.origin + shopUrl;
-    
-    document.getElementById('fullStoreLink').innerText = completeUrl;
-    document.getElementById('storeLinkBtn').href = completeUrl;
-}
+        const completeUrl = window.location.origin + shopUrl;
+        document.getElementById('fullStoreLink').innerText = completeUrl;
+        document.getElementById('storeLinkBtn').href = completeUrl;
+    }
 
     function generateQR() {
-        // Pura URL banate hain base domain ke sath
         const completeUrl = window.location.origin + shopUrl;
-        
-        // Ab 'completeUrl' ko QR API mein bhej rahe hain
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(completeUrl)}`;
         
         document.getElementById('qrCodeContainer').innerHTML = `
@@ -279,9 +270,51 @@
             </div>
         `;
     }
-    
-    printWindow.document.close();
-}
+
+    function printQRCode(qrUrl) {
+        const shopName = "Welcome to Our Store!"; 
+        const websiteName = "SmartShop India"; 
+        const websiteUrl = window.location.host; 
+
+        const printWindow = window.open('', '_blank', 'width=800,height=800');
+        
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>Print QR Code</title>
+                <style>
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 40px; }
+                    .ticket { border: 3px dashed #ea580c; padding: 40px; display: inline-block; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                    h1 { color: #111; margin-bottom: 10px; font-size: 32px; text-transform: uppercase; }
+                    .subtitle { font-size: 20px; color: #444; font-weight: 600; margin-bottom: 25px; }
+                    .qr-image { width: 300px; height: 300px; margin: 0 auto; border: 10px solid #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                    .branding { margin-top: 35px; font-size: 16px; color: #666; border-top: 2px solid #eee; padding-top: 20px; }
+                    .branding strong { color: #ea580c; font-size: 22px; display: block; margin-bottom: 5px; }
+                </style>
+            </head>
+            <body>
+                <div class="ticket">
+                    <h1>${shopName}</h1>
+                    <div class="subtitle">Scan to visit our online shop! 🛍️</div>
+                    <img src="${qrUrl}" class="qr-image" />
+                    <div class="branding">
+                        Powered by<br>
+                        <strong>${websiteName}</strong>
+                        <span>${websiteUrl}</span>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                        window.close();
+                    }, 800);
+                <\/script> 
+            </body>
+            </html>
+        `);
+        
+        printWindow.document.close();
+    }
 
     async function loadAgents() {
         const listEl = document.getElementById('agentsList');
@@ -620,6 +653,6 @@
 
     // INITIAL LOAD
     loadMyProducts();
-</script>
+    </script>
 </body>
 </html>
