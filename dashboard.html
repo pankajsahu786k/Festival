@@ -260,7 +260,12 @@
 }
 
     function generateQR() {
-        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
+        // Pura URL banate hain base domain ke sath
+        const completeUrl = window.location.origin + shopUrl;
+        
+        // Ab 'completeUrl' ko QR API mein bhej rahe hain
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(completeUrl)}`;
+        
         document.getElementById('qrCodeContainer').innerHTML = `
             <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
             <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
