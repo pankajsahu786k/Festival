@@ -252,9 +252,12 @@
     }
 
     if(shopSlug) {
-        document.getElementById('fullStoreLink').innerText = shopUrl;
-        document.getElementById('storeLinkBtn').href = shopUrl;
-    }
+    // Ye line base domain (jaise https://smart-shop-19.onrender.com) ko path ke sath jod degi
+    const completeUrl = window.location.origin + shopUrl;
+    
+    document.getElementById('fullStoreLink').innerText = completeUrl;
+    document.getElementById('storeLinkBtn').href = completeUrl;
+}
 
     function generateQR() {
         const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shopUrl)}`;
