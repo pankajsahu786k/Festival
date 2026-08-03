@@ -272,8 +272,13 @@
     }
 
     function printQRCode(qrUrl) {
-        const shopName = "Welcome to Our Store!"; 
-        const websiteName = "SmartShop India"; 
+        // System se shop ka naam nikal kar usko sundar banayenge
+        let actualShopName = localStorage.getItem('shopName') || shopSlug;
+        // Naam mein se dash (-) hata kar space lagana aur Capital karna
+        actualShopName = actualShopName.replace(/-/g, ' ').toUpperCase(); 
+
+        const shopName = "Welcome to " + actualShopName; 
+        const websiteName = "Smart-Shop-19"; 
         const websiteUrl = window.location.host; 
 
         const printWindow = window.open('', '_blank', 'width=800,height=800');
@@ -285,11 +290,11 @@
                 <style>
                     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 40px; }
                     .ticket { border: 3px dashed #ea580c; padding: 40px; display: inline-block; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-                    h1 { color: #111; margin-bottom: 10px; font-size: 32px; text-transform: uppercase; }
-                    .subtitle { font-size: 20px; color: #444; font-weight: 600; margin-bottom: 25px; }
+                    h1 { color: #111; margin-bottom: 10px; font-size: 28px; text-transform: uppercase; }
+                    .subtitle { font-size: 18px; color: #444; font-weight: 600; margin-bottom: 25px; }
                     .qr-image { width: 300px; height: 300px; margin: 0 auto; border: 10px solid #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
                     .branding { margin-top: 35px; font-size: 16px; color: #666; border-top: 2px solid #eee; padding-top: 20px; }
-                    .branding strong { color: #ea580c; font-size: 22px; display: block; margin-bottom: 5px; }
+                    .branding strong { color: #ea580c; font-size: 22px; display: block; margin-bottom: 5px; text-transform: uppercase; }
                 </style>
             </head>
             <body>
@@ -315,7 +320,6 @@
         
         printWindow.document.close();
     }
-
     async function loadAgents() {
         const listEl = document.getElementById('agentsList');
         try {
