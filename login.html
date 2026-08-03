@@ -158,10 +158,10 @@
 
                 // Smartly Route Data based on Role
                 if (selectedRole === 'vendor') {
-                    apiUrl = 'https://smart-shop-19.onrender.com/api/vendor/login';
+                    apiUrl = '/api/vendor/login';
                     payload = { mobileNumber: identifier, password: password };
                 } else {
-                    apiUrl = 'https://smart-shop-19.onrender.com/api/admin/login';
+                    apiUrl = '/api/admin/login';
                     payload = { username: identifier, password: password };
                 }
 
