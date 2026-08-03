@@ -274,6 +274,54 @@
             <a href="${qrApiUrl}" target="_blank" class="mt-3 inline-block bg-white text-orange-600 text-sm font-bold px-5 py-2.5 rounded-lg shadow-sm hover:bg-gray-50 transition">View Full Size</a>
         `;
     }
+    function printQRCode(qrUrl) {
+    // Agar aapka shop ka naam kisi aur variable me hai toh yahan set kar lena
+    const shopName = "Welcome to Our Store!"; 
+    const websiteName = "SmartShop India"; 
+    const websiteUrl = window.location.host; // ex: smart-shop-19.onrender.com
+
+    // Ek nayi window open karega print karne ke liye
+    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    
+    // Sundar sa Print Format (HTML + CSS)
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Print QR Code</title>
+            <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 40px; }
+                .ticket { border: 3px dashed #ea580c; padding: 40px; display: inline-block; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+                h1 { color: #111; margin-bottom: 10px; font-size: 32px; text-transform: uppercase; }
+                .subtitle { font-size: 20px; color: #444; font-weight: 600; margin-bottom: 25px; }
+                .qr-image { width: 300px; height: 300px; margin: 0 auto; border: 10px solid #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+                .branding { margin-top: 35px; font-size: 16px; color: #666; border-top: 2px solid #eee; padding-top: 20px; }
+                .branding strong { color: #ea580c; font-size: 22px; display: block; margin-bottom: 5px; }
+            </style>
+        </head>
+        <body>
+            <div class="ticket">
+                <h1>${shopName}</h1>
+                <div class="subtitle">Scan to visit our online shop! 🛍️</div>
+                <img src="${qrUrl}" class="qr-image" />
+                <div class="branding">
+                    Powered by<br>
+                    <strong>${websiteName}</strong>
+                    <span>${websiteUrl}</span>
+                </div>
+            </div>
+            <script>
+                // Image properly load hone ke liye thoda wait karke print open karega
+                setTimeout(() => {
+                    window.print();
+                    window.close();
+                }, 800);
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
 
     async function loadAgents() {
         const listEl = document.getElementById('agentsList');
