@@ -228,8 +228,12 @@
         }
 
         function openProductModal(id) {
-            const product = products.find(p => p.id === id);
-            if(!product) return;
+    const product = products.find(p => p.id === id);
+    if(!product) return;
+    
+    trackProductClick(id); // 👈 YEH LINE ADD KAREIN - Is se click hote hi view badh jayega!
+    
+    // ... baki ka code waisa hi rahega ...
 
             let imagesHtml = product.images.map(img => `<img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">`).join('');
             let dotsHtml = product.images.map((_, i) => `<span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>`).join('');
@@ -398,6 +402,33 @@
                 submitBtn.disabled = false;
             }
         }
+        // ==========================================
+// 🕵️‍♂️ SMART TRACKING SYSTEM
+// ==========================================
+
+// 1. Time Tracking Logic
+let sessionStartTime = Date.now();
+
+// Jab browser tab band ho, ya minimize ho, tab time bhejo
+document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') {
+        let timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000); // Seconds mein
+        if(timeSpent > 2) { // 2 second se kam ruka toh ignore karo
+            let data = JSON.stringify({ shopSlug: storeId, timeSpentSeconds: timeSpent });
+            // sendBeacon fast hota hai tab close hote waqt bhi chalta hai
+            navigator.sendBeacon('/api/analytics/track-time', new Blob([data], { type: 'application/json' }));
+        }
+    }
+});
+
+// 2. Product Click Tracking
+function trackProductClick(productId) {
+    fetch('/api/analytics/track-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: productId })
+    });
+}
 
         fetchShopDetails();
         fetchProducts();

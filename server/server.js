@@ -341,6 +341,72 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
         res.status(500).json({ message: "Vendor delete karne me error." });
     }
 });
+// ==========================================
+// 📈 5. ANALYTICS & TRACKING APIS
+// ==========================================
+
+// 1. Customer ka Time Spent Track karna (Jab wo dukan band kare tab chalega)
+app.post('/api/analytics/track-time', async (req, res) => {
+    try {
+        const { shopSlug, timeSpentSeconds } = req.body;
+        // Hum Vendor data me total time aur total visitors count karenge
+        await Vendor.findOneAndUpdate(
+            { shopSlug: shopSlug },
+            { 
+                $inc: { 
+                    totalTimeSpent: timeSpentSeconds, 
+                    totalSessions: 1 
+                } 
+            }
+        );
+        res.json({ message: "Time tracked" });
+    } catch (error) {
+        res.status(500).json({ message: "Tracking error" });
+    }
+});
+
+// 2. Product View Track karna (Jab customer kisi item par click kare)
+app.post('/api/analytics/track-product', async (req, res) => {
+    try {
+        const { productId } = req.body;
+        await Product.findByIdAndUpdate(productId, { $inc: { views: 1 } });
+        res.json({ message: "Product view tracked" });
+    } catch (error) {
+        res.status(500).json({ message: "Tracking error" });
+    }
+});
+
+// 3. Admin ke liye Analytics Data bhejna
+app.get('/api/analytics/dashboard/:shopSlug', async (req, res) => {
+    try {
+        const slug = req.params.shopSlug;
+        const vendor = await Vendor.findOne({ shopSlug: slug });
+        const products = await Product.find({ shopSlug: slug }).sort({ views: -1 }); // Sabse zyada view wale upar
+        const orders = await Order.find({ shopSlug: slug });
+
+        if(!vendor) return res.status(404).json({ message: "Shop not found" });
+
+        // Calculations
+        const totalOrders = orders.length;
+        const successfulOrders = orders.filter(o => o.status === 'Completed').length;
+        const conversionRate = totalOrders > 0 ? Math.round((successfulOrders / totalOrders) * 100) : 0;
+        
+        const avgTimeSeconds = vendor.totalSessions > 0 ? Math.round(vendor.totalTimeSpent / vendor.totalSessions) : 0;
+        const avgTimeFormatted = `${Math.floor(avgTimeSeconds / 60)}m ${avgTimeSeconds % 60}s`;
+
+        res.json({
+            views: vendor.shopViews || 0,
+            avgTimeSpent: avgTimeFormatted,
+            totalOrders,
+            successfulOrders,
+            conversionRate: `${conversionRate}%`,
+            trendingProducts: products.slice(0, 5) // Top 5 trending products
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: "Analytics fetch error" });
+    }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
