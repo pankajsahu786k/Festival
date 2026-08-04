@@ -2,239 +2,203 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Super Admin - SmartShop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Analytics - Super Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+<body class="bg-gray-50 text-gray-900 flex h-screen overflow-hidden">
 
-    <div id="adminLoginScreen" class="flex-1 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm border border-gray-100">
-            <h2 class="text-2xl font-black text-gray-900 mb-6 text-center">🛡️ Admin Login</h2>
-            <form id="adminLoginForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Username</label>
-                    <input type="text" id="adminUser" placeholder="admin" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 outline-none focus:bg-white focus:border-orange-500 font-medium">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
-                    <input type="password" id="adminPass" placeholder="••••••••" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 outline-none focus:bg-white focus:border-orange-500 font-medium">
-                </div>
-                <button type="submit" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl hover:bg-black transition shadow-lg mt-2">Login as Admin Boss 🚀</button>
-            </form>
+    <aside class="w-64 bg-indigo-900 text-white flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-indigo-800">
+            <h1 class="text-2xl font-black tracking-tight">Super<span class="text-blue-400">Admin</span></h1>
         </div>
-    </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="admin.html" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition text-gray-300">
+                ⬅️ Back to Dashboard
+            </a>
+            
+            <a href="adminanalytics.html" class="block px-4 py-3 bg-indigo-600 rounded-xl font-semibold shadow-md flex items-center justify-between mt-4 border border-indigo-500">
+                <span>🏆 Top Shops Data</span>
+                <span class="bg-blue-400 text-indigo-900 text-[10px] px-2 py-0.5 rounded-full font-black">PRO</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-indigo-800">
+            <button onclick="adminLogout()" class="w-full px-4 py-3 bg-indigo-800 hover:bg-red-600 rounded-xl font-medium transition text-left">🚪 Logout Boss</button>
+        </div>
+    </aside>
 
-    <div id="adminDashboardScreen" class="hidden flex-1 flex flex-col h-screen overflow-hidden">
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
         
-        <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-20">
-            <h1 class="text-xl font-black text-gray-900">Smart<span class="text-orange-600">Shop</span> <span class="text-sm font-bold text-gray-500 ml-2">Super Admin</span></h1>
-            <button onclick="adminLogout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-100 transition">Logout 🚪</button>
+        <header class="bg-white shadow-sm px-4 md:px-8 py-5 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <a href="admin.html" class="md:hidden bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm border border-gray-200">← Back</a>
+                <h2 class="text-xl font-bold text-gray-800">Platform Analytics 📈</h2>
+            </div>
+            
+            <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> LIVE DATA
+            </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 md:p-8">
-            <div class="max-w-6xl mx-auto space-y-6">
+        <div class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-indigo-500"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Platform Views</p>
+                    <h3 class="text-4xl font-black text-indigo-600 mt-2" id="totalPlatformViews">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-blue-500"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Active Shops</p>
+                    <h3 class="text-4xl font-black text-gray-900 mt-2" id="totalActiveShops">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-cyan-500"></div>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Products Hosted</p>
+                    <h3 class="text-4xl font-black text-gray-900 mt-2" id="totalProductsHosted">0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 border-l-4 border-l-blue-600">
-                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Registered Shops</p>
-                        <h3 class="text-3xl font-black text-gray-900 mt-1" id="totalShopsCount">0</h3>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 border-l-4 border-l-green-600">
-                        <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Products Listed</p>
-                        <h3 class="text-3xl font-black text-gray-900 mt-1" id="totalProductsCount">0</h3>
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6">🏆 Top 5 Shops (By Customer Scans)</h3>
+                    <div class="relative h-[300px]">
+                        <canvas id="topShopsChart"></canvas>
                     </div>
                 </div>
 
-                <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg p-6 text-white mt-8">
-                    <h2 class="text-lg font-black mb-4 flex items-center gap-2">🏆 Top Performing Shops (Leaderboard)</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="leaderboardContainer">
-                        <p class="text-sm font-medium text-orange-100">Loading leaderboard...</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
-                    <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                        <h2 class="text-lg font-bold text-gray-900">🏪 All Registered Vendors</h2>
-                        <button onclick="fetchAdminData()" class="text-sm font-bold text-orange-600 hover:underline">🔄 Refresh</button>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-white border-b border-gray-100">
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Shop Name</th>
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Owner & Mobile</th>
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Views 👁️</th>
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="vendorTableBody" class="divide-y divide-gray-50">
-                                <tr><td colspan="6" class="text-center py-8 text-gray-400 font-medium">Fetching data...</td></tr>
-                            </tbody>
-                        </table>
+                <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-extrabold text-gray-900 mb-6">📦 Products per Shop (Top 5)</h3>
+                    <div class="relative h-[300px]">
+                        <canvas id="productsChart"></canvas>
                     </div>
                 </div>
 
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <script>
-        // Check Login State
-        if (localStorage.getItem('adminToken')) {
-            document.getElementById('adminLoginScreen').classList.add('hidden');
-            document.getElementById('adminDashboardScreen').classList.remove('hidden');
-            fetchAdminData();
-        }
-
-        // 🔐 Admin Login Handling
-        document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const username = document.getElementById('adminUser').value;
-            const password = document.getElementById('adminPass').value;
-            const btn = this.querySelector('button');
-
-            btn.innerText = "Authenticating... ⏳";
-            try {
-                const response = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    localStorage.setItem('adminToken', data.token);
-                    document.getElementById('adminLoginScreen').classList.add('hidden');
-                    document.getElementById('adminDashboardScreen').classList.remove('hidden');
-                    fetchAdminData();
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            } catch (error) {
-                alert("Network error.");
-            } finally {
-                btn.innerText = "Login as Admin Boss 🚀";
-            }
-        });
-
-        // 📊 Fetch Dashboard Data
-        async function fetchAdminData() {
-            try {
-                // Fetch Vendors
-                const venRes = await fetch('/api/admin/vendors');
-                const vendors = await venRes.json();
-                document.getElementById('totalShopsCount').innerText = vendors.length;
-
-                // Fetch Products
-                const prodRes = await fetch('/api/admin/products');
-                const products = await prodRes.json();
-                document.getElementById('totalProductsCount').innerText = products.length;
-
-                renderLeaderboard(vendors);
-                renderVendorsTable(vendors);
-
-            } catch (error) {
-                console.error("Error fetching admin data", error);
-            }
-        }
-
-        // 🏆 Render Leaderboard
-        function renderLeaderboard(vendors) {
-            const container = document.getElementById('leaderboardContainer');
-            
-            // Sort vendors by views (Highest to lowest)
-            const sortedVendors = [...vendors].sort((a, b) => (b.shopViews || 0) - (a.shopViews || 0));
-            // Top 3 nikal lo
-            const top3 = sortedVendors.slice(0, 3);
-
-            if(top3.length === 0) {
-                container.innerHTML = `<p class="text-sm text-orange-100">Abhi tak koi dukan active nahi hui hai.</p>`;
-                return;
-            }
-
-            const medals = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
-            
-            container.innerHTML = top3.map((v, index) => `
-                <div class="bg-white/20 backdrop-blur-sm p-4 rounded-xl border border-white/30 flex justify-between items-center">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-wider text-orange-200 mb-1">${medals[index] || 'Top'}</p>
-                        <h4 class="font-bold text-white text-lg leading-tight truncate max-w-[150px]">${v.shopName}</h4>
-                        <p class="text-xs text-orange-100 mt-1">${v.category || 'General Store'}</p>
-                    </div>
-                    <div class="text-right">
-                        <span class="block text-3xl font-black text-white">${v.shopViews || 0}</span>
-                        <span class="text-[10px] font-bold uppercase text-orange-200">Total Scans</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // 🏪 Render Vendors Table
-        function renderVendorsTable(vendors) {
-            const tbody = document.getElementById('vendorTableBody');
-            if (vendors.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">No vendors found.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = vendors.map(vendor => {
-                const isSuspended = vendor.isSuspended || false;
-                const statusBadge = isSuspended 
-                    ? `<span class="bg-red-50 text-red-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold border border-red-200">Suspended</span>` 
-                    : `<span class="bg-green-50 text-green-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold border border-green-200">Active</span>`;
-
-                const toggleActionText = isSuspended ? "🟢 Resume" : "🔴 Suspend";
-                
-                return `
-                <tr class="hover:bg-gray-50 transition border-b border-gray-50">
-                    <td class="py-4 px-6">
-                        <p class="font-bold text-gray-900 text-sm">${vendor.shopName}</p>
-                        <a href="/shop.html?store=${vendor.shopSlug}" target="_blank" class="text-[10px] text-blue-600 hover:underline font-bold">View Live ↗</a>
-                    </td>
-                    <td class="py-4 px-6">
-                        <p class="font-bold text-gray-800 text-xs">${vendor.ownerName}</p>
-                        <p class="text-[10px] text-gray-500 font-medium">📱 ${vendor.mobileNumber}</p>
-                    </td>
-                    <td class="py-4 px-6 text-xs text-gray-600 font-medium bg-gray-50/50">${vendor.category || 'N/A'}</td>
-                    
-                    <td class="py-4 px-6 font-black text-orange-600 text-base">${vendor.shopViews || 0}</td>
-                    
-                    <td class="py-4 px-6">${statusBadge}</td>
-                    <td class="py-4 px-6 text-right space-x-2">
-                        <a href="/analytics.html?store=${vendor.shopSlug}" target="_blank" class="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md transition">📈 Data</a>
-                        
-                        <button onclick="toggleVendorStatus('${vendor._id}')" class="text-xs font-bold text-gray-700 hover:bg-gray-100 px-2 py-1.5 rounded-md transition border border-gray-200">${toggleActionText}</button>
-                        <button onclick="deleteVendor('${vendor._id}')" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-2 py-1.5 rounded-md transition shadow-sm">Delete</button>
-                    </td>
-                </tr>
-            `}).join('');
-        }
-
-        async function toggleVendorStatus(id) {
-            if(!confirm("Are you sure you want to change this vendor's status?")) return;
-            try {
-                const res = await fetch(`/api/admin/vendor/toggle-status/${id}`, { method: 'PUT' });
-                if(res.ok) fetchAdminData();
-            } catch (err) { alert('Error updating status'); }
-        }
-
-        async function deleteVendor(id) {
-            if(!confirm("⚠️ WARNING: This will permanently delete the vendor and ALL their products. Continue?")) return;
-            try {
-                const res = await fetch(`/api/admin/vendor/${id}`, { method: 'DELETE' });
-                if(res.ok) fetchAdminData();
-            } catch (err) { alert('Delete failed'); }
+        // Security Check
+        if (!localStorage.getItem('adminToken')) {
+            window.location.href = 'admin.html';
         }
 
         function adminLogout() {
             localStorage.removeItem('adminToken');
-            location.reload();
+            window.location.href = 'admin.html';
         }
+
+        async function fetchAnalyticsData() {
+            try {
+                // Fetch Vendors
+                const vRes = await fetch('/api/admin/vendors');
+                const vendors = await vRes.json();
+                
+                // Fetch Products
+                const pRes = await fetch('/api/admin/products');
+                const products = await pRes.json();
+
+                // 1. Calculate Quick Stats
+                const activeShops = vendors.filter(v => !v.isSuspended).length;
+                let totalViews = 0;
+                vendors.forEach(v => { totalViews += (v.shopViews || 0); });
+
+                document.getElementById('totalActiveShops').innerText = activeShops;
+                document.getElementById('totalPlatformViews').innerText = totalViews;
+                document.getElementById('totalProductsHosted').innerText = products.length;
+
+                // 2. Prepare Data for Charts
+                renderTopShopsChart(vendors);
+                renderProductsChart(vendors, products);
+
+            } catch (error) {
+                console.error("Error fetching analytics data", error);
+            }
+        }
+
+        function renderTopShopsChart(vendors) {
+            const sortedVendors = [...vendors].sort((a, b) => (b.shopViews || 0) - (a.shopViews || 0)).slice(0, 5);
+            
+            const labels = sortedVendors.map(v => v.shopName);
+            const data = sortedVendors.map(v => v.shopViews || 0);
+
+            const ctx = document.getElementById('topShopsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Views / Scans',
+                        data: data,
+                        backgroundColor: 'rgba(79, 70, 229, 0.9)', // Indigo-600
+                        borderRadius: 8,
+                        barThickness: 45
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderProductsChart(vendors, products) {
+            // Count products per shop slug
+            const productCounts = {};
+            products.forEach(p => {
+                productCounts[p.shopSlug] = (productCounts[p.shopSlug] || 0) + 1;
+            });
+
+            // Map slugs back to names and sort
+            const shopStats = Object.keys(productCounts).map(slug => {
+                const shop = vendors.find(v => v.shopSlug === slug);
+                return {
+                    name: shop ? shop.shopName : slug,
+                    count: productCounts[slug]
+                };
+            }).sort((a, b) => b.count - a.count).slice(0, 5);
+
+            const labels = shopStats.map(s => s.name);
+            const data = shopStats.map(s => s.count);
+
+            const ctx = document.getElementById('productsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#4f46e5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+
+        // Initialize
+        fetchAnalyticsData();
     </script>
 </body>
 </html>
