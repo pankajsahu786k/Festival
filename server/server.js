@@ -94,15 +94,23 @@ app.post('/api/vendor/login', async (req, res) => {
 
 app.post('/api/vendor/setup-shop', async (req, res) => {
     try {
-        const { shopSlug, category, address, upiId, description } = req.body;
+        const { shopSlug, category, address, description, latitude, longitude } = req.body;
+        
+        // Database update request
         const updatedVendor = await Vendor.findOneAndUpdate(
             { shopSlug: shopSlug },
-            { category, address, upiId, description, isSetupCompleted: true },
+            { 
+                category, 
+                address, 
+                description, 
+                location: { lat: latitude, lng: longitude }, // 📍 GPS data saved here
+                isSetupCompleted: true 
+            },
             { new: true } 
         );
 
         if (!updatedVendor) return res.status(404).json({ message: "Vendor nahi mila. Kripya wapas login karein." });
-        res.json({ message: "Shop Profile Successfully Setup!", vendor: updatedVendor });
+        res.json({ message: "Shop Profile Successfully Setup with GPS!", vendor: updatedVendor });
 
     } catch (error) {
         console.error("Setup Error: ", error);

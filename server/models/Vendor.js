@@ -9,12 +9,16 @@ const vendorSchema = new mongoose.Schema({
     role: { type: String, default: 'vendor' },
     category: { type: String, default: '' },
     address: { type: String, default: '' },
-    upiId: { type: String, default: '' },
     description: { type: String, default: '' },
     isSetupCompleted: { type: Boolean, default: false },
     isSuspended: { type: Boolean, default: false },
     
-    // 🚀 NAYA ANALYTICS DATA YAHAN ADD KIYA HAI
+    // 📍 NAYA GPS LOCATION SYSTEM
+    location: {
+        lat: { type: Number },
+        lng: { type: Number }
+    },
+
     shopViews: { type: Number, default: 0 },
     totalTimeSpent: { type: Number, default: 0 },
     totalSessions: { type: Number, default: 0 }
