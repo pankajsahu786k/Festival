@@ -112,7 +112,13 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
 
 app.get('/api/shop/:slug', async (req, res) => {
     try {
-        const shop = await Vendor.findOne({ shopSlug: req.params.slug, role: 'vendor' });
+        // 🚀 Yahan findOneAndUpdate use kiya hai aur $inc lagaya hai (View +1 karne ke liye)
+        const shop = await Vendor.findOneAndUpdate(
+            { shopSlug: req.params.slug, role: 'vendor' },
+            { $inc: { shopViews: 1 } },
+            { new: true }
+        );
+        
         if (!shop) return res.status(404).json({ message: "Dukan nahi mili" });
 
         if (shop.isSuspended) {
