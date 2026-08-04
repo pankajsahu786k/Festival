@@ -45,6 +45,11 @@
                 <a href="#" onclick="showSection('overview')" id="nav-overview" class="block px-4 py-3 bg-indigo-600 rounded-xl font-semibold shadow-md">📊 Overview</a>
                 <a href="#" onclick="showSection('vendors')" id="nav-vendors" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">🏪 Manage Vendors</a>
                 <a href="#" onclick="showSection('products')" id="nav-products" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">📦 All Listings</a>
+                
+                <a href="adminanalytics.html" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition flex items-center justify-between border border-indigo-700 mt-4 shadow-sm">
+                    <span>🏆 Top Shops Data</span>
+                    <span class="bg-blue-500 text-[10px] px-2 py-0.5 rounded-full font-bold">PRO</span>
+                </a>
             </nav>
             <div class="p-4 border-t border-indigo-800">
                 <button onclick="adminLogout()" class="w-full px-4 py-3 bg-indigo-800 hover:bg-red-600 rounded-xl font-medium transition text-left">🚪 Logout Boss</button>
@@ -116,9 +121,6 @@
             fetchAdminData();
         }
 
-        // ==========================================
-        // 🔐 ADMIN LOGIN
-        // ==========================================
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('adminUser').value;
@@ -150,9 +152,6 @@
             window.location.reload();
         }
 
-        // ==========================================
-        // 🎛️ DASHBOARD NAVIGATION
-        // ==========================================
         function showSection(sectionId) {
             ['overview', 'vendors', 'products'].forEach(id => {
                 document.getElementById(`sec-${id}`).classList.add('hidden');
@@ -164,9 +163,6 @@
             document.getElementById(`nav-${sectionId}`).classList.remove('hover:bg-indigo-800');
         }
 
-        // ==========================================
-        // 📊 FETCH ADMIN DATA
-        // ==========================================
         async function fetchAdminData() {
             try {
                 const vRes = await fetch(`${API_URL}/api/admin/vendors`);
@@ -224,22 +220,16 @@
             } catch(err) { console.error("Admin data fetch error", err); }
         }
 
-        // ==========================================
-        // 🚀 SUSPEND / RESUME VENDOR
-        // ==========================================
         async function toggleSuspend(id) {
             if(!confirm("Kya aap sach me is dukandaar ka account status badalna chahte hain?")) return;
             try {
                 const res = await fetch(`${API_URL}/api/admin/vendor/toggle-status/${id}`, { method: 'PUT' });
                 const data = await res.json();
                 alert(data.message);
-                fetchAdminData(); // Refresh Data
+                fetchAdminData(); 
             } catch (err) { alert("Error changing status."); }
         }
 
-        // ==========================================
-        // 🗑️ DELETE VENDOR
-        // ==========================================
         async function deleteVendor(vendorId, shopName) {
             if(!confirm(`WARNING: Kya aap sach me '${shopName}' dukan aur uske SAARE items delete karna chahte hain? Yeh wapas nahi aayega!`)) return;
             try {
