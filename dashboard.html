@@ -228,11 +228,23 @@
     </div>
 
     <script>
-    const token = localStorage.getItem('token');
-    if (!token) window.location.href = 'login.html';
-
-    const userRole = localStorage.getItem('userRole') || localStorage.getItem('role') || 'vendor';
-    const shopSlug = localStorage.getItem('shopSlug');
+        
+   // 📍 🚨 LOCATION ENFORCER LOGIC FOR OLD VENDORS
+    async function enforceLocation() {
+        if (userRole === 'vendor' && shopSlug) {
+            try {
+                const res = await fetch(`/api/vendor/check-location/${shopSlug}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.hasLocation === false) {
+                        alert("⚠️ Naya System Update: Aapko apni dukaan ki exact 'GPS Location' set karni hogi. Kripya is form ko poora karein!");
+                        window.location.href = "setup-shop.html";
+                    }
+                }
+            } catch(e) { console.log("Location check failed"); }
+        }
+    }
+    enforceLocation(); // Run as soon as dashboard opens
     const shopUrl = `/shop.html?store=${shopSlug}`;
 
     if (userRole === 'agent') {

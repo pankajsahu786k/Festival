@@ -26,8 +26,14 @@
                     <option value="clothes">Clothing & Fashion</option>
                     <option value="realestate">Real Estate & Property Brokerage</option>
                     <option value="electronics">Electronics & Mobile Repair</option>
-                    <option value="other">Other / General Store</option>
+                    <option value="other">Other (Apni marzi se likhein)</option>
                 </select>
+            </div>
+
+            <div id="otherCategoryBox" class="hidden p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                <label class="block text-sm font-bold text-gray-900 mb-2">Apni Category Likhain ✍️</label>
+                <input type="text" id="customCategory" placeholder="E.g. Bakery, Hardware, Pharmacy..." 
+                    class="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition text-sm font-medium">
             </div>
 
             <div>
@@ -65,6 +71,21 @@
     </div>
 
     <script>
+        // 🆕 OTHER CATEGORY LOGIC
+        const categorySelect = document.getElementById('category');
+        const otherCategoryBox = document.getElementById('otherCategoryBox');
+        const customCategoryInput = document.getElementById('customCategory');
+
+        categorySelect.addEventListener('change', function() {
+            if (this.value === 'other') {
+                otherCategoryBox.classList.remove('hidden');
+                customCategoryInput.required = true;
+            } else {
+                otherCategoryBox.classList.add('hidden');
+                customCategoryInput.required = false;
+            }
+        });
+
         // GPS Coordinates Variables
         let shopLat = null;
         let shopLng = null;
@@ -80,7 +101,6 @@
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    // Success
                     (position) => {
                         shopLat = position.coords.latitude;
                         shopLng = position.coords.longitude;
@@ -92,19 +112,18 @@
                         btn.innerHTML = "📍 Shop Located";
                         btn.classList.replace('bg-gray-900', 'bg-green-600');
                         btn.classList.replace('hover:bg-black', 'hover:bg-green-700');
-                        btn.disabled = true; // Ek baar set hone ke baad disable
+                        btn.disabled = true;
                     },
-                    // Error
                     (error) => {
                         btn.innerHTML = "📍 Detect My Shop";
                         errorMsg.classList.remove('hidden');
                         if(error.code === 1) {
                             errorMsg.innerText = "⚠️ Aapne Location permission allow nahi ki hai. Kripya URL bar me lock icon par click karke Location Allow karein.";
                         } else {
-                            errorMsg.innerText = "⚠️ Location track nahi ho paayi. Apna GPS (Location) chalu rakhein aur dobara try karein.";
+                            errorMsg.innerText = "⚠️ Location track nahi ho paayi. Apna GPS chalu rakhein aur try karein.";
                         }
                     },
-                    { enableHighAccuracy: true } // Accurate location ke liye
+                    { enableHighAccuracy: true }
                 );
             } else {
                 alert("Aapka browser ya mobile location ko support nahi karta.");
@@ -116,7 +135,6 @@
         document.getElementById('setupForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Pehle check karo ki Location mili ya nahi
             if(shopLat === null || shopLng === null) {
                 alert("⚠️ Kripya 'Detect My Shop' button par click karke apni dukan ki location set karein!");
                 return;
@@ -127,7 +145,13 @@
             submitBtn.disabled = true;
 
             const shopSlug = localStorage.getItem('shopSlug');
-            const category = document.getElementById('category').value;
+            
+            // 🆕 CHECK IF OTHER IS SELECTED
+            let finalCategory = categorySelect.value;
+            if (finalCategory === 'other') {
+                finalCategory = customCategoryInput.value.trim();
+            }
+
             const address = document.getElementById('address').value;
             const description = document.getElementById('description').value;
 
@@ -135,10 +159,13 @@
                 const response = await fetch('/api/vendor/setup-shop', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // 🚀 Backend me ab upiId nahi, latitude aur longitude jayega
                     body: JSON.stringify({ 
-                        shopSlug, category, address, description, 
-                        latitude: shopLat, longitude: shopLng 
+                        shopSlug, 
+                        category: finalCategory, // Yahan final category jayegi
+                        address, 
+                        description, 
+                        latitude: shopLat, 
+                        longitude: shopLng 
                     })
                 });
 
@@ -159,6 +186,5 @@
             }
         });
     </script>
-
 </body>
 </html>
