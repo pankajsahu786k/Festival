@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // 👈 CORS import kiya
+const cors = require('cors'); // 👈 CORS import kiya (API Block fix)
 const path = require('path'); 
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
@@ -18,8 +18,8 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 🚀 3. STATIC FILES FIX (Saari HTML files sahi se load hongi)
-app.use(express.static(__dirname)); 
+// 🚀 3. STATIC FILES FIX (Wapas aapka purana path '../' lagaya hai jisse saare page theek se load honge)
+app.use(express.static(path.join(__dirname, '../')));
 
 // Live Database Connection
 const MONGO_URI = process.env.MONGO_URI; 
@@ -28,8 +28,9 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
+// 👇 Yahan path theek kar diya hai
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Index.html')); // Capital I for Index.html
+    res.sendFile(path.join(__dirname, '../Index.html')); 
 });
 
 app.get('/api/test', (req, res) => {
@@ -154,7 +155,7 @@ app.get('/api/vendor/check-location/:slug', async (req, res) => {
 });
 
 // ==========================================
-// 🚀 AGENT MANAGEMENT APIS
+// 🚀 1.5 AGENT MANAGEMENT APIS
 // ==========================================
 
 app.post('/api/vendor/add-agent', async (req, res) => {
