@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors'); // 👈 CORS import kiya (API Block fix)
+const cors = require('cors'); 
 const path = require('path'); 
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
@@ -11,14 +11,14 @@ const Order = require('./models/Order');
 
 const app = express();
 
-// 🚀 1. CORS ENABLE KARNA BOHOT ZAROORI HAI (Iske bina APIs block ho jati hain)
+// CORS ENABLE KARNA BOHOT ZAROORI HAI
 app.use(cors());
 
-// 🚀 2. Cloud images ke liye limit
+// Cloud images ke liye limit
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 🚀 3. STATIC FILES FIX (Wapas aapka purana path '../' lagaya hai jisse saare page theek se load honge)
+// STATIC FILES FIX
 app.use(express.static(path.join(__dirname, '../')));
 
 // Live Database Connection
@@ -28,7 +28,6 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('✅ Live MongoDB Atlas Connected Successfully!'))
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
-// 👇 Yahan path theek kar diya hai
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Index.html')); 
 });
@@ -422,6 +421,65 @@ app.get('/api/analytics/dashboard/:shopSlug', async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: "Analytics fetch error" });
+    }
+});
+
+// ==========================================
+// 🛒 6. CUSTOMER HYPERLOCAL SEARCH API
+// ==========================================
+
+function getDistanceInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in KM
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; 
+}
+
+app.post('/api/customer/search', async (req, res) => {
+    try {
+        const { latitude, longitude, searchQuery } = req.body;
+        
+        const vendors = await Vendor.find({ isSuspended: false, 'location.lat': { $exists: true } });
+
+        const vendorDistances = {};
+        vendors.forEach(v => {
+            if (latitude && longitude) {
+                const dist = getDistanceInKm(latitude, longitude, v.location.lat, v.location.lng);
+                vendorDistances[v.shopSlug] = dist;
+            } else {
+                vendorDistances[v.shopSlug] = 0; 
+            }
+        });
+
+        let productQuery = {};
+        if (searchQuery) {
+            productQuery.name = { $regex: searchQuery, $options: 'i' }; 
+        }
+        const products = await Product.find(productQuery);
+
+        const searchResults = products.map(p => {
+            const shop = vendors.find(v => v.shopSlug === p.shopSlug);
+            if (!shop) return null; 
+            return {
+                ...p._doc,
+                shopName: shop.shopName,
+                distance: vendorDistances[p.shopSlug]
+            };
+        }).filter(p => p !== null);
+
+        if (latitude && longitude) {
+            searchResults.sort((a, b) => a.distance - b.distance);
+        }
+
+        res.json(searchResults);
+
+    } catch (error) {
+        console.error("Search API Error:", error);
+        res.status(500).json({ message: "Search fail ho gaya." });
     }
 });
 
