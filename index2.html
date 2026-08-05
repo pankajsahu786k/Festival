@@ -53,108 +53,113 @@
     </main>
 
     <script>
-        // API URL (Since it's on same domain, relative URL is fine, but we use absolute for safety if tested locally)
-        const API_URL = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost' 
-            ? 'https://smart-shop-19.onrender.com' // Ya festival wala link
-            : '';
+    // 🚀 URL ko blank kar diya taaki wo apne aap aapka Render domain utha le
+const API_URL = '';
 
-        let userLat = null;
-        let userLng = null;
+let userLat = null;
+let userLng = null;
 
-        // 📍 1. GET USER LOCATION
-        document.getElementById('locBtn').addEventListener('click', () => {
-            const locText = document.getElementById('locText');
-            locText.innerText = "Locating... ⏳";
-            
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        userLat = position.coords.latitude;
-                        userLng = position.coords.longitude;
-                        locText.innerText = "Location Set ✅";
-                        document.getElementById('locBtn').classList.replace('bg-gray-100', 'bg-green-100');
-                        document.getElementById('locBtn').classList.replace('text-gray-700', 'text-green-700');
-                        fetchProducts(''); // Auto search nearby after location is set
-                    },
-                    (error) => {
-                        alert("⚠️ Location permission denied! Hum default search dikhayenge.");
-                        locText.innerText = "Location Blocked ❌";
-                    }
-                );
-            } else {
-                alert("Browser doesn't support geolocation.");
+// 📍 1. GET USER LOCATION
+document.getElementById('locBtn').addEventListener('click', () => {
+    const locText = document.getElementById('locText');
+    locText.innerText = "Locating... ⏳";
+    
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                userLat = position.coords.latitude;
+                userLng = position.coords.longitude;
+                locText.innerText = "Location Set ✅";
+                document.getElementById('locBtn').classList.replace('bg-gray-100', 'bg-green-100');
+                document.getElementById('locBtn').classList.replace('text-gray-700', 'text-green-700');
+                fetchProducts(document.getElementById('searchInput').value.trim()); 
+            },
+            (error) => {
+                alert("⚠️ Location permission denied! Hum default search dikhayenge.");
+                locText.innerText = "Location Blocked ❌";
+                fetchProducts(document.getElementById('searchInput').value.trim());
             }
+        );
+    } else {
+        alert("Browser doesn't support geolocation.");
+    }
+});
+
+// 🔍 2. SEARCH PRODUCTS
+document.getElementById('searchBtn').addEventListener('click', () => {
+    const query = document.getElementById('searchInput').value.trim();
+    fetchProducts(query);
+});
+
+document.getElementById('searchInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') fetchProducts(e.target.value.trim());
+});
+
+// 🛍️ 3. FETCH & RENDER DATA
+async function fetchProducts(searchQuery) {
+    const grid = document.getElementById('productsGrid');
+    const title = document.getElementById('resultTitle');
+    
+    grid.innerHTML = `<p class="col-span-full text-center py-10 text-orange-600 font-bold animate-pulse">Searching nearby stores... ⏳</p>`;
+    title.innerText = searchQuery ? `Results for "${searchQuery}" 🎯` : `Trending Nearby Products 🔥`;
+
+    try {
+        const res = await fetch(`${API_URL}/api/customer/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude: userLat, longitude: userLng, searchQuery: searchQuery })
         });
 
-        // 🔍 2. SEARCH PRODUCTS
-        document.getElementById('searchBtn').addEventListener('click', () => {
-            const query = document.getElementById('searchInput').value.trim();
-            fetchProducts(query);
-        });
-
-        // Trigger search on Enter key
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fetchProducts(e.target.value.trim());
-        });
-
-        // 🛍️ 3. FETCH & RENDER DATA
-        async function fetchProducts(searchQuery) {
-            const grid = document.getElementById('productsGrid');
-            const title = document.getElementById('resultTitle');
-            
-            grid.innerHTML = `<p class="col-span-full text-center py-10 text-orange-600 font-bold animate-pulse">Searching nearby stores... ⏳</p>`;
-            title.innerText = searchQuery ? `Results for "${searchQuery}" 🎯` : `Trending Nearby Products 🔥`;
-
-            try {
-                const res = await fetch(`${API_URL}/api/customer/search`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ latitude: userLat, longitude: userLng, searchQuery: searchQuery })
-                });
-
-                const data = await res.json();
-
-                if (data.length === 0) {
-                    grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman nahi mila. Kuch aur search karke dekhein! 😔</p>`;
-                    return;
-                }
-
-                grid.innerHTML = data.map(item => {
-                    // Distance Format (e.g. 1.2 KM away)
-                    let distanceHtml = '';
-                    if (item.distance !== undefined && item.distance !== null && userLat) {
-                        distanceHtml = `<span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">📍 ${item.distance.toFixed(1)} KM away</span>`;
-                    }
-
-                    return `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition overflow-hidden group flex flex-col">
-                        <div class="relative h-40 overflow-hidden bg-gray-50">
-                            <img src="${item.images[0] || 'https://via.placeholder.com/150'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
-                        </div>
-                        <div class="p-4 flex flex-col flex-1">
-                            <h4 class="font-bold text-gray-900 text-sm line-clamp-2 mb-1">${item.name}</h4>
-                            <p class="text-xs font-medium text-gray-500 mb-2 truncate">🏪 ${item.shopName}</p>
-                            
-                            <div class="mt-auto">
-                                <div class="flex justify-between items-end mb-3">
-                                    <span class="font-black text-orange-600 text-lg">₹${item.price}</span>
-                                    ${distanceHtml}
-                                </div>
-                                <a href="/shop.html?store=${item.shopSlug}" target="_blank" class="block w-full text-center bg-gray-900 text-white font-bold text-xs py-2.5 rounded-xl hover:bg-black transition">
-                                    Visit Store ↗
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                `}).join('');
-
-            } catch (err) {
-                grid.innerHTML = `<p class="col-span-full text-center py-10 text-red-500 font-bold">⚠️ Connection error. Please try again.</p>`;
-            }
+        // 🚨 ASLI ERROR PAKADNE KA NAYA LOGIC
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Server Error (${res.status}): ${errText}`);
         }
 
-        // Initial Load (Without query or location)
-        fetchProducts('');
+        const data = await res.json();
+
+        if (data.length === 0) {
+            grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman nahi mila. Kuch aur search karke dekhein! 😔</p>`;
+            return;
+        }
+
+        grid.innerHTML = data.map(item => {
+            let distanceHtml = '';
+            if (item.distance !== undefined && item.distance !== null && userLat) {
+                distanceHtml = `<span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">📍 ${item.distance.toFixed(1)} KM away</span>`;
+            }
+
+            return `
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition overflow-hidden group flex flex-col">
+                <div class="relative h-40 overflow-hidden bg-gray-50">
+                    <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                </div>
+                <div class="p-4 flex flex-col flex-1">
+                    <h4 class="font-bold text-gray-900 text-sm line-clamp-2 mb-1">${item.name}</h4>
+                    <p class="text-xs font-medium text-gray-500 mb-2 truncate">🏪 ${item.shopName}</p>
+                    
+                    <div class="mt-auto">
+                        <div class="flex justify-between items-end mb-3">
+                            <span class="font-black text-orange-600 text-lg">₹${item.price}</span>
+                            ${distanceHtml}
+                        </div>
+                        <a href="/shop.html?store=${item.shopSlug}" target="_blank" class="block w-full text-center bg-gray-900 text-white font-bold text-xs py-2.5 rounded-xl hover:bg-black transition">
+                            Visit Store ↗
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `}).join('');
+
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        // Ab yahan generic error nahi, Asli Error dikhegi
+        grid.innerHTML = `<p class="col-span-full text-center py-10 text-red-500 font-bold">⚠️ ${err.message}</p>`;
+    }
+}
+
+// Initial Load
+fetchProducts('');
     </script>
 </body>
 </html>
