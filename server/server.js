@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 const express = require('express');
 const mongoose = require('mongoose');
-const cors = require('cors');
+const cors = require('cors'); // 👈 CORS import kiya
 const path = require('path'); 
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
@@ -11,12 +11,15 @@ const Order = require('./models/Order');
 
 const app = express();
 
-// 🚀 Cloud images ke liye limit badhayi hui hai
+// 🚀 1. CORS ENABLE KARNA BOHOT ZAROORI HAI (Iske bina APIs block ho jati hain)
+app.use(cors());
+
+// 🚀 2. Cloud images ke liye limit
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Static files serve karne ke liye
-app.use(express.static(path.join(__dirname, '../')));
+// 🚀 3. STATIC FILES FIX (Saari HTML files sahi se load hongi)
+app.use(express.static(__dirname)); 
 
 // Live Database Connection
 const MONGO_URI = process.env.MONGO_URI; 
@@ -26,7 +29,7 @@ mongoose.connect(MONGO_URI)
     .catch((err) => console.log('❌ Database Connection Error: ', err));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../Index.html'));
+    res.sendFile(path.join(__dirname, 'Index.html')); // Capital I for Index.html
 });
 
 app.get('/api/test', (req, res) => {
@@ -96,14 +99,13 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
     try {
         const { shopSlug, category, address, description, latitude, longitude } = req.body;
         
-        // Database update request
         const updatedVendor = await Vendor.findOneAndUpdate(
-            { shopSlug: shopSlug },
+            { shopSlug: shopSlug, role: 'vendor' },
             { 
                 category, 
                 address, 
                 description, 
-                location: { lat: latitude, lng: longitude }, // 📍 GPS data saved here
+                location: { lat: latitude, lng: longitude },
                 isSetupCompleted: true 
             },
             { new: true } 
@@ -120,7 +122,6 @@ app.post('/api/vendor/setup-shop', async (req, res) => {
 
 app.get('/api/shop/:slug', async (req, res) => {
     try {
-        // 🚀 Yahan findOneAndUpdate use kiya hai aur $inc lagaya hai (View +1 karne ke liye)
         const shop = await Vendor.findOneAndUpdate(
             { shopSlug: req.params.slug, role: 'vendor' },
             { $inc: { shopViews: 1 } },
@@ -140,13 +141,24 @@ app.get('/api/shop/:slug', async (req, res) => {
     }
 });
 
+app.get('/api/vendor/check-location/:slug', async (req, res) => {
+    try {
+        const shop = await Vendor.findOne({ shopSlug: req.params.slug, role: 'vendor' });
+        if (!shop) return res.status(404).json({ hasLocation: false });
+        
+        const hasLoc = !!(shop.location && shop.location.lat);
+        res.json({ hasLocation: hasLoc });
+    } catch (error) {
+        res.status(500).json({ hasLocation: true }); 
+    }
+});
+
 // ==========================================
-// 🚀 1.5 AGENT MANAGEMENT APIS
+// 🚀 AGENT MANAGEMENT APIS
 // ==========================================
 
 app.post('/api/vendor/add-agent', async (req, res) => {
     try {
-        // 🛠️ YEH LINE ERROR KO FIX KAREGI: Database ka purana lock hata degi
         try { await mongoose.connection.collection('vendors').dropIndex('shopSlug_1'); } catch(e) {}
 
         const { shopSlug, agentName, mobileNumber, password } = req.body;
@@ -355,23 +367,16 @@ app.delete('/api/admin/vendor/:id', async (req, res) => {
         res.status(500).json({ message: "Vendor delete karne me error." });
     }
 });
+
 // ==========================================
 // 📈 5. ANALYTICS & TRACKING APIS
 // ==========================================
-
-// 1. Customer ka Time Spent Track karna (Jab wo dukan band kare tab chalega)
 app.post('/api/analytics/track-time', async (req, res) => {
     try {
         const { shopSlug, timeSpentSeconds } = req.body;
-        // Hum Vendor data me total time aur total visitors count karenge
         await Vendor.findOneAndUpdate(
             { shopSlug: shopSlug },
-            { 
-                $inc: { 
-                    totalTimeSpent: timeSpentSeconds, 
-                    totalSessions: 1 
-                } 
-            }
+            { $inc: { totalTimeSpent: timeSpentSeconds, totalSessions: 1 } }
         );
         res.json({ message: "Time tracked" });
     } catch (error) {
@@ -379,7 +384,6 @@ app.post('/api/analytics/track-time', async (req, res) => {
     }
 });
 
-// 2. Product View Track karna (Jab customer kisi item par click kare)
 app.post('/api/analytics/track-product', async (req, res) => {
     try {
         const { productId } = req.body;
@@ -390,17 +394,15 @@ app.post('/api/analytics/track-product', async (req, res) => {
     }
 });
 
-// 3. Admin ke liye Analytics Data bhejna
 app.get('/api/analytics/dashboard/:shopSlug', async (req, res) => {
     try {
         const slug = req.params.shopSlug;
-        const vendor = await Vendor.findOne({ shopSlug: slug });
-        const products = await Product.find({ shopSlug: slug }).sort({ views: -1 }); // Sabse zyada view wale upar
+        const vendor = await Vendor.findOne({ shopSlug: slug, role: 'vendor' });
+        const products = await Product.find({ shopSlug: slug }).sort({ views: -1 }); 
         const orders = await Order.find({ shopSlug: slug });
 
         if(!vendor) return res.status(404).json({ message: "Shop not found" });
 
-        // Calculations
         const totalOrders = orders.length;
         const successfulOrders = orders.filter(o => o.status === 'Completed').length;
         const conversionRate = totalOrders > 0 ? Math.round((successfulOrders / totalOrders) * 100) : 0;
@@ -414,7 +416,7 @@ app.get('/api/analytics/dashboard/:shopSlug', async (req, res) => {
             totalOrders,
             successfulOrders,
             conversionRate: `${conversionRate}%`,
-            trendingProducts: products.slice(0, 5) // Top 5 trending products
+            trendingProducts: products.slice(0, 5) 
         });
 
     } catch (error) {
