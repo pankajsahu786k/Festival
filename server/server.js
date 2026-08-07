@@ -134,7 +134,13 @@ app.get('/api/shop/:slug', async (req, res) => {
             return res.status(403).json({ message: "Yeh dukan abhi temporary band (Suspended) hai." });
         }
 
-        res.json({ shopName: shop.shopName, mobileNumber: shop.mobileNumber, category: shop.category });
+        // 🚀 UPDATED: Response mein 'location' (lat, lng) bhi bhej rahe hain taaki distance nikal sakein
+        res.json({ 
+            shopName: shop.shopName, 
+            mobileNumber: shop.mobileNumber, 
+            category: shop.category,
+            location: shop.location || null 
+        });
     } catch (error) {
         console.error("Shop Fetch Error: ", error);
         res.status(500).json({ message: "Server error" });

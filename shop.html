@@ -22,6 +22,11 @@
                 <div>
                     <p class="text-[10px] font-extrabold text-orange-500 uppercase tracking-widest">Welcome to</p>
                     <h1 id="storeName" class="text-xl font-extrabold text-gray-900 truncate max-w-[200px]">Loading Store...</h1>
+                    <div id="shopDistanceBadge" class="mt-1 hidden">
+                        <span class="text-[11px] font-black text-blue-700 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
+                            📍 Loading distance...
+                        </span>
+                    </div>
                 </div>
                 <div class="bg-gray-50 p-2.5 rounded-full border border-gray-100 shadow-sm">🏪</div>
             </div>
@@ -41,13 +46,15 @@
             </button>
         </div>
 
-        <div id="productModal" class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300" style="transform: translateX(-50%) translateY(100%);">
-            <div class="sticky top-0 bg-white/80 backdrop-blur-md px-4 py-4 flex justify-between items-center z-10 border-b border-gray-100">
-                <button onclick="closeProductModal()" class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center text-lg shadow-sm">←</button>
-                <span class="font-bold text-gray-900">Item Details</span>
+        <div id="productModal" class="fixed inset-y-0 left-1/2 w-full max-w-md bg-white z-50 flex flex-col transition-all duration-300 shadow-2xl" style="transform: translateX(-50%) translateY(100%);">
+            <div class="sticky top-0 bg-white/90 backdrop-blur-md px-4 py-4 flex justify-between items-center z-10 border-b border-gray-100">
+                <button onclick="closeProductModal()" class="bg-gray-100 w-10 h-10 rounded-full flex items-center justify-center font-black shadow-sm text-gray-700 hover:bg-gray-200">←</button>
+                <span class="font-bold text-gray-900">View Full Item Photos</span>
                 <div class="w-10"></div> 
             </div>
-            <div id="modalContent" class="flex-1 overflow-y-auto pb-24"></div>
+            
+            <div id="modalContent" class="flex-1 overflow-y-auto pb-24 no-scrollbar"></div>
+            
             <div class="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-lg flex items-center justify-between gap-4">
                 <div class="flex flex-col">
                     <p class="text-xs text-gray-500 font-bold uppercase">Total Price</p>
@@ -83,7 +90,38 @@
         let realShopName = "";
         let products = [];
         let autoSlideInterval = null; 
+        let shopCoordinates = null; // To store shop's GPS coordinates
         const fallbackImg = "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=500&q=80";
+
+        // 📍 Client side distance computation logic (Haversine Formula)
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; 
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; 
+        }
+
+        // Request Grahak GPS to calculate distance dynamically
+        function detectCustomerDistance() {
+            if (navigator.geolocation && shopCoordinates && shopCoordinates.lat) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const custLat = position.coords.latitude;
+                    const custLng = position.coords.longitude;
+                    
+                    const distance = calculateDistance(custLat, custLng, shopCoordinates.lat, shopCoordinates.lng);
+                    
+                    const badge = document.getElementById('shopDistanceBadge');
+                    badge.innerHTML = `<span class="text-[11px] font-black text-blue-700 bg-blue-50 border border-blue-100 px-2.5 py-0.5 rounded-md">📍 ${distance.toFixed(1)} KM away from you</span>`;
+                    badge.classList.remove('hidden');
+                }, () => {
+                    console.log("Location access denied by user.");
+                });
+            }
+        }
 
         async function fetchShopDetails() {
             if(!storeId) return;
@@ -94,6 +132,11 @@
                     realShopName = data.shopName;
                     document.getElementById('storeName').innerText = realShopName;
                     dynamicVendorPhone = "91" + data.mobileNumber; 
+                    
+                    if(data.location) {
+                        shopCoordinates = data.location;
+                        detectCustomerDistance(); // Trigger live tracking engine
+                    }
                 }
             } catch (error) { console.error(error); }
         }
@@ -158,11 +201,11 @@
 
                 list.innerHTML += `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col relative ${isOutOfStock ? 'opacity-60 cursor-not-allowed' : ''}">
-                        <div onclick="${isOutOfStock ? '' : `openProductModal('${product.id}')`}" class="relative aspect-square overflow-hidden bg-gray-50 cursor-pointer">
+                        <div onclick="${isOutOfStock ? '' : `openProductModal('${product.id}')`}" class="relative scale-95 hover:scale-100 transition-all duration-300 aspect-square overflow-hidden bg-gray-50 cursor-pointer rounded-t-xl">
                             <img src="${firstImg}" onerror="this.src='${fallbackImg}'" class="w-full h-full object-cover">
                             ${isOutOfStock ? `<div class="absolute inset-0 bg-white/50 flex items-center justify-center"><span class="bg-red-600 text-white px-3 py-1 text-[10px] font-black uppercase rounded shadow-sm">Out of Stock</span></div>` : ''}
                             <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white px-2 py-0.5 rounded-md text-[10px] font-bold">
-                                📷 ${product.images.length}
+                                📷 ${product.images.length} Photos
                             </div>
                         </div>
                         <div class="p-3 flex-1 flex flex-col justify-between">
@@ -198,6 +241,7 @@
             renderProducts(); 
         }
 
+        // 🔄 Premium horizontal manual swiping & scrolling slider engine
         function startAutoSlider(totalImages) {
             stopAutoSlider(); 
             if (totalImages <= 1) return;
@@ -209,7 +253,7 @@
                     slider.scrollLeft = currentIndex * slider.clientWidth;
                     updateSliderDots(currentIndex);
                 }
-            }, 3000);
+            }, 3500);
         }
 
         function stopAutoSlider() {
@@ -228,26 +272,30 @@
         }
 
         function openProductModal(id) {
-    const product = products.find(p => p.id === id);
-    if(!product) return;
-    
-    trackProductClick(id); // 👈 YEH LINE ADD KAREIN - Is se click hote hi view badh jayega!
-    
-    // ... baki ka code waisa hi rahega ...
-
-            let imagesHtml = product.images.map(img => `<img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full h-72 object-cover flex-shrink-0 snap-center">`).join('');
+            const product = products.find(p => p.id === id);
+            if(!product) return;
+            
+            trackProductClick(id); // Analytics views count trigger
+            
+            // Native full wide scroll structure (Customer can manually scroll/swipe anytime)
+            let imagesHtml = product.images.map(img => `
+                <div class="w-full flex-shrink-0 snap-center flex items-center justify-center bg-black min-w-full">
+                    <img src="${img}" onerror="this.src='${fallbackImg}'" class="w-full max-h-[70vh] object-contain">
+                </div>
+            `).join('');
+            
             let dotsHtml = product.images.map((_, i) => `<span class="slider-dot h-2 rounded-full transition-all duration-300 ${i === 0 ? 'bg-orange-600 w-4' : 'bg-gray-300 w-2'}"></span>`).join('');
 
             document.getElementById('modalContent').innerHTML = `
-                <div class="relative">
-                    <div id="modalImageSlider" class="slider-container w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-black">
+                <div class="relative w-full overflow-hidden bg-black">
+                    <div id="modalImageSlider" class="slider-container w-full flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth">
                         ${imagesHtml}
                     </div>
-                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-white/60 backdrop-blur-md px-2.5 py-1.5 rounded-full shadow-sm">
+                    <div class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 bg-white/75 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md z-10">
                         ${dotsHtml}
                     </div>
                 </div>
-                <div class="p-5">
+                <div class="p-5 bg-white rounded-t-3xl -mt-4 relative z-10">
                     <div class="flex justify-between items-start gap-2 mb-2">
                         <h2 class="text-2xl font-extrabold text-gray-900 leading-tight">${product.name}</h2>
                         <span class="bg-blue-50 text-blue-700 text-[10px] font-black px-2 py-1 rounded shadow-sm flex-shrink-0">📦 Stock: ${product.stockQuantity}</span>
@@ -263,6 +311,8 @@
             updateModalFooterControls(product.id);
             const modal = document.getElementById('productModal');
             modal.style.transform = 'translateX(-50%) translateY(0)';
+            
+            // Initialize manual swipe event listeners
             startAutoSlider(product.images.length);
 
             const sliderEl = document.getElementById('modalImageSlider');
@@ -270,6 +320,9 @@
                 const index = Math.round(sliderEl.scrollLeft / sliderEl.clientWidth);
                 updateSliderDots(index);
             });
+
+            // Stop auto animation as soon as user touches/scrolls image manually
+            sliderEl.addEventListener('touchstart', stopAutoSlider, { passive: true });
         }
 
         function updateModalFooterControls(productId) {
@@ -315,7 +368,6 @@
             renderProducts(); 
             updateModalFooterControls(productId);
 
-            // Item pehli baar add hone par modal auto close kar do taaki cart bar screen par direct mil jaye
             if(isFirstAdd) {
                 closeProductModal();
             }
@@ -402,33 +454,28 @@
                 submitBtn.disabled = false;
             }
         }
+
         // ==========================================
-// 🕵️‍♂️ SMART TRACKING SYSTEM
-// ==========================================
+        // 🕵️‍♂️ SMART TRACKING SYSTEM
+        // ==========================================
+        let sessionStartTime = Date.now();
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'hidden') {
+                let timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000); 
+                if(timeSpent > 2) { 
+                    let data = JSON.stringify({ shopSlug: storeId, timeSpentSeconds: timeSpent });
+                    navigator.sendBeacon('/api/analytics/track-time', new Blob([data], { type: 'application/json' }));
+                }
+            }
+        });
 
-// 1. Time Tracking Logic
-let sessionStartTime = Date.now();
-
-// Jab browser tab band ho, ya minimize ho, tab time bhejo
-document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'hidden') {
-        let timeSpent = Math.floor((Date.now() - sessionStartTime) / 1000); // Seconds mein
-        if(timeSpent > 2) { // 2 second se kam ruka toh ignore karo
-            let data = JSON.stringify({ shopSlug: storeId, timeSpentSeconds: timeSpent });
-            // sendBeacon fast hota hai tab close hote waqt bhi chalta hai
-            navigator.sendBeacon('/api/analytics/track-time', new Blob([data], { type: 'application/json' }));
+        function trackProductClick(productId) {
+            fetch('/api/analytics/track-product', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId: productId })
+            });
         }
-    }
-});
-
-// 2. Product Click Tracking
-function trackProductClick(productId) {
-    fetch('/api/analytics/track-product', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId: productId })
-    });
-}
 
         fetchShopDetails();
         fetchProducts();
