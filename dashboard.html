@@ -15,10 +15,80 @@
         img { max-width: 100%; height: auto; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Normal screen par banner ko chupana */
+.print-only {
+    display: none;
+}
+
+/* Jab Print (Ctrl+P) dabega, tab kya hoga */
+@media print {
+    /* Dashboard ki baaki saari cheezein chupa do */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Sirf Banner ko dikhao */
+    #print-banner, #print-banner * {
+        visibility: visible;
+    }
+    
+    /* Banner ka mast sa design */
+    #print-banner {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        background-color: #f3f4f6;
+    }
+    
+    .banner-wrapper {
+        border: 4px solid #111827; /* Navy/Black border */
+        border-radius: 20px;
+        padding: 40px;
+        width: 90%;
+        max-width: 600px;
+        background-color: white;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .brand-title { font-size: 40px; margin-bottom: 10px; font-weight: 900; color: #111827; }
+    .scan-heading { font-size: 28px; color: #4b5563; margin-bottom: 5px; }
+    .shop-name-text { font-size: 22px; color: #1f2937; margin-bottom: 30px; }
+    
+    .qr-box img {
+        width: 300px;
+        height: 300px;
+        border: 5px solid #ea580c; /* Orange border around QR */
+        border-radius: 15px;
+        padding: 10px;
+    }
+    
+    .scan-instruction { font-size: 20px; margin-top: 20px; font-weight: bold; }
+    .footer-url { font-size: 24px; margin-top: 15px; color: #ea580c; font-weight: 800; }
+}
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
+    <div id="print-banner" class="print-only">
+    <div class="banner-wrapper">
+        <h1 class="brand-title">Smart<span style="color: #ea580c;">Shop</span>19</h1>
+        <h2 class="scan-heading">भीड़ से बचें, स्मार्टशॉपिंग करें!</h2>
+        <p class="shop-name-text">Welcome to: <strong id="print-shop-name">Your Shop Name</strong></p>
+        
+        <div class="qr-box">
+            <img id="print-qr-image" src="" alt="Shop QR Code">
+        </div>
+        
+        <p class="scan-instruction">स्कैन करें और तुरंत शॉपिंग शुरू करें</p>
+        <div class="footer-url">smartshop19.online</div>
+    </div>
+</div>
     <div class="flex h-screen overflow-hidden">
         
         <aside class="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
@@ -271,65 +341,266 @@
             document.getElementById('qrCodeContainer').innerHTML = `
                 <h3 class="text-xl font-extrabold mb-4">Store QR Code</h3>
                 <div class="bg-white p-3 rounded-2xl shadow-2xl inline-block">
-                    <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48">
+                    <img src="${qrApiUrl}" alt="Store QR Code" class="w-48 h-48" id="generatedQrImg">
                 </div>
                 <br>
-                <div class="mt-4 flex gap-2 justify-center">
+                <div class="mt-4 flex flex-wrap gap-2 justify-center">
                     <a href="${qrApiUrl}" target="_blank" class="inline-block bg-white text-orange-600 text-sm font-bold px-4 py-2 rounded-lg shadow-sm border border-gray-200 hover:bg-gray-50 transition">View Full</a>
                     
-                    <button onclick="printQRCode('${qrApiUrl}')" class="inline-block bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-orange-700 transition">🖨️ Print QR</button>
+                    <button onclick="printQRCode('${qrApiUrl}')" class="inline-block bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-orange-700 transition">🖨️ Print Banner</button>
+
+                    <button onclick="downloadQRCode('${qrApiUrl}')" class="inline-block bg-gray-900 text-white text-sm font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-black transition">⬇️ Download QR</button>
                 </div>
             `;
         }
+        async function downloadQRCode(qrUrl) {
+            // Dukaan ka naam set kar rahe hain taaki image usi naam se save ho
+            let actualShopName = localStorage.getItem('shopName') || shopSlug || 'SmartShop';
+            actualShopName = actualShopName.replace(/-/g, '_').toUpperCase(); 
+
+            try {
+                // QR Code ko API se fetch karna
+                const response = await fetch(qrUrl);
+                const blob = await response.blob();
+                
+                // Temporary download link banana
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = `${actualShopName}_QR.png`; // Image file ka naam
+                
+                // Automatically click karke download shuru karwana
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // Memory clean karna
+                window.URL.revokeObjectURL(downloadUrl);
+            } catch (error) {
+                console.error("Download Error:", error);
+                alert("⚠️ Download block ho gaya! Kripya QR Code image par Right-Click (ya mobile me Long Press) karke 'Save Image' par click karein.");
+            }
+        }
 
         function printQRCode(qrUrl) {
-            let actualShopName = localStorage.getItem('shopName') || shopSlug;
+            let actualShopName = localStorage.getItem('shopName') || shopSlug || 'OUR STORE';
             actualShopName = actualShopName.replace(/-/g, ' ').toUpperCase(); 
 
-            const shopName = "Welcome to " + actualShopName; 
-            const websiteName = "Smart-Shop-19"; 
-            const websiteUrl = window.location.host; 
+            const shopName = actualShopName; 
+            const websiteUrl = "smartshop19.online"; 
 
-            const printWindow = window.open('', '_blank', 'width=800,height=800');
+            // Naya print window open karna
+            const printWindow = window.open('', '_blank', 'width=850,height=1100');
             
             printWindow.document.write(`
+                <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Print QR Code</title>
+                    <title>Print Banner - ${shopName}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800;900&display=swap" rel="stylesheet">
                     <style>
-                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 40px; }
-                        .ticket { border: 3px dashed #ea580c; padding: 40px; display: inline-block; border-radius: 20px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-                        h1 { color: #111; margin-bottom: 10px; font-size: 28px; text-transform: uppercase; }
-                        .subtitle { font-size: 18px; color: #444; font-weight: 600; margin-bottom: 25px; }
-                        .qr-image { width: 300px; height: 300px; margin: 0 auto; border: 10px solid #fff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-                        .branding { margin-top: 35px; font-size: 16px; color: #666; border-top: 2px solid #eee; padding-top: 20px; }
-                        .branding strong { color: #ea580c; font-size: 22px; display: block; margin-bottom: 5px; text-transform: uppercase; }
+                        @page { margin: 0; size: A4 portrait; }
+                        * { box-sizing: border-box; }
+                        body { 
+                            font-family: 'Plus Jakarta Sans', sans-serif; 
+                            margin: 0; padding: 0; 
+                            background: #f8fafc;
+                            -webkit-print-color-adjust: exact !important; 
+                            print-color-adjust: exact !important; 
+                        }
+                        .banner-card {
+                            width: 210mm;
+                            height: 297mm;
+                            margin: 0 auto;
+                            background: #ffffff;
+                            display: flex;
+                            flex-direction: column;
+                            justify-content: space-between;
+                            align-items: center;
+                            padding: 15mm 12mm 0 12mm;
+                            position: relative;
+                        }
+
+                        /* Header */
+                        .brand-logo {
+                            font-size: 38px;
+                            font-weight: 900;
+                            color: #1e3a8a;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        .brand-logo span { color: #ea580c; }
+
+                        /* Headings */
+                        .heading-main {
+                            font-size: 46px;
+                            font-weight: 900;
+                            color: #0f172a;
+                            text-align: center;
+                            margin-top: 10px;
+                            line-height: 1.15;
+                        }
+                        .heading-main .highlight { color: #16a34a; }
+
+                        .heading-sub {
+                            font-size: 20px;
+                            font-weight: 700;
+                            color: #475569;
+                            text-align: center;
+                            margin-top: 8px;
+                        }
+
+                        /* 3 Features Icons Grid */
+                        .features-grid {
+                            display: flex;
+                            justify-content: space-between;
+                            width: 100%;
+                            gap: 10px;
+                            margin-top: 20px;
+                        }
+                        .feature-item {
+                            flex: 1;
+                            background: #f1f5f9;
+                            border: 2px solid #cbd5e1;
+                            border-radius: 12px;
+                            padding: 10px 6px;
+                            text-align: center;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            gap: 4px;
+                        }
+                        .feature-icon { font-size: 24px; }
+                        .feature-text { font-size: 13px; font-weight: 800; color: #1e293b; line-height: 1.2; }
+
+                        /* Visit Section */
+                        .visit-title {
+                            font-size: 26px;
+                            font-weight: 900;
+                            color: #0f172a;
+                            margin-top: 20px;
+                        }
+                        .domain-box {
+                            font-size: 30px;
+                            font-weight: 900;
+                            color: #0f172a;
+                            background: #f8fafc;
+                            padding: 6px 20px;
+                            border-radius: 10px;
+                            border: 2px solid #e2e8f0;
+                            margin-top: 4px;
+                        }
+
+                        /* Shop Name Badge */
+                        .shop-badge {
+                            background: #fff7ed;
+                            border: 3px dashed #ea580c;
+                            border-radius: 50px;
+                            padding: 8px 30px;
+                            text-align: center;
+                            margin-top: 15px;
+                        }
+                        .shop-badge p { font-size: 13px; font-weight: 700; color: #9a3412; margin: 0; text-transform: uppercase; }
+                        .shop-badge h3 { font-size: 28px; font-weight: 900; color: #ea580c; margin: 0; }
+
+                        /* QR Code Wrapper */
+                        .qr-card {
+                            background: #ffffff;
+                            padding: 16px;
+                            border-radius: 20px;
+                            border: 6px solid #1e3a8a;
+                            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+                            margin-top: 15px;
+                        }
+                        .qr-card img {
+                            width: 250px;
+                            height: 250px;
+                            display: block;
+                        }
+
+                        .scan-tag {
+                            font-size: 22px;
+                            font-weight: 900;
+                            color: #0f172a;
+                            margin-top: 12px;
+                        }
+
+                        /* Bottom Banner Strip */
+                        .bottom-strip {
+                            width: 100%;
+                            background: #1e3a8a;
+                            color: #ffffff;
+                            text-align: center;
+                            padding: 16px 0;
+                            font-size: 26px;
+                            font-weight: 900;
+                            letter-spacing: 1px;
+                            margin-top: 15px;
+                        }
                     </style>
                 </head>
                 <body>
-                    <div class="ticket">
-                        <h1>${shopName}</h1>
-                        <div class="subtitle">Scan to visit our online shop! 🛍️</div>
-                        <img src="${qrUrl}" class="qr-image" />
-                        <div class="branding">
-                            Powered by<br>
-                            <strong>${websiteName}</strong>
-                            <span>${websiteUrl}</span>
+                    <div class="banner-card">
+                        <div class="brand-logo">
+                            🛒 Smart<span>Shop</span>19
+                        </div>
+
+                        <div class="heading-main">
+                            भीड़ से बचें, <span class="highlight">स्मार्टशॉपिंग</span> करें!
+                        </div>
+
+                        <div class="heading-sub">
+                            भोपाल की लोकल दुकानों पर लाइन लगाए बिना शॉपिंग करें
+                        </div>
+
+                        <div class="features-grid">
+                            <div class="feature-item">
+                                <span class="feature-icon">📍</span>
+                                <span class="feature-text">पास की दुकानें ढूंढें</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">📱</span>
+                                <span class="feature-text">प्रोडक्ट्स घर बैठे देखें</span>
+                            </div>
+                            <div class="feature-item">
+                                <span class="feature-icon">🛍️</span>
+                                <span class="feature-text">सीधे काउंटर से पिकअप करें</span>
+                            </div>
+                        </div>
+
+                        <div class="shop-badge">
+                            <p>Welcome To</p>
+                            <h3>${shopName}</h3>
+                        </div>
+
+                        <div class="visit-title">अभी विजिट करें:</div>
+                        <div class="domain-box">${websiteUrl}</div>
+
+                        <div class="qr-card">
+                            <img src="${qrUrl}" alt="Shop QR Code">
+                        </div>
+
+                        <div class="scan-tag">
+                            स्कैन करें और तुरंत शॉपिंग शुरू करें!
+                        </div>
+
+                        <div class="bottom-strip">
+                            भोपाल की अपनी शॉपिंग साइट
                         </div>
                     </div>
+
                     <script>
                         setTimeout(() => {
                             window.print();
                             window.close();
                         }, 800);
-                    <\/script> 
+                    <\/script>
                 </body>
                 </html>
             `);
-            
             printWindow.document.close();
         }
-        
         async function loadAgents() {
             const listEl = document.getElementById('agentsList');
             try {
