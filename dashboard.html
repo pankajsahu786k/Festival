@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dashboard - SmartShop</title>
-    
+    <title>Dashboard - SmartShop</title>   
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -354,31 +354,100 @@
             `;
         }
         async function downloadQRCode(qrUrl) {
-            // Dukaan ka naam set kar rahe hain taaki image usi naam se save ho
-            let actualShopName = localStorage.getItem('shopName') || shopSlug || 'SmartShop';
-            actualShopName = actualShopName.replace(/-/g, '_').toUpperCase(); 
+            // Button ko loading state mein daalna
+            const btn = event.currentTarget;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = "⏳ Generating Poster...";
+            btn.disabled = true;
 
             try {
-                // QR Code ko API se fetch karna
-                const response = await fetch(qrUrl);
-                const blob = await response.blob();
+                let actualShopName = localStorage.getItem('shopName') || shopSlug || 'SmartShop';
+                actualShopName = actualShopName.replace(/-/g, ' ').toUpperCase(); 
+                const websiteUrl = "smartshop19.online"; 
+
+                // Ek temporary hidden (chupa hua) dabba banana jisme poster banega
+                const posterDiv = document.createElement('div');
+                posterDiv.style.position = 'absolute';
+                posterDiv.style.left = '-9999px'; // Screen se bahar
+                posterDiv.style.top = '-9999px';
+                posterDiv.style.width = '794px';  // Exact A4 width
+                posterDiv.style.height = '1122px'; // Exact A4 height
+                posterDiv.style.backgroundColor = '#f8fafc';
                 
-                // Temporary download link banana
-                const downloadUrl = window.URL.createObjectURL(blob);
+                // Poore poster ka design isme daalna
+                posterDiv.innerHTML = `
+                    <style>
+                        .banner-dl { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 50px 40px 0 40px; font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; background: #ffffff; }
+                        .logo-dl { font-size: 38px; font-weight: 900; color: #1e3a8a; display: flex; align-items: center; gap: 8px; }
+                        .logo-dl span { color: #ea580c; }
+                        .head-main-dl { font-size: 46px; font-weight: 900; color: #0f172a; text-align: center; margin-top: 15px; line-height: 1.2; }
+                        .head-main-dl .hl { color: #16a34a; }
+                        .head-sub-dl { font-size: 20px; font-weight: 700; color: #475569; text-align: center; margin-top: 10px; }
+                        .feat-grid-dl { display: flex; justify-content: space-between; width: 100%; gap: 15px; margin-top: 25px; }
+                        .feat-item-dl { flex: 1; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 12px; padding: 15px 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+                        .feat-icon-dl { font-size: 26px; }
+                        .feat-text-dl { font-size: 14px; font-weight: 800; color: #1e293b; line-height: 1.3; }
+                        .shop-badge-dl { background: #fff7ed; border: 3px dashed #ea580c; border-radius: 50px; padding: 15px 40px; text-align: center; margin-top: 25px; }
+                        .shop-badge-dl p { font-size: 14px; font-weight: 700; color: #9a3412; margin: 0; text-transform: uppercase; }
+                        .shop-badge-dl h3 { font-size: 32px; font-weight: 900; color: #ea580c; margin: 0; }
+                        .visit-dl { font-size: 24px; font-weight: 900; color: #0f172a; margin-top: 25px; }
+                        .domain-dl { font-size: 32px; font-weight: 900; color: #0f172a; background: #f8fafc; padding: 10px 30px; border-radius: 10px; border: 2px solid #e2e8f0; margin-top: 5px; }
+                        .qr-box-dl { background: #ffffff; padding: 20px; border-radius: 20px; border: 6px solid #1e3a8a; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-top: 20px; }
+                        .qr-box-dl img { width: 260px; height: 260px; display: block; }
+                        .scan-dl { font-size: 24px; font-weight: 900; color: #0f172a; margin-top: 15px; }
+                        .foot-dl { width: 100%; background: #1e3a8a; color: #ffffff; text-align: center; padding: 20px 0; font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-top: 20px; }
+                    </style>
+                    <div class="banner-dl">
+                        <div class="logo-dl">🛒 Smart<span>Shop</span>19</div>
+                        <div class="head-main-dl">भीड़ से बचें, <span class="hl">स्मार्टशॉपिंग</span> करें!</div>
+                        <div class="head-sub-dl">भोपाल की लोकल दुकानों पर लाइन लगाए बिना शॉपिंग करें</div>
+                        <div class="feat-grid-dl">
+                            <div class="feat-item-dl"><span class="feat-icon-dl">📍</span><span class="feat-text-dl">पास की दुकानें ढूंढें</span></div>
+                            <div class="feat-item-dl"><span class="feat-icon-dl">📱</span><span class="feat-text-dl">प्रोडक्ट्स घर बैठे देखें</span></div>
+                            <div class="feat-item-dl"><span class="feat-icon-dl">🛍️</span><span class="feat-text-dl">सीधे काउंटर से पिकअप</span></div>
+                        </div>
+                        <div class="shop-badge-dl"><p>Welcome To</p><h3>${actualShopName}</h3></div>
+                        <div class="visit-dl">अभी विजिट करें:</div>
+                        <div class="domain-dl">${websiteUrl}</div>
+                        <div class="qr-box-dl"><img src="${qrUrl}" crossorigin="anonymous" alt="QR Code"></div>
+                        <div class="scan-dl">स्कैन करें और तुरंत शॉपिंग शुरू करें!</div>
+                        <div class="foot-dl">भोपाल की अपनी शॉपिंग साइट</div>
+                    </div>
+                `;
+                document.body.appendChild(posterDiv);
+
+                // Image load hone ka thoda wait karna taaki QR code blank na aaye
+                const img = posterDiv.querySelector('img');
+                await new Promise((resolve) => {
+                    if (img.complete) resolve();
+                    else img.onload = resolve;
+                });
+
+                // HTML to Image (Canvas) ka jaadoo
+                const canvas = await html2canvas(posterDiv, {
+                    useCORS: true, // External QR code load karne ke liye
+                    scale: 2 // High Quality Image ke liye
+                });
+
+                // Canvas se Image banakar download karna
+                const imageURL = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
-                link.href = downloadUrl;
-                link.download = `${actualShopName}_QR.png`; // Image file ka naam
-                
-                // Automatically click karke download shuru karwana
-                document.body.appendChild(link);
+                link.href = imageURL;
+                link.download = `${actualShopName.replace(/\s+/g, '_')}_Poster.png`;
                 link.click();
-                document.body.removeChild(link);
+
+                // Chupa hua dabba hata dena
+                document.body.removeChild(posterDiv);
                 
-                // Memory clean karna
-                window.URL.revokeObjectURL(downloadUrl);
+                // Button ko wapas normal karna
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
             } catch (error) {
-                console.error("Download Error:", error);
-                alert("⚠️ Download block ho gaya! Kripya QR Code image par Right-Click (ya mobile me Long Press) karke 'Save Image' par click karein.");
+                console.error("Poster Download Error:", error);
+                alert("⚠️ Download me dikkat aayi. Kripya 'Print Banner' button dabakar 'Save as PDF' choose karein.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
 
