@@ -104,6 +104,11 @@
                     <span class="bg-orange-500 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
                 </a>
 
+                <!-- 🌟 NAYA LINK: Edit Shop Profile / Category -->
+                <a href="setup-shop.html" id="setupNavBtn" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex items-center gap-2 text-white">
+                    <span>⚙️ Edit Shop Profile</span>
+                </a>
+
                 <a href="#agentsSection" id="agentsNavBtn" class="block px-4 py-3 hover:bg-gray-800 rounded-xl font-medium transition flex items-center gap-2 text-white">
                     <span>👥 Manage Staff / Agents</span>
                 </a>
@@ -286,7 +291,6 @@
     </div>
 
     <script>
-        // 👇 YEH WO LINES HAIN JO PEHLE DELETE HO GAYI THIN! INKE BINA DASHBOARD LOAD NAHI HOTA
         const token = localStorage.getItem('token');
         if (!token) window.location.href = 'login.html';
 
@@ -309,16 +313,18 @@
                 } catch(e) { console.log("Location check failed"); }
             }
         }
-        enforceLocation(); // Run as soon as dashboard opens
+        enforceLocation(); 
 
         if (userRole === 'agent') {
             const agentsNav = document.getElementById('agentsNavBtn');
             const agentsSec = document.getElementById('agentsSection');
             const agentStat = document.getElementById('agentStatCard');
+            const setupNav = document.getElementById('setupNavBtn'); // 🌟 Edit Profile Link nikaala
 
             if(agentsNav) agentsNav.style.display = 'none'; 
             if(agentsSec) agentsSec.style.display = 'none'; 
             if(agentStat) agentStat.style.display = 'none'; 
+            if(setupNav) setupNav.style.display = 'none'; // 🌟 Agents ke liye Edit Shop Profile link chhupa diya
             
             document.getElementById('roleBadge').innerText = 'Agent / Staff';
             document.getElementById('roleBadge').className = 'text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-blue-600 text-white';
@@ -354,7 +360,6 @@
             `;
         }
         async function downloadQRCode(qrUrl) {
-            // Button ko loading state mein daalna
             const btn = event.currentTarget;
             const originalText = btn.innerHTML;
             btn.innerHTML = "⏳ Generating Poster...";
@@ -365,16 +370,14 @@
                 actualShopName = actualShopName.replace(/-/g, ' ').toUpperCase(); 
                 const websiteUrl = "smartshop19.online"; 
 
-                // Ek temporary hidden (chupa hua) dabba banana jisme poster banega
                 const posterDiv = document.createElement('div');
                 posterDiv.style.position = 'absolute';
-                posterDiv.style.left = '-9999px'; // Screen se bahar
+                posterDiv.style.left = '-9999px'; 
                 posterDiv.style.top = '-9999px';
-                posterDiv.style.width = '794px';  // Exact A4 width
-                posterDiv.style.height = '1122px'; // Exact A4 height
+                posterDiv.style.width = '794px';  
+                posterDiv.style.height = '1122px'; 
                 posterDiv.style.backgroundColor = '#f8fafc';
                 
-                // Poore poster ka design isme daalna
                 posterDiv.innerHTML = `
                     <style>
                         .banner-dl { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 50px 40px 0 40px; font-family: 'Plus Jakarta Sans', sans-serif; box-sizing: border-box; background: #ffffff; }
@@ -416,30 +419,25 @@
                 `;
                 document.body.appendChild(posterDiv);
 
-                // Image load hone ka thoda wait karna taaki QR code blank na aaye
                 const img = posterDiv.querySelector('img');
                 await new Promise((resolve) => {
                     if (img.complete) resolve();
                     else img.onload = resolve;
                 });
 
-                // HTML to Image (Canvas) ka jaadoo
                 const canvas = await html2canvas(posterDiv, {
-                    useCORS: true, // External QR code load karne ke liye
-                    scale: 2 // High Quality Image ke liye
+                    useCORS: true, 
+                    scale: 2 
                 });
 
-                // Canvas se Image banakar download karna
                 const imageURL = canvas.toDataURL("image/png");
                 const link = document.createElement('a');
                 link.href = imageURL;
                 link.download = `${actualShopName.replace(/\s+/g, '_')}_Poster.png`;
                 link.click();
 
-                // Chupa hua dabba hata dena
                 document.body.removeChild(posterDiv);
                 
-                // Button ko wapas normal karna
                 btn.innerHTML = originalText;
                 btn.disabled = false;
 
@@ -458,7 +456,6 @@
             const shopName = actualShopName; 
             const websiteUrl = "smartshop19.online"; 
 
-            // Naya print window open karna
             const printWindow = window.open('', '_blank', 'width=850,height=1100');
             
             printWindow.document.write(`
