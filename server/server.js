@@ -158,7 +158,19 @@ app.get('/api/vendor/check-location/:slug', async (req, res) => {
         res.status(500).json({ hasLocation: true }); 
     }
 });
-
+// ==========================================
+// 🌟 DYNAMIC CATEGORY API
+// ==========================================
+app.get('/api/categories', async (req, res) => {
+    try {
+        // 'Store' की जगह 'Vendor' मॉडल यूज़ करना है
+        const categories = await Vendor.distinct('category'); 
+        res.json(categories);
+    } catch (error) {
+        console.error("Categories Fetch Error:", error);
+        res.status(500).json({ error: "Server Error" });
+    }
+});
 // ==========================================
 // 🚀 1.5 AGENT MANAGEMENT APIS
 // ==========================================
@@ -445,11 +457,42 @@ function getDistanceInKm(lat1, lon1, lat2, lon2) {
     return R * c; 
 }
 
+// ==========================================
+// 🛒 6. CUSTOMER HYPERLOCAL SEARCH API
+// ==========================================
+
+function getDistanceInKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in KM
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; 
+}
+
 app.post('/api/customer/search', async (req, res) => {
     try {
-        const { latitude, longitude, searchQuery } = req.body;
+        const { latitude, longitude, searchQuery, category } = req.body;
         
-        const vendors = await Vendor.find({ isSuspended: false, 'location.lat': { $exists: true } });
+        // 1. वेंडर (Dukan) का फिल्टर तैयार करें
+        let vendorFilter = { isSuspended: false, 'location.lat': { $exists: true } };
+        
+        // 🌟 अगर यूज़र ने कोई कैटेगरी सेलेक्ट की है, तो उसे यहाँ लगा दें
+        if (category && category.trim() !== "") {
+            vendorFilter.category = category; 
+        }
+
+        const vendors = await Vendor.find(vendorFilter);
+
+        // अगर चुनी हुई कैटेगरी की कोई दुकान नहीं है, तो खाली रिज़ल्ट वापस कर दें
+        if (vendors.length === 0) {
+            return res.json([]);
+        }
+
+        // जो दुकानें मिली हैं, उनके slugs निकाल लें
+        const vendorSlugs = vendors.map(v => v.shopSlug);
 
         const vendorDistances = {};
         vendors.forEach(v => {
@@ -461,10 +504,14 @@ app.post('/api/customer/search', async (req, res) => {
             }
         });
 
-        let productQuery = {};
+        // 2. प्रोडक्ट (Saaman) का फिल्टर तैयार करें
+        // 🌟 अब हम सिर्फ उन्हीं दुकानों में सामान ढूँढेंगे जो ऊपर फिल्टर होकर आई हैं
+        let productQuery = { shopSlug: { $in: vendorSlugs } }; 
+        
         if (searchQuery) {
             productQuery.name = { $regex: searchQuery, $options: 'i' }; 
         }
+        
         const products = await Product.find(productQuery);
 
         const searchResults = products.map(p => {
