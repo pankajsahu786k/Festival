@@ -173,18 +173,25 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    alert(`Success: ${data.message}`);
-                    
-                    if (selectedRole === 'vendor') {
+                if (selectedRole === 'vendor') {
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('userRole', data.role);
                         localStorage.setItem('shopSlug', data.shopSlug);
                         
+                        // Naya data localStorage me save kar lete hain future use ke liye
+                        if(data.storeType) {
+                            localStorage.setItem('storeType', data.storeType);
+                        }
+                        
                         if (!data.isSetupCompleted) {
                             window.location.href = 'setup-shop.html';
                         } else {
-                            window.location.href = 'dashboard.html';
+                            // 🚦 NAYA TRAFFIC POLICE LOGIC
+                            if (data.storeType === 'food') {
+                                window.location.href = 'food-dashboard.html';
+                            } else {
+                                window.location.href = 'dashboard.html';
+                            }
                         }
                     } else {
                         // Admin Panel Par Bhejein

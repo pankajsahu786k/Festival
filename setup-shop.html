@@ -280,7 +280,14 @@
                 if (response.ok) {
                     localStorage.setItem('isSetupCompleted', 'true');
                     alert('Success: Profile details aur GPS Location save ho gayi hain!');
-                    window.location.href = 'dashboard.html';
+                    
+                    // 🚦 NAYA TRAFFIC POLICE LOGIC
+                    if (storeType === 'food') {
+                        window.location.href = 'food-dashboard.html'; // Food wale yahan jayenge
+                    } else {
+                        window.location.href = 'dashboard.html'; // Baaki sab yahan jayenge
+                    }
+                    
                 } else {
                     alert(`Error: ${data.message}`);
                 }
