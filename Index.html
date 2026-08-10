@@ -6,15 +6,18 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-
       gtag('config', 'G-9QFPH9J8TG');
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartShop - Find Nearby Stores</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Plus Jakarta Sans', sans-serif; } 
+        .tab-active { background-color: #111827; color: white; border-color: #111827; }
+        .tab-inactive { background-color: white; color: #374151; border-color: #e5e7eb; }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
@@ -28,14 +31,20 @@
         </div>
     </header>
 
-    <section class="bg-gradient-to-br from-orange-500 to-red-500 py-16 px-4">
-        <div class="max-w-3xl mx-auto text-center space-y-6">
+    <section class="bg-gradient-to-br from-orange-500 to-red-500 py-12 px-4">
+        <div class="max-w-4xl mx-auto text-center space-y-6">
             <h2 class="text-4xl md:text-5xl font-black text-white leading-tight">
                 Aapke ghar ke paas ki dukaano ka saman, ab online. 🛍️
             </h2>
             <p class="text-orange-100 font-medium">Search products & services in stores just minutes away from you!</p>
             
-            <div class="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2 mt-8">
+            <div class="flex flex-wrap justify-center gap-3 mt-8 mb-4">
+                <button onclick="switchTab('retail')" id="btn-retail" class="tab-active px-6 py-2.5 rounded-full font-bold text-sm border-2 shadow-md transition transform hover:scale-105">🛍️ Retail / Saman</button>
+                <button onclick="switchTab('food')" id="btn-food" class="tab-inactive px-6 py-2.5 rounded-full font-bold text-sm border-2 shadow-sm transition transform hover:scale-105">🍔 Food Outlet</button>
+                <button onclick="switchTab('service')" id="btn-service" class="tab-inactive px-6 py-2.5 rounded-full font-bold text-sm border-2 shadow-sm transition transform hover:scale-105">🛠️ Services</button>
+            </div>
+
+            <div class="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2">
                 
                 <button id="locBtn" class="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-200 transition whitespace-nowrap">
                     📍 <span id="locText">Detect Location</span>
@@ -43,9 +52,9 @@
                 
                 <select id="categorySelect" class="px-4 py-3 bg-gray-50 border border-gray-100 outline-none text-gray-700 font-bold rounded-xl md:w-48 focus:ring-2 focus:ring-orange-500 transition cursor-pointer">
                     <option value="">All Categories</option>
-                    </select>
+                </select>
                 
-                <input type="text" id="searchInput" placeholder="Search for shoes, groceries, burger, or haircut..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
+                <input type="text" id="searchInput" placeholder="Search for shoes, clothes, groceries..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
                 
                 <button id="searchBtn" class="bg-orange-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-700 transition">
                     Search
@@ -60,7 +69,7 @@
         </div>
 
         <div id="productsGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            <p class="text-gray-500 col-span-full text-center py-10 font-medium">Click Search to find products near you.</p>
+            <p class="text-gray-500 col-span-full text-center py-10 font-medium">Loading items near you...</p>
         </div>
     </main>
 
@@ -69,48 +78,34 @@
 
     let userLat = null;
     let userLng = null;
+    let currentTab = 'retail';
 
-    // 🌟 1. DYNAMIC CATEGORIES LOAD FUNCTION
-    async function loadCategories() {
-        try {
-            const res = await fetch(`${API_URL}/api/categories`);
-            if (res.ok) {
-                const categories = await res.json();
-                const select = document.getElementById('categorySelect');
-                
-                // Pure dynamic categories set
-                const uniqueCategories = new Set();
-                categories.forEach(cat => {
-                    if (typeof cat === 'string' && cat.trim() !== '' && cat.toLowerCase() !== 'other') {
-                        uniqueCategories.add(cat);
-                    } else if (typeof cat === 'object' && cat.category) {
-                        uniqueCategories.add(cat.category);
-                    }
-                });
-
-                uniqueCategories.forEach(catName => {
-                    const option = document.createElement('option');
-                    option.value = catName;
-                    option.textContent = catName;
-                    select.appendChild(option);
-                });
+    // 🌟 TAB SWITCHING LOGIC 🌟
+    function switchTab(tabName) {
+        currentTab = tabName;
+        
+        const tabs = ['retail', 'food', 'service'];
+        tabs.forEach(t => {
+            const btn = document.getElementById(`btn-${t}`);
+            if(t === tabName) {
+                btn.classList.replace('tab-inactive', 'tab-active');
+            } else {
+                btn.classList.replace('tab-active', 'tab-inactive');
             }
-        } catch (error) {
-            console.error("Categories load karne mein error:", error);
-            const defaultCategories = ["Grocery & Kirana Store", "Clothing & Fashion", "Electronics & Mobile Accessories", "Cafe & Coffee Shop", "Salon, Parlour & Spa"];
-            const select = document.getElementById('categorySelect');
-            defaultCategories.forEach(cat => {
-                const option = document.createElement('option');
-                option.value = cat;
-                option.textContent = cat;
-                select.appendChild(option);
-            });
-        }
+        });
+
+        const searchInput = document.getElementById('searchInput');
+        if(tabName === 'retail') searchInput.placeholder = "Search for shoes, clothes, groceries, electronics...";
+        if(tabName === 'food') searchInput.placeholder = "Search in food outlets (burger, thali, bakery, dishes)...";
+        if(tabName === 'service') searchInput.placeholder = "Search services (haircut, plumber, repair)...";
+
+        document.getElementById('searchInput').value = "";
+        document.getElementById('categorySelect').value = "";
+        
+        triggerSearch();
     }
 
-    loadCategories();
-
-    // 📍 2. LOCATION DETECTION
+    // 📍 LOCATION DETECTION
     document.getElementById('locBtn').addEventListener('click', () => {
         const locText = document.getElementById('locText');
         locText.innerText = "Locating... ⏳";
@@ -123,21 +118,20 @@
                     locText.innerText = "Location Set ✅";
                     document.getElementById('locBtn').classList.replace('bg-gray-100', 'bg-green-100');
                     document.getElementById('locBtn').classList.replace('text-gray-700', 'text-green-700');
-                    
                     triggerSearch(); 
                 },
                 (error) => {
-                    alert("⚠️ Location permission denied! Hum default search dikhayenge.");
+                    alert("⚠️ Location permission denied! Default view dikha rahe hain.");
                     locText.innerText = "Location Blocked ❌";
                     triggerSearch();
                 }
             );
         } else {
-            alert("Browser doesn't support geolocation.");
+            alert("Browser location support nahi karta.");
         }
     });
 
-    // 🔍 3. SEARCH TRIGGERS
+    // 🔍 SEARCH TRIGGERS
     function triggerSearch() {
         const query = document.getElementById('searchInput').value.trim();
         const category = document.getElementById('categorySelect').value; 
@@ -145,21 +139,18 @@
     }
 
     document.getElementById('searchBtn').addEventListener('click', triggerSearch);
-
-    document.getElementById('searchInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') triggerSearch();
-    });
-
+    document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') triggerSearch(); });
     document.getElementById('categorySelect').addEventListener('change', triggerSearch);
 
-    // 🛍️ 4. FETCH & RENDER DATA WITH SMART STORE-TYPE FILTERING
+    // 🛍️ STRICT FETCH & SEPARATION LOGIC
     async function fetchProducts(searchQuery, category = "") {
         const grid = document.getElementById('productsGrid');
         const title = document.getElementById('resultTitle');
         
-        grid.innerHTML = `<p class="col-span-full text-center py-10 text-orange-600 font-bold animate-pulse">Searching nearby stores... ⏳</p>`;
+        grid.innerHTML = `<p class="col-span-full text-center py-10 text-orange-600 font-bold animate-pulse">Fetching ${currentTab} items... ⏳</p>`;
         
-        let titleText = `Trending Nearby Products 🔥`;
+        let tabLabel = currentTab === 'retail' ? 'Products' : currentTab === 'food' ? 'Food Outlets' : 'Services';
+        let titleText = `Top Nearby ${tabLabel} 🔥`;
         if (searchQuery || category) {
             titleText = `Results `;
             if (searchQuery) titleText += `for "${searchQuery}" `;
@@ -180,38 +171,41 @@
                 })
             });
 
-            if (!res.ok) {
-                const errText = await res.text();
-                throw new Error(`Server Error (${res.status}): ${errText}`);
-            }
-
+            if (!res.ok) throw new Error(`Server Error`);
             const data = await res.json();
 
-            // 🌟 STORE TYPE BASED DYNAMIC FILTERING 🌟
-            let finalData = data;
+            // 🌟 100% STRICT TAB SEPARATION FILTER 🌟
+            let finalData = data.filter(item => {
+                const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
+                const catString = (item.category || item.shopCategory || item.shopName || '').toLowerCase();
 
-            // Agar Search Box aur Category Dropdown dono KHALI hain -> Sirf 'retail' stores dikhain
-            if (searchQuery === "" && category === "") {
-                finalData = data.filter(item => {
-                    // 1. Primary Check: Direct 'storeType' or 'shopStoreType'
-                    const type = (item.storeType || item.shopStoreType || '').toLowerCase();
-                    if (type) {
-                        return type === 'retail';
-                    }
-                    
-                    // 2. Fallback Check (Purane Vendors ke data ke liye):
-                    const catString = (item.category || item.shopName || '').toLowerCase();
-                    const isServiceOrFood = catString.includes('food') || catString.includes('restaurant') || 
-                                            catString.includes('cafe') || catString.includes('barber') || 
-                                            catString.includes('salon') || catString.includes('repair') || 
-                                            catString.includes('service') || catString.includes('plumber');
-                    
-                    return !isServiceOrFood;
-                });
-            }
+                // Strict check by storeType
+                if (itemStoreType === 'retail' || itemStoreType === 'food' || itemStoreType === 'service') {
+                    return itemStoreType === currentTab;
+                }
+
+                // Fallback check for legacy data
+                const isFoodItem = catString.includes('food') || catString.includes('restaurant') || 
+                                   catString.includes('cafe') || catString.includes('bakery') || 
+                                   catString.includes('sweet') || catString.includes('mithai') || 
+                                   catString.includes('dine') || catString.includes('snack') ||
+                                   catString.includes('beverage') || catString.includes('juice');
+
+                const isServiceItem = catString.includes('barber') || catString.includes('salon') || 
+                                      catString.includes('repair') || catString.includes('service') || 
+                                      catString.includes('plumber') || catString.includes('electrician') ||
+                                      catString.includes('tailor') || catString.includes('parlour') ||
+                                      catString.includes('spa') || catString.includes('broker');
+
+                if (currentTab === 'food') return isFoodItem;
+                if (currentTab === 'service') return isServiceItem;
+                if (currentTab === 'retail') return !isFoodItem && !isServiceItem;
+
+                return false;
+            });
 
             if (finalData.length === 0) {
-                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman ya service nahi mili. Kuch aur search karke dekhein! 😔</p>`;
+                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Is category me koi item nahi mila. 😔</p>`;
                 return;
             }
 
@@ -236,7 +230,7 @@
                                 ${distanceHtml}
                             </div>
                             <a href="/shop.html?store=${item.shopSlug}" target="_blank" class="block w-full text-center bg-gray-900 text-white font-bold text-xs py-2.5 rounded-xl hover:bg-black transition">
-                                Visit Store ↗
+                                View Details ↗
                             </a>
                         </div>
                     </div>
@@ -245,7 +239,7 @@
 
         } catch (err) {
             console.error("Fetch Error:", err);
-            grid.innerHTML = `<p class="col-span-full text-center py-10 text-red-500 font-bold">⚠️ ${err.message}</p>`;
+            grid.innerHTML = `<p class="col-span-full text-center py-10 text-red-500 font-bold">⚠️ Connection Error</p>`;
         }
     }
 
