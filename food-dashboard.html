@@ -103,8 +103,129 @@
     </main>
 
     <script>
-        // Yahan aapka API URL aur fetch logic aayega (Same as normal dashboard, but focused on food data)
-        // Agle step mein hum API endpoints aur JS logic connect karenge!
+        // 🔒 1. SECURITY & AUTHENTICATION
+        const token = localStorage.getItem('token');
+        const shopSlug = localStorage.getItem('shopSlug');
+
+        if (!token) {
+            alert("Aap logged in nahi hain! Kripya login karein.");
+            window.location.href = 'login.html';
+        }
+
+        // 📸 2. GALLERY VARIABLES
+        const galleryInput = document.getElementById('galleryInput');
+        const uploadBtn = document.getElementById('uploadGalleryBtn');
+        const galleryGrid = document.getElementById('galleryGrid');
+        
+        let uploadedPhotos = []; // Save hui photos yahan rahengi
+
+        // 🔄 3. LOAD EXISTING PHOTOS (Page khulte hi chalega)
+        async function loadGallery() {
+            try {
+                // Backend se is shop ki photos mangwana
+                const res = await fetch(`/api/vendor/gallery/${shopSlug}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    uploadedPhotos = data.galleryPhotos || [];
+                    renderGallery();
+                }
+            } catch (error) {
+                console.log("Gallery load karne me error aayi:", error);
+            }
+        }
+
+        // 🎨 4. SHOW PHOTOS ON SCREEN
+        function renderGallery() {
+            if (uploadedPhotos.length === 0) {
+                galleryGrid.innerHTML = '<p class="col-span-full text-sm text-gray-400 font-medium italic">No photos uploaded yet. Your gallery is empty.</p>';
+                return;
+            }
+            
+            // Photos ko mast grid me dikhana with Delete Button
+            galleryGrid.innerHTML = uploadedPhotos.map((imgUrl, index) => `
+                <div class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200">
+                    <img src="${imgUrl}" class="w-full h-24 object-cover">
+                    <button onclick="deletePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-md">
+                        🗑️
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 🚀 5. UPLOAD NEW PHOTOS TO SERVER
+        uploadBtn.addEventListener('click', async () => {
+            const files = galleryInput.files;
+            
+            if (files.length === 0) {
+                return alert("⚠️ Pehle photo select karein!");
+            }
+            if (uploadedPhotos.length + files.length > 5) {
+                return alert(`⚠️ Maximum 5 photos allowed hain! Aap ${5 - uploadedPhotos.length} aur daal sakte hain.`);
+            }
+
+            // Image file server par bhejne ke liye FormData banate hain
+            const formData = new FormData();
+            for (let i = 0; i < files.length; i++) {
+                formData.append('photos', files[i]); // 'photos' naam se file jayegi
+            }
+            formData.append('shopSlug', shopSlug);
+
+            uploadBtn.innerText = "Uploading... ⏳";
+            uploadBtn.disabled = true;
+
+            try {
+                // API Call (Ye server API hume banani hogi backend me)
+                const res = await fetch('/api/vendor/upload-gallery', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }, // Token zaroori hai
+                    body: formData
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    uploadedPhotos = data.updatedGallery; 
+                    renderGallery(); // Screen update karo
+                    galleryInput.value = ""; // Input clear karo
+                    alert("✅ Photos successfully upload ho gayi!");
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                alert("Upload failed! Kripya internet connection check karein.");
+            } finally {
+                uploadBtn.innerText = "Upload Photos";
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // 🗑️ 6. DELETE PHOTO LOGIC
+        async function deletePhoto(index) {
+            if(!confirm("Kya aap sach me ye photo hatana chahte hain?")) return;
+            
+            // Frontend se photo remove karke UI update
+            const photoToRemove = uploadedPhotos[index];
+            uploadedPhotos.splice(index, 1); 
+            renderGallery();
+
+            // Backend ko batana ki ye photo hata do
+            try {
+                await fetch('/api/vendor/delete-gallery-photo', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ shopSlug, photoUrl: photoToRemove })
+                });
+            } catch(e) {
+                console.log("Delete API fail ho gayi, par UI update ho gaya");
+            }
+        }
+
+        // Page Start hote hi load function chalao
+        loadGallery();
     </script>
 </body>
 </html>
