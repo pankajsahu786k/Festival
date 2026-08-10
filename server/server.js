@@ -3,11 +3,24 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors'); 
 const path = require('path'); 
+const fs = require('fs');
 const bcrypt = require('bcryptjs');
 const Vendor = require('./models/Vendor');
 const jwt = require('jsonwebtoken'); 
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+
+// 🌟 MULTER SETUP (Gallery photos handle karne ke liye)
+const multer = require('multer');
+// Uploads folder create karein agar nahi hai
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) { cb(null, 'uploads/') },
+    filename: function (req, file, cb) { cb(null, Date.now() + '-' + file.originalname) }
+});
+const upload = multer({ storage: storage });
 
 const app = express();
 
@@ -20,6 +33,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // STATIC FILES FIX
 app.use(express.static(path.join(__dirname, '../')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Photos dikhane ke liye
 
 // Live Database Connection
 const MONGO_URI = process.env.MONGO_URI; 
@@ -86,6 +100,7 @@ app.post('/api/vendor/login', async (req, res) => {
             token: token,
             role: user.role, 
             shopSlug: user.shopSlug,
+            storeType: user.storeType, // Added storeType in response
             isSetupCompleted: user.isSetupCompleted || false
         });
 
@@ -97,11 +112,12 @@ app.post('/api/vendor/login', async (req, res) => {
 
 app.post('/api/vendor/setup-shop', async (req, res) => {
     try {
-        const { shopSlug, category, address, description, latitude, longitude } = req.body;
+        const { shopSlug, storeType, category, address, description, latitude, longitude } = req.body;
         
         const updatedVendor = await Vendor.findOneAndUpdate(
             { shopSlug: shopSlug, role: 'vendor' },
             { 
+                storeType, // Added Store Type
                 category, 
                 address, 
                 description, 
@@ -134,7 +150,6 @@ app.get('/api/shop/:slug', async (req, res) => {
             return res.status(403).json({ message: "Yeh dukan abhi temporary band (Suspended) hai." });
         }
 
-        // 🚀 UPDATED: Response mein 'location' (lat, lng) bhi bhej rahe hain taaki distance nikal sakein
         res.json({ 
             shopName: shop.shopName, 
             mobileNumber: shop.mobileNumber, 
@@ -158,23 +173,28 @@ app.get('/api/vendor/check-location/:slug', async (req, res) => {
         res.status(500).json({ hasLocation: true }); 
     }
 });
+
 // ==========================================
-// 🌟 DYNAMIC CATEGORY API
+// 🌟 SMART DYNAMIC CATEGORY API
 // ==========================================
 app.get('/api/categories', async (req, res) => {
     try {
-        // 'Store' की जगह 'Vendor' मॉडल यूज़ करना है
-        const categories = await Vendor.distinct('category'); 
+        const categories = await Vendor.aggregate([
+            { $match: { category: { $ne: '' }, storeType: { $exists: true, $ne: '' } } },
+            { $group: { _id: { category: "$category", storeType: "$storeType" } } },
+            { $project: { _id: 0, category: "$_id.category", storeType: "$_id.storeType" } }
+        ]);
+        
         res.json(categories);
     } catch (error) {
         console.error("Categories Fetch Error:", error);
         res.status(500).json({ error: "Server Error" });
     }
 });
+
 // ==========================================
 // 🚀 1.5 AGENT MANAGEMENT APIS
 // ==========================================
-
 app.post('/api/vendor/add-agent', async (req, res) => {
     try {
         try { await mongoose.connection.collection('vendors').dropIndex('shopSlug_1'); } catch(e) {}
@@ -278,6 +298,41 @@ app.delete('/api/products/delete/:id', async (req, res) => {
         res.json({ message: "Item successfully delete ho gaya!" });
     } catch (error) {
         res.status(500).json({ message: "Delete karne me error aaya." });
+    }
+});
+
+// 📸 FOOD DASHBOARD: GALLERY UPLOAD API
+app.post('/api/vendor/upload-gallery', upload.array('photos', 5), async (req, res) => {
+    try {
+        const { shopSlug } = req.body;
+        
+        if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ message: "Koi photo nahi mili!" });
+        }
+
+        // Multer se mili file ka path (relative path save karenge)
+        const newPhotos = req.files.map(file => `/${file.path.replace(/\\/g, '/')}`);
+
+        const vendor = await Vendor.findOne({ shopSlug });
+        if (!vendor) {
+            return res.status(404).json({ message: "Vendor nahi mila!" });
+        }
+
+        if (!vendor.galleryPhotos) {
+            vendor.galleryPhotos = [];
+        }
+
+        vendor.galleryPhotos = [...vendor.galleryPhotos, ...newPhotos].slice(0, 5);
+        await vendor.save();
+
+        res.json({ 
+            message: "Photos successfully upload ho gayi!", 
+            updatedGallery: vendor.galleryPhotos 
+        });
+
+    } catch (error) {
+        console.error("Gallery upload error:", error);
+        res.status(500).json({ message: "Server mein error aayi, kripya baad mein try karein." });
     }
 });
 
@@ -457,41 +512,22 @@ function getDistanceInKm(lat1, lon1, lat2, lon2) {
     return R * c; 
 }
 
-// ==========================================
-// 🛒 6. CUSTOMER HYPERLOCAL SEARCH API
-// ==========================================
-
-function getDistanceInKm(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in KM
-    const dLat = (lat2 - lat1) * (Math.PI / 180);
-    const dLon = (lon2 - lon1) * (Math.PI / 180);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-              Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-              Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c; 
-}
-
 app.post('/api/customer/search', async (req, res) => {
     try {
         const { latitude, longitude, searchQuery, category } = req.body;
         
-        // 1. वेंडर (Dukan) का फिल्टर तैयार करें
         let vendorFilter = { isSuspended: false, 'location.lat': { $exists: true } };
         
-        // 🌟 अगर यूज़र ने कोई कैटेगरी सेलेक्ट की है, तो उसे यहाँ लगा दें
         if (category && category.trim() !== "") {
             vendorFilter.category = category; 
         }
 
         const vendors = await Vendor.find(vendorFilter);
 
-        // अगर चुनी हुई कैटेगरी की कोई दुकान नहीं है, तो खाली रिज़ल्ट वापस कर दें
         if (vendors.length === 0) {
             return res.json([]);
         }
 
-        // जो दुकानें मिली हैं, उनके slugs निकाल लें
         const vendorSlugs = vendors.map(v => v.shopSlug);
 
         const vendorDistances = {};
@@ -504,8 +540,6 @@ app.post('/api/customer/search', async (req, res) => {
             }
         });
 
-        // 2. प्रोडक्ट (Saaman) का फिल्टर तैयार करें
-        // 🌟 अब हम सिर्फ उन्हीं दुकानों में सामान ढूँढेंगे जो ऊपर फिल्टर होकर आई हैं
         let productQuery = { shopSlug: { $in: vendorSlugs } }; 
         
         if (searchQuery) {
