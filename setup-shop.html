@@ -18,17 +18,25 @@
         <form id="setupForm" class="space-y-6">
             
             <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">Aap kis cheez ka business karte hain?</label>
-                <!-- 🌟 NAYA DYNAMIC DROPDOWN -->
+                <label class="block text-sm font-bold text-gray-700 mb-2">Aapki Dukaan/Business ka Type kya hai?</label>
+                <select id="storeType" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition text-sm font-medium cursor-pointer">
+                    <option value="" disabled selected>Type select karein...</option>
+                    <option value="retail">🛍️ Retail Store (Products / Saman)</option>
+                    <option value="food">🍔 Food Outlet (Restaurant / Cafe / Bakery)</option>
+                    <option value="service">🛠️ Service Provider (Salon / Repair / Plumber etc.)</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Aapki exact Category kya hai?</label>
                 <select id="category" required class="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition text-sm font-medium cursor-pointer">
                     <option value="" disabled selected>Loading Categories... ⏳</option>
-                    <!-- Backend se aane wali categories yahan automatically load hongi -->
                 </select>
             </div>
 
             <div id="otherCategoryBox" class="hidden p-4 bg-orange-50 border border-orange-100 rounded-xl">
                 <label class="block text-sm font-bold text-gray-900 mb-2">Apni Nayi Category Likhain ✍️</label>
-                <input type="text" id="customCategory" placeholder="E.g. Bakery, Hardware, Pharmacy..." 
+                <input type="text" id="customCategory" placeholder="E.g. Hardware, Sofa Cleaning..." 
                     class="w-full px-4 py-3 rounded-lg border border-gray-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-100 outline-none transition text-sm font-medium">
             </div>
 
@@ -75,7 +83,6 @@
                 if (res.ok) {
                     const dbCategories = await res.json();
                     
-                    // Kuch basic categories default rakhte hain taaki list bilkul khali na dikhe
                     const defaultOptions = [
                         "Grocery & Kirana Store", 
                         "Clothing & Fashion", 
@@ -84,7 +91,6 @@
                         "Real Estate & Property Brokerage"
                     ];
                     
-                    // Set ka use karke duplicate categories ko hata denge (Default + Nayi DB Categories)
                     const allCategories = new Set([...defaultOptions, ...dbCategories]);
                     
                     select.innerHTML = '<option value="" disabled selected>Category chunie...</option>';
@@ -98,7 +104,6 @@
                         }
                     });
                     
-                    // 🌟 Sabse aakhiri me 'Other' option add kar diya
                     const otherOption = document.createElement('option');
                     otherOption.value = 'other';
                     otherOption.className = 'font-bold text-orange-600';
@@ -117,7 +122,6 @@
             }
         }
 
-        // Page khulte hi Categories load karein
         loadCategories();
 
         // 🆕 OTHER CATEGORY LOGIC
@@ -196,7 +200,9 @@
 
             const shopSlug = localStorage.getItem('shopSlug');
             
-            // 🆕 CHECK IF OTHER IS SELECTED
+            // 🌟 STORE TYPE GET KARNA
+            const storeType = document.getElementById('storeType').value;
+            
             let finalCategory = categorySelect.value;
             if (finalCategory === 'other') {
                 finalCategory = customCategoryInput.value.trim();
@@ -206,12 +212,14 @@
             const description = document.getElementById('description').value;
 
             try {
+                // Backend me ab 'storeType' bhi bheja jaa raha hai
                 const response = await fetch('/api/vendor/setup-shop', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         shopSlug, 
-                        category: finalCategory, // Yahan final string jayegi (nayi ya purani)
+                        storeType, // Naya variable
+                        category: finalCategory, 
                         address, 
                         description, 
                         latitude: shopLat, 
