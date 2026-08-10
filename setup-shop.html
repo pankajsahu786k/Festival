@@ -75,60 +75,109 @@
     </div>
 
     <script>
-        // 🌟 1. DYNAMIC CATEGORY FETCH LOGIC
-        async function loadCategories() {
-            const select = document.getElementById('category');
-            try {
-                const res = await fetch('/api/categories');
-                if (res.ok) {
-                    const dbCategories = await res.json();
-                    
-                    const defaultOptions = [
-                        "Grocery & Kirana Store", 
-                        "Clothing & Fashion", 
-                        "Electronics & Mobile Repair",
-                        "Festival & Seasonal Items",
-                        "Real Estate & Property Brokerage"
-                    ];
-                    
-                    const allCategories = new Set([...defaultOptions, ...dbCategories]);
-                    
-                    select.innerHTML = '<option value="" disabled selected>Category chunie...</option>';
-                    
-                    allCategories.forEach(cat => {
-                        if (cat && cat.trim() !== '' && cat.toLowerCase() !== 'other') { 
-                            const option = document.createElement('option');
-                            option.value = cat; 
-                            option.textContent = cat;
-                            select.appendChild(option);
-                        }
-                    });
-                    
-                    const otherOption = document.createElement('option');
-                    otherOption.value = 'other';
-                    otherOption.className = 'font-bold text-orange-600';
-                    otherOption.textContent = '+ Other (Nayi Category Banayein)';
-                    select.appendChild(otherOption);
-                }
-            } catch (error) {
-                console.error("Categories load karne mein error:", error);
-                select.innerHTML = `
-                    <option value="" disabled selected>Category chunie...</option>
-                    <option value="Grocery & Kirana Store">Grocery & Kirana Store</option>
-                    <option value="Clothing & Fashion">Clothing & Fashion</option>
-                    <option value="Electronics & Mobile Repair">Electronics & Mobile Repair</option>
-                    <option value="other" class="font-bold text-orange-600">+ Other (Nayi Category Banayein)</option>
-                `;
-            }
-        }
-
-        loadCategories();
-
-        // 🆕 OTHER CATEGORY LOGIC
+        // 🌟 1. SMART & DYNAMIC CATEGORY LOGIC 🌟
+        const storeTypeSelect = document.getElementById('storeType');
         const categorySelect = document.getElementById('category');
         const otherCategoryBox = document.getElementById('otherCategoryBox');
         const customCategoryInput = document.getElementById('customCategory');
 
+        // Default categories (Taaki shuruwat me list khali na rahe)
+        const defaultCategories = {
+            retail: [
+                "Grocery & Kirana Store", "Clothing & Fashion", "Electronics & Mobile Accessories",
+                "Hardware, Paint & Tools", "Medical & Pharmacy", "Footwear & Shoes",
+                "Cosmetics & Beauty Products", "Stationery & Books"
+            ],
+            food: [
+                "Restaurant & Dine-in", "Cafe & Coffee Shop", "Bakery & Cake Shop",
+                "Fast Food & Snacks", "Sweet Shop (Mithai)", "Juice & Beverages"
+            ],
+            service: [
+                "Salon, Parlour & Spa", "Mobile & Laptop Repair", "Plumber, Electrician & Carpenter",
+                "Event, Tent & Decoration", "Real Estate & Brokerage", "Tailor & Boutique"
+            ]
+        };
+
+        let dbDynamicCategories = [];
+
+        // 🔄 Backend se categories fetch karna (Page Load par)
+        async function fetchDynamicCategories() {
+            try {
+                const res = await fetch('/api/categories');
+                if(res.ok) {
+                    dbDynamicCategories = await res.json(); 
+                }
+            } catch (e) {
+                console.log("Dynamic categories load nahi ho paayi.");
+            }
+        }
+        
+        fetchDynamicCategories();
+
+        // 🔄 Jab Store Type badle, Dropdown update karein
+        storeTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Purani list clear karein
+            categorySelect.innerHTML = '<option value="" disabled selected>Category chunie...</option>';
+            otherCategoryBox.classList.add('hidden');
+            customCategoryInput.required = false;
+
+            // 1. Default categories add karein
+            if (defaultCategories[selectedType]) {
+                defaultCategories[selectedType].forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat; 
+                    option.textContent = cat;
+                    categorySelect.appendChild(option);
+                });
+            }
+
+            // 2. Nayi (Dynamic) Categories add karein
+            let newAdditions = [];
+            
+            dbDynamicCategories.forEach(item => {
+                // Agar backend smart ho gaya aur {storeType, category} dono bhej raha hai
+                if (typeof item === 'object' && item.category && item.storeType) {
+                    if (item.storeType === selectedType && !defaultCategories[selectedType].includes(item.category)) {
+                        newAdditions.push(item.category);
+                    }
+                } 
+                // Agar backend abhi sirf purane style ka flat array ["Pizza", "Repair"] bhej raha hai
+                else if (typeof item === 'string') {
+                    const allDefaults = [...defaultCategories.retail, ...defaultCategories.food, ...defaultCategories.service];
+                    if (!allDefaults.includes(item) && item.toLowerCase() !== 'other' && item.trim() !== '') {
+                        newAdditions.push(item);
+                    }
+                }
+            });
+
+            // Duplicate names hatana aur dropdown me daalna
+            if (newAdditions.length > 0) {
+                newAdditions = [...new Set(newAdditions)]; // Remove duplicates
+                
+                const group = document.createElement('optgroup');
+                group.label = "🌟 Nayi Categories (User Added)"; // Alag se highlight karega
+                
+                newAdditions.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    group.appendChild(option);
+                });
+                
+                categorySelect.appendChild(group);
+            }
+
+            // 3. Sabse aakhiri me '+ Other' ka option
+            const otherOption = document.createElement('option');
+            otherOption.value = 'other';
+            otherOption.className = 'font-bold text-orange-600';
+            otherOption.textContent = '+ Other (Nayi Category Banayein)';
+            categorySelect.appendChild(otherOption);
+        });
+
+        // 🆕 OTHER CATEGORY BOX LOGIC
         categorySelect.addEventListener('change', function() {
             if (this.value === 'other') {
                 otherCategoryBox.classList.remove('hidden');
@@ -139,7 +188,6 @@
                 customCategoryInput.required = false;
             }
         });
-
         // GPS Coordinates Variables
         let shopLat = null;
         let shopLng = null;
