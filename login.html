@@ -173,7 +173,11 @@
 
                 const data = await response.json();
 
-                if (selectedRole === 'vendor') {
+                // YAHAN WOH LINE MISSING THI JO MAINE WAPAS LAGA DI HAI 👇
+                if (response.ok) {
+                    alert(`Success: ${data.message}`);
+
+                    if (selectedRole === 'vendor') {
                         localStorage.setItem('token', data.token);
                         localStorage.setItem('userRole', data.role);
                         localStorage.setItem('shopSlug', data.shopSlug);
