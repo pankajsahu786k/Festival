@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-9QFPH9J8TG"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9QFPH9J8TG"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
@@ -42,13 +41,11 @@
                     📍 <span id="locText">Detect Location</span>
                 </button>
                 
-                <!-- 🌟 NAYA FEATURE: Category Dropdown -->
                 <select id="categorySelect" class="px-4 py-3 bg-gray-50 border border-gray-100 outline-none text-gray-700 font-bold rounded-xl md:w-48 focus:ring-2 focus:ring-orange-500 transition cursor-pointer">
                     <option value="">All Categories</option>
-                    <!-- Backend se aane wali categories yahan load hongi -->
-                </select>
+                    </select>
                 
-                <input type="text" id="searchInput" placeholder="Search for headphones, shoes, groceries..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
+                <input type="text" id="searchInput" placeholder="Search for headphones, shoes, groceries, or haircut..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
                 
                 <button id="searchBtn" class="bg-orange-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-700 transition">
                     Search
@@ -74,17 +71,14 @@
     let userLng = null;
 
     // 🌟 NAYA FEATURE: Load Dynamic Categories
-    // Ye function backend se saari unique categories layega (taaki nayi added categories automatically dikhein)
     async function loadCategories() {
         try {
-            // Yahan hum man ke chal rahe hain ki backend me ek naya route banega: GET /api/categories
             const res = await fetch(`${API_URL}/api/categories`);
             if (res.ok) {
                 const categories = await res.json();
                 const select = document.getElementById('categorySelect');
                 
                 categories.forEach(cat => {
-                    // Agar category blank nahi hai tabhi add karein
                     if(cat && cat.trim() !== '') {
                         const option = document.createElement('option');
                         option.value = cat;
@@ -95,8 +89,7 @@
             }
         } catch (error) {
             console.error("Categories load karne mein error:", error);
-            // Fallback categories agar API fail ho jaye
-            const defaultCategories = ["Mobile Accessories", "General Store", "Electronics", "Groceries", "Clothing"];
+            const defaultCategories = ["Mobile Accessories", "General Store", "Electronics", "Groceries", "Clothing", "Salon/Barber", "Food Outlet"];
             const select = document.getElementById('categorySelect');
             defaultCategories.forEach(cat => {
                 const option = document.createElement('option');
@@ -107,7 +100,6 @@
         }
     }
 
-    // Page load hote hi categories le aao
     loadCategories();
 
     // 📍 1. GET USER LOCATION
@@ -140,7 +132,7 @@
     // 🔍 2. SEARCH PRODUCTS
     function triggerSearch() {
         const query = document.getElementById('searchInput').value.trim();
-        const category = document.getElementById('categorySelect').value; // 🌟 Category nikal li
+        const category = document.getElementById('categorySelect').value; 
         fetchProducts(query, category);
     }
 
@@ -150,7 +142,6 @@
         if (e.key === 'Enter') triggerSearch();
     });
 
-    // 🌟 Dropdown change hone par bhi turant search ho jaye
     document.getElementById('categorySelect').addEventListener('change', triggerSearch);
 
     // 🛍️ 3. FETCH & RENDER DATA
@@ -160,7 +151,6 @@
         
         grid.innerHTML = `<p class="col-span-full text-center py-10 text-orange-600 font-bold animate-pulse">Searching nearby stores... ⏳</p>`;
         
-        // Title update karne ka logic
         let titleText = `Trending Nearby Products 🔥`;
         if (searchQuery || category) {
             titleText = `Results `;
@@ -171,7 +161,6 @@
         title.innerText = titleText;
 
         try {
-            // 🌟 Body mein category pass kar di gayi hai
             const res = await fetch(`${API_URL}/api/customer/search`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -179,7 +168,7 @@
                     latitude: userLat, 
                     longitude: userLng, 
                     searchQuery: searchQuery,
-                    category: category // Naya parameter
+                    category: category
                 })
             });
 
@@ -190,12 +179,37 @@
 
             const data = await res.json();
 
-            if (data.length === 0) {
-                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman nahi mila. Kuch aur search karke dekhein! 😔</p>`;
+            // 🌟 SMART FILTER LOGIC (DYNAMIC HIDING) 🌟
+            let finalData = data;
+
+            // Agar Search Box aur Category Dropdown dono KHALI hain, tab hide wala logic chalega
+            if (searchQuery === "" && category === "") {
+                finalData = data.filter(item => {
+                    // Agar backend se storeType aane laga hai, toh uska use karo:
+                    if (item.storeType) {
+                        return item.storeType.toLowerCase() === 'retail';
+                    }
+                    
+                    // FALLBACK: Jab tak backend me 'storeType' proper set nahi hota, 
+                    // hum category name me ye words dhoondh kar unhe chupa denge
+                    const catString = (item.category || item.shopName || '').toLowerCase();
+                    const isServiceOrFood = catString.includes('food') || catString.includes('restaurant') || 
+                                            catString.includes('cafe') || catString.includes('barber') || 
+                                            catString.includes('salon') || catString.includes('repair') || 
+                                            catString.includes('service') || catString.includes('plumber');
+                    
+                    // Agar wo food/service nahi hai, tabhi default view me dikhao (!isServiceOrFood)
+                    return !isServiceOrFood;
+                });
+            }
+
+            // Ab hum rendered output ke liye 'finalData' use karenge
+            if (finalData.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman ya service nahi mili. Kuch aur search karke dekhein! 😔</p>`;
                 return;
             }
 
-            grid.innerHTML = data.map(item => {
+            grid.innerHTML = finalData.map(item => {
                 let distanceHtml = '';
                 if (item.distance !== undefined && item.distance !== null && userLat) {
                     distanceHtml = `<span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">📍 ${item.distance.toFixed(1)} KM away</span>`;
