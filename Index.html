@@ -70,7 +70,7 @@
     let userLat = null;
     let userLng = null;
 
-    // 🌟 NAYA FEATURE: Load Dynamic Categories
+    // Load Dynamic Categories
     async function loadCategories() {
         try {
             const res = await fetch(`${API_URL}/api/categories`);
@@ -89,7 +89,7 @@
             }
         } catch (error) {
             console.error("Categories load karne mein error:", error);
-            const defaultCategories = ["Mobile Accessories", "General Store", "Electronics", "Groceries", "Clothing", "Salon/Barber", "Food Outlet"];
+            const defaultCategories = ["Mobile Accessories", "General Store", "Electronics", "Groceries", "Clothing", "Salon & Beauty", "Food & Restaurant"];
             const select = document.getElementById('categorySelect');
             defaultCategories.forEach(cat => {
                 const option = document.createElement('option');
@@ -144,7 +144,7 @@
 
     document.getElementById('categorySelect').addEventListener('change', triggerSearch);
 
-    // 🛍️ 3. FETCH & RENDER DATA
+    // 🛍️ 3. FETCH & RENDER DATA WITH DYNAMIC FILTERING
     async function fetchProducts(searchQuery, category = "") {
         const grid = document.getElementById('productsGrid');
         const title = document.getElementById('resultTitle');
@@ -179,31 +179,28 @@
 
             const data = await res.json();
 
-            // 🌟 SMART FILTER LOGIC (DYNAMIC HIDING) 🌟
+            // 🌟 DYNAMIC STORE TYPE FILTER LOGIC 🌟
             let finalData = data;
 
-            // Agar Search Box aur Category Dropdown dono KHALI hain, tab hide wala logic chalega
+            // Agar Search Box aur Category Dropdown dono KHALI hain, tab sirf Retail Dukaanein dikhengi
             if (searchQuery === "" && category === "") {
                 finalData = data.filter(item => {
-                    // Agar backend se storeType aane laga hai, toh uska use karo:
+                    // 1. Agar backend se 'storeType' aa raha hai, toh strict filter apply karein
                     if (item.storeType) {
                         return item.storeType.toLowerCase() === 'retail';
                     }
                     
-                    // FALLBACK: Jab tak backend me 'storeType' proper set nahi hota, 
-                    // hum category name me ye words dhoondh kar unhe chupa denge
+                    // 2. FALLBACK (Purane data ke liye jab tak storeType na ho):
                     const catString = (item.category || item.shopName || '').toLowerCase();
                     const isServiceOrFood = catString.includes('food') || catString.includes('restaurant') || 
                                             catString.includes('cafe') || catString.includes('barber') || 
                                             catString.includes('salon') || catString.includes('repair') || 
                                             catString.includes('service') || catString.includes('plumber');
                     
-                    // Agar wo food/service nahi hai, tabhi default view me dikhao (!isServiceOrFood)
                     return !isServiceOrFood;
                 });
             }
 
-            // Ab hum rendered output ke liye 'finalData' use karenge
             if (finalData.length === 0) {
                 grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Koi saaman ya service nahi mili. Kuch aur search karke dekhein! 😔</p>`;
                 return;
