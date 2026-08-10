@@ -54,7 +54,7 @@
                     <option value="">All Categories</option>
                 </select>
                 
-                <input type="text" id="searchInput" placeholder="Search for shoes, clothes, groceries..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
+                <input type="text" id="searchInput" placeholder="Search for shoes, clothes, groceries, electronics..." class="flex-1 px-4 py-3 bg-transparent outline-none text-gray-800 font-medium placeholder-gray-400 border-t border-gray-100 md:border-t-0 md:border-l">
                 
                 <button id="searchBtn" class="bg-orange-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-orange-700 transition">
                     Search
@@ -79,11 +79,90 @@
     let userLat = null;
     let userLng = null;
     let currentTab = 'retail';
+    let dbDynamicCategories = [];
+
+    // 🌟 SMART CATEGORY DICTIONARY
+    const categoryData = {
+        retail: [
+            "Grocery & Kirana Store", "Clothing & Fashion", "Electronics & Mobile Accessories",
+            "Hardware, Paint & Tools", "Medical & Pharmacy", "Footwear & Shoes",
+            "Cosmetics & Beauty Products", "Stationery & Books"
+        ],
+        food: [
+            "Restaurant & Dine-in", "Cafe & Coffee Shop", "Bakery & Cake Shop",
+            "Fast Food & Snacks", "Sweet Shop (Mithai)", "Juice & Beverages"
+        ],
+        service: [
+            "Salon, Parlour & Spa", "Mobile & Laptop Repair", "Plumber, Electrician & Carpenter",
+            "Event, Tent & Decoration", "Real Estate & Brokerage", "Tailor & Boutique"
+        ]
+    };
+
+    // 1. DYNAMIC CATEGORIES LOAD FUNCTION
+    async function loadCategories() {
+        try {
+            const res = await fetch(`${API_URL}/api/categories`);
+            if (res.ok) {
+                dbDynamicCategories = await res.json();
+            }
+        } catch (error) {
+            console.error("Categories load karne mein error:", error);
+        }
+        // Page load hote hi Retail tab ki categories bharna
+        updateCategoryDropdown(currentTab);
+    }
+
+    // 2. 🌟 DROPDOWN UPDATE LOGIC (Yeh solve karega lafda)
+    function updateCategoryDropdown(tabName) {
+        const select = document.getElementById('categorySelect');
+        select.innerHTML = '<option value="">All Categories</option>';
+
+        // 1. Default categories uss particular tab ke liye
+        if (categoryData[tabName]) {
+            categoryData[tabName].forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                select.appendChild(option);
+            });
+        }
+
+        // 2. Nayi Dynamic (User added) categories filter karke lagana
+        let newAdditions = [];
+        dbDynamicCategories.forEach(item => {
+            if (typeof item === 'object' && item.category && item.storeType) {
+                if (item.storeType === tabName && !categoryData[tabName].includes(item.category)) {
+                    newAdditions.push(item.category);
+                }
+            } else if (typeof item === 'string') {
+                const allDefaults = [...categoryData.retail, ...categoryData.food, ...categoryData.service];
+                if (!allDefaults.includes(item) && item.toLowerCase() !== 'other' && item.trim() !== '') {
+                    newAdditions.push(item);
+                }
+            }
+        });
+
+        if (newAdditions.length > 0) {
+            newAdditions = [...new Set(newAdditions)];
+            const group = document.createElement('optgroup');
+            group.label = "🌟 Nayi Categories";
+            newAdditions.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                group.appendChild(option);
+            });
+            select.appendChild(group);
+        }
+    }
+
+    loadCategories();
 
     // 🌟 TAB SWITCHING LOGIC 🌟
     function switchTab(tabName) {
         currentTab = tabName;
         
+        // Tab buttons ko update karna
         const tabs = ['retail', 'food', 'service'];
         tabs.forEach(t => {
             const btn = document.getElementById(`btn-${t}`);
@@ -94,13 +173,15 @@
             }
         });
 
+        // 🌟 DROPDOWN KO NAYE TAB KE HISAAB SE REFRESH KARNA
+        updateCategoryDropdown(tabName);
+
         const searchInput = document.getElementById('searchInput');
         if(tabName === 'retail') searchInput.placeholder = "Search for shoes, clothes, groceries, electronics...";
         if(tabName === 'food') searchInput.placeholder = "Search in food outlets (burger, thali, bakery, dishes)...";
         if(tabName === 'service') searchInput.placeholder = "Search services (haircut, plumber, repair)...";
 
         document.getElementById('searchInput').value = "";
-        document.getElementById('categorySelect').value = "";
         
         triggerSearch();
     }
