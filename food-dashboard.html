@@ -102,7 +102,7 @@
 
     </main>
 
-    <script>
+   <script>
         // 🔒 1. SECURITY & AUTHENTICATION
         const token = localStorage.getItem('token');
         const shopSlug = localStorage.getItem('shopSlug');
@@ -112,17 +112,16 @@
             window.location.href = 'login.html';
         }
 
-        // 📸 2. GALLERY VARIABLES
+        // ==========================================
+        // 📸 GALLERY MANAGEMENT LOGIC
+        // ==========================================
         const galleryInput = document.getElementById('galleryInput');
         const uploadBtn = document.getElementById('uploadGalleryBtn');
         const galleryGrid = document.getElementById('galleryGrid');
-        
-        let uploadedPhotos = []; // Save hui photos yahan rahengi
+        let uploadedPhotos = []; 
 
-        // 🔄 3. LOAD EXISTING PHOTOS (Page khulte hi chalega)
         async function loadGallery() {
             try {
-                // Backend se is shop ki photos mangwana
                 const res = await fetch(`/api/vendor/gallery/${shopSlug}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -131,101 +130,188 @@
                     uploadedPhotos = data.galleryPhotos || [];
                     renderGallery();
                 }
-            } catch (error) {
-                console.log("Gallery load karne me error aayi:", error);
-            }
+            } catch (error) { console.log("Gallery fetch error"); }
         }
 
-        // 🎨 4. SHOW PHOTOS ON SCREEN
         function renderGallery() {
             if (uploadedPhotos.length === 0) {
                 galleryGrid.innerHTML = '<p class="col-span-full text-sm text-gray-400 font-medium italic">No photos uploaded yet. Your gallery is empty.</p>';
                 return;
             }
-            
-            // Photos ko mast grid me dikhana with Delete Button
             galleryGrid.innerHTML = uploadedPhotos.map((imgUrl, index) => `
                 <div class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200">
                     <img src="${imgUrl}" class="w-full h-24 object-cover">
-                    <button onclick="deletePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-md">
-                        🗑️
-                    </button>
+                    <button onclick="deletePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-md">🗑️</button>
                 </div>
             `).join('');
         }
 
-        // 🚀 5. UPLOAD NEW PHOTOS TO SERVER
         uploadBtn.addEventListener('click', async () => {
             const files = galleryInput.files;
-            
-            if (files.length === 0) {
-                return alert("⚠️ Pehle photo select karein!");
-            }
-            if (uploadedPhotos.length + files.length > 5) {
-                return alert(`⚠️ Maximum 5 photos allowed hain! Aap ${5 - uploadedPhotos.length} aur daal sakte hain.`);
-            }
+            if (files.length === 0) return alert("⚠️ Pehle photo select karein!");
+            if (uploadedPhotos.length + files.length > 5) return alert(`⚠️ Maximum 5 photos allowed!`);
 
-            // Image file server par bhejne ke liye FormData banate hain
             const formData = new FormData();
-            for (let i = 0; i < files.length; i++) {
-                formData.append('photos', files[i]); // 'photos' naam se file jayegi
-            }
+            for (let i = 0; i < files.length; i++) formData.append('photos', files[i]);
             formData.append('shopSlug', shopSlug);
 
             uploadBtn.innerText = "Uploading... ⏳";
             uploadBtn.disabled = true;
 
             try {
-                // API Call (Ye server API hume banani hogi backend me)
                 const res = await fetch('/api/vendor/upload-gallery', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }, // Token zaroori hai
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
-
                 const data = await res.json();
                 if (res.ok) {
                     uploadedPhotos = data.updatedGallery; 
-                    renderGallery(); // Screen update karo
-                    galleryInput.value = ""; // Input clear karo
+                    renderGallery(); 
+                    galleryInput.value = ""; 
                     alert("✅ Photos successfully upload ho gayi!");
-                } else {
-                    alert(`Error: ${data.message}`);
-                }
-            } catch (error) {
-                alert("Upload failed! Kripya internet connection check karein.");
-            } finally {
-                uploadBtn.innerText = "Upload Photos";
-                uploadBtn.disabled = false;
-            }
+                } else { alert(`Error: ${data.message}`); }
+            } catch (error) { alert("Upload failed! Kripya internet connection check karein."); } 
+            finally { uploadBtn.innerText = "Upload Photos"; uploadBtn.disabled = false; }
         });
 
-        // 🗑️ 6. DELETE PHOTO LOGIC
         async function deletePhoto(index) {
             if(!confirm("Kya aap sach me ye photo hatana chahte hain?")) return;
-            
-            // Frontend se photo remove karke UI update
             const photoToRemove = uploadedPhotos[index];
             uploadedPhotos.splice(index, 1); 
             renderGallery();
+            // Delete API functionality can be added here in future
+        }
 
-            // Backend ko batana ki ye photo hata do
+
+        // ==========================================
+        // 🍔 FOOD MENU MANAGEMENT LOGIC (NAYA ENGINE)
+        // ==========================================
+        const menuForm = document.getElementById('menuForm');
+        const menuList = document.getElementById('menuList');
+
+        // Image ko text (Base64) me badalna taaki purani API se save ho sake
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // 🟢 1. ADD DISH TO MENU
+        menuForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = menuForm.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = "Adding... ⏳";
+            submitBtn.disabled = true;
+
             try {
-                await fetch('/api/vendor/delete-gallery-photo', {
+                const name = document.getElementById('itemName').value;
+                const price = document.getElementById('itemPrice').value;
+                const category = document.getElementById('itemCategory').value;
+                const dietTag = document.getElementById('itemDiet').value;
+                const description = document.getElementById('itemDesc').value;
+                
+                // Hum veg/non-veg tag ko description ke shuru me chupa denge
+                const finalDescription = `[${dietTag}] ${description}`;
+
+                const photoFile = document.getElementById('itemPhoto').files[0];
+                const base64Photo = await getBase64(photoFile);
+
+                const payload = {
+                    shopSlug: shopSlug,
+                    name: name,
+                    price: price,
+                    category: category,
+                    description: finalDescription,
+                    images: [base64Photo], 
+                    stockQuantity: 999 // Food items ke liye stock default 999
+                };
+
+                const res = await fetch('/api/products/add', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
-                    body: JSON.stringify({ shopSlug, photoUrl: photoToRemove })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
-            } catch(e) {
-                console.log("Delete API fail ho gayi, par UI update ho gaya");
+
+                if (res.ok) {
+                    alert("✅ Dish aapke live Menu me add ho gayi!");
+                    menuForm.reset();
+                    loadMenu(); // Nayi list turant load karein
+                } else {
+                    alert("Error aayi dish add karne me.");
+                }
+            } catch (error) {
+                alert("Network Error! Dish add nahi ho payi.");
+            } finally {
+                submitBtn.innerHTML = "+ Add to Menu";
+                submitBtn.disabled = false;
+            }
+        });
+
+        // 📋 2. LOAD LIVE MENU
+        async function loadMenu() {
+            try {
+                const res = await fetch(`/api/products/${shopSlug}`);
+                const products = await res.json();
+
+                if (products.length === 0) {
+                    menuList.innerHTML = '<p class="col-span-full text-sm text-gray-400 font-medium italic">Your menu is empty. Add dishes above to see them here.</p>';
+                    return;
+                }
+
+                menuList.innerHTML = products.map(item => {
+                    // Veg/Non-Veg indicator ko nikalna
+                    let dietIcon = '🟢 Veg';
+                    if(item.description.includes('[Non-Veg]')) dietIcon = '🔴 Non-Veg';
+                    if(item.description.includes('[Egg]')) dietIcon = '🟡 Egg';
+                    
+                    // Description clean karna
+                    let cleanDesc = item.description.replace(/\[.*?\] /, '');
+
+                    return `
+                    <div class="flex gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-md transition">
+                        <img src="${item.images[0]}" class="w-20 h-20 object-cover rounded-lg shadow-sm">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-bold text-gray-900 text-sm">${item.name}</h4>
+                                <span class="font-black text-orange-600 text-sm">₹${item.price}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-0.5 font-medium">${dietIcon} • ${item.category}</p>
+                            <p class="text-xs text-gray-500 mt-1 line-clamp-1">${cleanDesc}</p>
+                            <div class="mt-3 flex justify-end gap-2">
+                                <button onclick="deleteMenuItem('${item._id}')" class="text-xs font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded">Delete 🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                menuList.innerHTML = '<p class="text-red-500 font-bold text-sm">Menu load nahi ho paya.</p>';
             }
         }
 
-        // Page Start hote hi load function chalao
+        // ❌ 3. DELETE MENU ITEM
+        async function deleteMenuItem(id) {
+            if (!confirm("Kya aap sach me ye dish menu se hatana chahte hain?")) return;
+            try {
+                const res = await fetch(`/api/products/delete/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    loadMenu(); // Delete hone ke baad list update karo
+                } else {
+                    alert("Delete fail ho gaya.");
+                }
+            } catch (error) {
+                alert("Network Error.");
+            }
+        }
+
+        // Page Start hote hi Gallery aur Menu dono load karein
         loadGallery();
+        loadMenu();
     </script>
 </body>
 </html>
