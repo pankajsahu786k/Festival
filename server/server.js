@@ -335,6 +335,41 @@ app.post('/api/vendor/upload-gallery', upload.array('photos', 5), async (req, re
         res.status(500).json({ message: "Server mein error aayi, kripya baad mein try karein." });
     }
 });
+// ==========================================
+// 📸 GET GALLERY PHOTOS (Page load hone par photos bhejne ke liye)
+// ==========================================
+app.get('/api/vendor/gallery/:slug', async (req, res) => {
+    try {
+        const vendor = await Vendor.findOne({ shopSlug: req.params.slug });
+        if (!vendor) return res.status(404).json({ message: "Vendor nahi mila!" });
+        
+        res.json({ galleryPhotos: vendor.galleryPhotos || [] });
+    } catch (error) {
+        console.error("Gallery fetch error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+// ==========================================
+// 🗑️ DELETE GALLERY PHOTO (Photo hatane ke liye)
+// ==========================================
+app.post('/api/vendor/delete-gallery-photo', async (req, res) => {
+    try {
+        const { shopSlug, photoUrl } = req.body;
+        const vendor = await Vendor.findOne({ shopSlug });
+        
+        if (!vendor) return res.status(404).json({ message: "Vendor nahi mila!" });
+
+        // Jo photo delete karni hai, usko array se hata do
+        vendor.galleryPhotos = vendor.galleryPhotos.filter(url => url !== photoUrl);
+        await vendor.save();
+
+        res.json({ message: "Photo successfully delete ho gayi!", galleryPhotos: vendor.galleryPhotos });
+    } catch (error) {
+        console.error("Delete photo error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
 
 // ==========================================
 // 3. ORDER MANAGEMENT APIS
