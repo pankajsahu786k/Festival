@@ -22,7 +22,7 @@
         <nav class="flex-1 p-4 space-y-2">
             <a href="#" class="block px-4 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm shadow-md">🍔 Dashboard</a>
             <a href="#" class="block px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl font-bold text-sm transition">📦 Manage Orders</a>
-            <a href="setup-shop.html" class="block px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl font-bold text-sm transition">⚙️ Edit Profile</a>
+            <a href="#" class="block px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl font-bold text-sm transition">⚙️ Edit Profile</a>
         </nav>
         <div class="p-4 border-t border-gray-800">
             <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold text-sm transition">
@@ -85,8 +85,11 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-xl font-extrabold mb-1">+ Add Menu Item 🍔</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="menuFormSection">
+                    <div class="flex justify-between items-center mb-1">
+                        <h3 id="menuFormTitle" class="text-xl font-extrabold">+ Add Menu Item 🍔</h3>
+                        <button id="cancelEditBtn" class="hidden text-xs font-bold text-red-500 hover:underline">Cancel Edit</button>
+                    </div>
                     <p class="text-sm text-gray-500 mb-6 font-medium">Create mouth-watering listings for your dishes.</p>
                     
                     <form id="menuForm" class="space-y-5">
@@ -123,6 +126,7 @@
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-1">Dish Photo</label>
                                 <input type="file" id="itemPhoto" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition cursor-pointer border border-gray-200 rounded-xl bg-gray-50">
+                                <p id="photoHelpText" class="text-[10px] text-gray-400 mt-1 hidden">Leave empty to keep old photo.</p>
                             </div>
                         </div>
 
@@ -131,7 +135,7 @@
                             <textarea id="itemDesc" rows="2" placeholder="e.g. Loaded with extra cheese, jalapenos, and fresh veggies." class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium"></textarea>
                         </div>
 
-                        <button type="submit" class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl hover:bg-orange-700 transition shadow-md shadow-orange-600/20">
+                        <button type="submit" id="submitMenuBtn" class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl hover:bg-orange-700 transition shadow-md shadow-orange-600/20">
                             + Add to Live Menu
                         </button>
                     </form>
@@ -151,7 +155,7 @@
     </main>
 
     <script>
-        // 🔒 1. SECURITY, SETUP & LOGOUT
+        // 🔒 SECURITY, SETUP & LOGOUT
         const token = localStorage.getItem('token');
         const shopSlug = localStorage.getItem('shopSlug');
 
@@ -167,7 +171,7 @@
             }
         }
 
-        // 🔗 2. DYNAMIC LIVE SHOP LINK & QR CODE
+        // 🔗 DYNAMIC LIVE SHOP LINK & QR CODE
         const liveShopUrl = `${window.location.origin}/food-shop.html?store=${shopSlug}`;
         document.getElementById('shopLinkInput').value = liveShopUrl;
         document.getElementById('topLiveLink').href = liveShopUrl;
@@ -180,7 +184,7 @@
             qrContainer.classList.remove('hidden');
         }
 
-        // 📸 3. GALLERY MANAGEMENT LOGIC
+        // 📸 GALLERY MANAGEMENT
         const galleryInput = document.getElementById('galleryInput');
         const uploadBtn = document.getElementById('uploadGalleryBtn');
         const galleryGrid = document.getElementById('galleryGrid');
@@ -212,7 +216,16 @@
             `).join('');
         }
 
-       uploadBtn.addEventListener('click', async () => {
+        function getBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        uploadBtn.addEventListener('click', async () => {
             const files = galleryInput.files;
             if (files.length === 0) return alert("⚠️ Pehle photo select karein!");
             if (uploadedPhotos.length + files.length > 5) return alert(`⚠️ Maximum 5 photos allowed!`);
@@ -221,7 +234,6 @@
             uploadBtn.disabled = true;
 
             try {
-                // 🌟 NAYA LOGIC: Saari photos ko Base64 (Text) me badalna
                 const base64Photos = await Promise.all(
                     Array.from(files).map(file => getBase64(file))
                 );
@@ -232,10 +244,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}` 
                     },
-                    body: JSON.stringify({
-                        shopSlug: shopSlug,
-                        photos: base64Photos // Array of Base64 strings
-                    })
+                    body: JSON.stringify({ shopSlug: shopSlug, photos: base64Photos })
                 });
 
                 const data = await res.json();
@@ -243,7 +252,7 @@
                     uploadedPhotos = data.updatedGallery; 
                     renderGallery(); 
                     galleryInput.value = ""; 
-                    alert("✅ Photos Database me permanently save ho gayi!");
+                    alert("✅ Photos permanently save ho gayi!");
                 } else { alert(`Error: ${data.message}`); }
             } catch (error) { alert("Upload failed! Kripya internet connection check karein."); } 
             finally { uploadBtn.innerText = "Upload Photos"; uploadBtn.disabled = false; }
@@ -251,104 +260,37 @@
 
         async function deletePhoto(index) {
             if(!confirm("Kya aap sach me ye photo hatana chahte hain?")) return;
-            
             const photoToRemove = uploadedPhotos[index];
-            
-            // 1. Pehle screen (UI) se turant hatao
             uploadedPhotos.splice(index, 1); 
             renderGallery();
 
-            // 2. Ab Backend (Database) ko batao ki hamesha ke liye delete kar de
             try {
-                const res = await fetch('/api/vendor/delete-gallery-photo', {
+                await fetch('/api/vendor/delete-gallery-photo', {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ shopSlug, photoUrl: photoToRemove })
                 });
-
-                if (!res.ok) {
-                    alert("⚠️ Server par photo delete nahi hui. Kripya page refresh karein.");
-                }
-            } catch (error) {
-                console.error("Network Error during delete:", error);
-            }
+            } catch (error) { console.error("Error deleting"); }
         }
 
-        // 🍔 4. FOOD MENU MANAGEMENT LOGIC
+        // 🍔 FOOD MENU MANAGEMENT (WITH EDIT LOGIC)
         const menuForm = document.getElementById('menuForm');
         const menuList = document.getElementById('menuList');
-
-        function getBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        menuForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitBtn = menuForm.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = "Adding... ⏳";
-            submitBtn.disabled = true;
-
-            try {
-                const name = document.getElementById('itemName').value;
-                const price = document.getElementById('itemPrice').value;
-                const category = document.getElementById('itemCategory').value;
-                const dietTag = document.getElementById('itemDiet').value;
-                const description = document.getElementById('itemDesc').value;
-                
-                const finalDescription = `[${dietTag}] ${description}`;
-                const photoFile = document.getElementById('itemPhoto').files[0];
-                const base64Photo = await getBase64(photoFile);
-
-                const payload = {
-                    shopSlug: shopSlug,
-                    name: name,
-                    price: price,
-                    category: category,
-                    description: finalDescription,
-                    images: [base64Photo], 
-                    stockQuantity: 999 
-                };
-
-                const res = await fetch('/api/products/add', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    menuForm.reset();
-                    loadMenu(); 
-                } else {
-                    alert("Error aayi dish add karne me.");
-                }
-            } catch (error) {
-                alert("Network Error! Dish add nahi ho payi.");
-            } finally {
-                submitBtn.innerHTML = "+ Add to Live Menu";
-                submitBtn.disabled = false;
-            }
-        });
+        
+        let allProducts = []; // Live menu ka data isme save hoga edit karne ke liye
+        let editingItemId = null; // Agar hum edit kar rahe hain, to uski ID isme aayegi
 
         async function loadMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
-                const products = await res.json();
+                allProducts = await res.json();
 
-                if (products.length === 0) {
+                if (allProducts.length === 0) {
                     menuList.innerHTML = '<p class="text-sm text-gray-400 font-medium italic text-center py-4">Your menu is empty.</p>';
                     return;
                 }
 
-                menuList.innerHTML = products.map(item => {
+                menuList.innerHTML = allProducts.map(item => {
                     let dietIcon = '🟢 Veg';
                     if(item.description.includes('[Non-Veg]')) dietIcon = '🔴 Non-Veg';
                     if(item.description.includes('[Egg]')) dietIcon = '🟡 Egg';
@@ -356,14 +298,19 @@
 
                     return `
                     <div class="flex gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 hover:border-orange-200 transition relative group">
-                        <img src="${item.images[0]}" class="w-16 h-16 object-cover rounded-lg shadow-sm shrink-0">
-                        <div class="flex-1 min-w-0">
+                        <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" class="w-16 h-16 object-cover rounded-lg shadow-sm shrink-0">
+                        <div class="flex-1 min-w-0 pr-8">
                             <div class="flex justify-between items-start">
                                 <h4 class="font-bold text-gray-900 text-sm truncate pr-2">${item.name}</h4>
                                 <span class="font-black text-orange-600 text-sm">₹${item.price}</span>
                             </div>
                             <p class="text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">${dietIcon} • ${item.category}</p>
                         </div>
+                        
+                        <button onclick="triggerEdit('${item._id}')" class="absolute top-2 right-9 bg-blue-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition shadow-md" title="Edit Dish">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+
                         <button onclick="deleteMenuItem('${item._id}')" class="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition shadow-md" title="Delete Dish">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </button>
@@ -375,11 +322,125 @@
             }
         }
 
+        // ✏️ FUNCTION TO START EDITING
+        function triggerEdit(id) {
+            const item = allProducts.find(p => p._id === id);
+            if(!item) return;
+
+            editingItemId = id;
+            
+            // Form me details bharna
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('itemPrice').value = item.price;
+            document.getElementById('itemCategory').value = item.category || 'Starters';
+            
+            let diet = 'Veg';
+            if(item.description.includes('[Non-Veg]')) diet = 'Non-Veg';
+            if(item.description.includes('[Egg]')) diet = 'Egg';
+            document.getElementById('itemDiet').value = diet;
+            
+            document.getElementById('itemDesc').value = item.description.replace(/\[.*?\] /, '');
+
+            // Photo required nahi rakhni edit karte time
+            document.getElementById('itemPhoto').required = false;
+            document.getElementById('photoHelpText').classList.remove('hidden');
+
+            // Button update
+            const submitBtn = document.getElementById('submitMenuBtn');
+            submitBtn.innerHTML = "🔄 Update Menu Item";
+            submitBtn.classList.replace('bg-orange-600', 'bg-blue-600');
+            submitBtn.classList.replace('hover:bg-orange-700', 'hover:bg-blue-700');
+            
+            document.getElementById('menuFormTitle').innerText = "✏️ Edit Menu Item";
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            // Scroll up to form
+            document.getElementById('menuFormSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ❌ CANCEL EDITING
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            resetMenuForm();
+        });
+
+        function resetMenuForm() {
+            editingItemId = null;
+            menuForm.reset();
+            
+            document.getElementById('itemPhoto').required = true;
+            document.getElementById('photoHelpText').classList.add('hidden');
+            
+            const submitBtn = document.getElementById('submitMenuBtn');
+            submitBtn.innerHTML = "+ Add to Live Menu";
+            submitBtn.classList.replace('bg-blue-600', 'bg-orange-600');
+            submitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-orange-700');
+            
+            document.getElementById('menuFormTitle').innerText = "+ Add Menu Item 🍔";
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        menuForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitMenuBtn');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = "Saving... ⏳";
+            submitBtn.disabled = true;
+
+            try {
+                const name = document.getElementById('itemName').value;
+                const price = document.getElementById('itemPrice').value;
+                const category = document.getElementById('itemCategory').value;
+                const dietTag = document.getElementById('itemDiet').value;
+                const description = document.getElementById('itemDesc').value;
+                
+                const finalDescription = `[${dietTag}] ${description}`;
+                
+                const payload = {
+                    shopSlug: shopSlug,
+                    name: name,
+                    price: price,
+                    category: category,
+                    description: finalDescription,
+                    stockQuantity: 999 
+                };
+
+                const photoFile = document.getElementById('itemPhoto').files[0];
+                if (photoFile) {
+                    payload.images = [await getBase64(photoFile)];
+                }
+
+                // Agar editing ho rahi hai to PUT method, warna naya item add karne ke liye POST
+                const apiUrl = editingItemId ? `/api/products/edit/${editingItemId}` : '/api/products/add';
+                const apiMethod = editingItemId ? 'PUT' : 'POST';
+
+                const res = await fetch(apiUrl, {
+                    method: apiMethod,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    resetMenuForm();
+                    loadMenu(); 
+                    alert(editingItemId ? "✅ Dish update ho gayi!" : "✅ Nayi dish add ho gayi!");
+                } else {
+                    alert("Error aayi details save karne me.");
+                }
+            } catch (error) {
+                alert("Network Error! Action fail ho gaya.");
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
         async function deleteMenuItem(id) {
             if (!confirm("Kya aap sach me ye dish menu se hatana chahte hain?")) return;
             try {
                 const res = await fetch(`/api/products/delete/${id}`, { method: 'DELETE' });
                 if (res.ok) {
+                    if (editingItemId === id) resetMenuForm(); // Agar delete karte time edit kar rahe the to cancel ho jaye
                     loadMenu();
                 } else {
                     alert("Delete fail ho gaya.");
