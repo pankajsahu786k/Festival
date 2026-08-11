@@ -301,17 +301,14 @@ app.delete('/api/products/delete/:id', async (req, res) => {
     }
 });
 
-// 📸 FOOD DASHBOARD: GALLERY UPLOAD API
-app.post('/api/vendor/upload-gallery', upload.array('photos', 5), async (req, res) => {
+// 📸 FOOD DASHBOARD: GALLERY UPLOAD API (PERMANENT BASE64 FIX)
+app.post('/api/vendor/upload-gallery', async (req, res) => {
     try {
-        const { shopSlug } = req.body;
+        const { shopSlug, photos } = req.body; // Frontend ab direct Base64 string bhejega
         
-        if (!req.files || req.files.length === 0) {
+        if (!photos || photos.length === 0) {
             return res.status(400).json({ message: "Koi photo nahi mili!" });
         }
-
-        // Multer se mili file ka path (relative path save karenge)
-        const newPhotos = req.files.map(file => `/${file.path.replace(/\\/g, '/')}`);
 
         const vendor = await Vendor.findOne({ shopSlug });
         if (!vendor) {
@@ -322,11 +319,12 @@ app.post('/api/vendor/upload-gallery', upload.array('photos', 5), async (req, re
             vendor.galleryPhotos = [];
         }
 
-        vendor.galleryPhotos = [...vendor.galleryPhotos, ...newPhotos].slice(0, 5);
+        // Nayi Base64 photos ko database me seedha save karein (Max 5)
+        vendor.galleryPhotos = [...vendor.galleryPhotos, ...photos].slice(0, 5);
         await vendor.save();
 
         res.json({ 
-            message: "Photos successfully upload ho gayi!", 
+            message: "Photos hamesha ke liye successfully save ho gayi!", 
             updatedGallery: vendor.galleryPhotos 
         });
 

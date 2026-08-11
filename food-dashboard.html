@@ -212,30 +212,38 @@
             `).join('');
         }
 
-        uploadBtn.addEventListener('click', async () => {
+       uploadBtn.addEventListener('click', async () => {
             const files = galleryInput.files;
             if (files.length === 0) return alert("⚠️ Pehle photo select karein!");
             if (uploadedPhotos.length + files.length > 5) return alert(`⚠️ Maximum 5 photos allowed!`);
-
-            const formData = new FormData();
-            for (let i = 0; i < files.length; i++) formData.append('photos', files[i]);
-            formData.append('shopSlug', shopSlug);
 
             uploadBtn.innerText = "Uploading... ⏳";
             uploadBtn.disabled = true;
 
             try {
+                // 🌟 NAYA LOGIC: Saari photos ko Base64 (Text) me badalna
+                const base64Photos = await Promise.all(
+                    Array.from(files).map(file => getBase64(file))
+                );
+
                 const res = await fetch('/api/vendor/upload-gallery', {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({
+                        shopSlug: shopSlug,
+                        photos: base64Photos // Array of Base64 strings
+                    })
                 });
+
                 const data = await res.json();
                 if (res.ok) {
                     uploadedPhotos = data.updatedGallery; 
                     renderGallery(); 
                     galleryInput.value = ""; 
-                    alert("✅ Photos successfully upload ho gayi!");
+                    alert("✅ Photos Database me permanently save ho gayi!");
                 } else { alert(`Error: ${data.message}`); }
             } catch (error) { alert("Upload failed! Kripya internet connection check karein."); } 
             finally { uploadBtn.innerText = "Upload Photos"; uploadBtn.disabled = false; }
