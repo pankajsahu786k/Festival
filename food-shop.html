@@ -8,58 +8,28 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style> 
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
+        /* Hide scrollbar for horizontal gallery */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 🖨️ PRINT JADOO CSS */
-        @media print {
-            body * { visibility: hidden; } /* Screen ki baaki cheezein chupa do */
-            #printArea, #printArea * { visibility: visible; } /* Sirf menu dikhao */
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
-            @page { margin: 0; size: A4 portrait; }
-        }
     </style>
-</head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex">
-
-    <div id="printArea" class="hidden bg-white min-h-screen"></div>
-
-    ```
-
-Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me Print button add kijiye:
-```html
-        <div class="flex justify-between items-center mb-4">
-            <div>
-                <h2 class="text-2xl font-black">Welcome to Dashboard! 👨‍🍳</h2>
-                <p class="text-gray-500 text-sm mt-1">Owner Access Mode - Food Outlet</p>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="generatePrintMenu()" class="text-sm font-bold bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center gap-2">
-                    🖨️ Print Menu
-                </button>
-                <a id="topLiveLink" href="#" target="_blank" class="text-sm font-bold bg-gray-900 text-white px-6 py-2.5 rounded-xl hover:bg-black transition shadow-md flex items-center gap-2">
-                    Live Shop ↗
-                </a>
-            </div>
-        </div>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen pb-20">
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
-            <button onclick="window.close(); window.history.back();" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
+            <button onclick="window.history.back()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
                 ⬅️ Back
             </button>
             <h1 class="text-xl font-black tracking-tight" id="headerShopName">Loading...</h1>
-            <button class="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition shadow-sm">
+            <button class="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition">
                 📞 Call
             </button>
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm relative">
+    <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm">
         
-        <div id="galleryContainer" class="flex overflow-x-auto gap-4 p-4 no-scrollbar bg-gray-50 hidden snap-x snap-mandatory border-b border-gray-100">
+        <div id="galleryContainer" class="flex overflow-x-auto gap-2 p-4 no-scrollbar bg-gray-100 hidden">
             </div>
 
         <div class="p-5 border-b border-gray-100">
@@ -68,14 +38,14 @@ Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me 
                     <h2 id="shopName" class="text-2xl font-black text-gray-900">Loading...</h2>
                     <p id="shopCategory" class="text-sm font-medium text-gray-500 mt-1">...</p>
                 </div>
-                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-lg flex flex-col items-center justify-center shadow-sm">
+                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-lg flex flex-col items-center justify-center">
                     <span class="text-xs font-bold">⭐ 4.5</span>
                 </div>
             </div>
             <div class="mt-4 flex gap-3 text-xs font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <span class="flex items-center gap-1">🛵 30-40 mins</span>
                 <span>•</span>
-                <span class="flex items-center gap-1">📍 <span id="distanceText">View Map</span></span>
+                <span class="flex items-center gap-1">📍 <span id="distanceText">Calculating...</span></span>
             </div>
         </div>
 
@@ -84,11 +54,11 @@ Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me 
             
             <div id="menuContainer" class="space-y-6">
                 <p class="text-center text-gray-500 text-sm py-10 font-medium">Menu load ho raha hai... ⏳</p>
-            </div>
+                </div>
         </div>
     </main>
 
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-40">
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-50">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div>
                 <p class="text-xs text-gray-500 font-bold uppercase">Your Order</p>
@@ -100,23 +70,16 @@ Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me 
         </div>
     </div>
 
-    <div id="imageModal" class="fixed inset-0 z-[100] bg-black/95 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300">
-        <button onclick="closeModal()" class="absolute top-4 right-4 text-white p-3 bg-white/10 rounded-full hover:bg-white/20 transition active:scale-95">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-        <img id="modalImage" src="" class="max-w-[95vw] max-h-[85vh] object-contain rounded-xl shadow-2xl">
-    </div>
-
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         const shopSlug = urlParams.get('store');
 
         if (!shopSlug) {
             alert("Galat URL! Dukaan nahi mili.");
-            window.location.href = 'index.html';
+            window.location.href = 'food-shop.html';
         }
 
-        // 🏪 1. Fetch Shop Info
+        // 🏪 1. Fetch Shop Info & Gallery
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
@@ -129,106 +92,39 @@ Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me 
             } catch (error) { console.error("Error loading shop info"); }
         }
 
-        // 📸 2. Fetch & Render Gallery
-        async function fetchGallery() {
-            try {
-                const res = await fetch(`/api/vendor/gallery/${shopSlug}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    const photos = data.galleryPhotos || [];
-                    const container = document.getElementById('galleryContainer');
-                    
-                    if (photos.length > 0) {
-                        container.innerHTML = photos.map(img => `
-                            <img src="${img}" onclick="openModal('${img}')" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200 cursor-pointer active:scale-[0.98] transition">
-                        `).join('');
-                        container.classList.remove('hidden'); 
-                        startAutoScroll();
-                    }
-                }
-            } catch (error) { console.error("Error loading gallery"); }
-        }
-
-        let scrollInterval;
-        function startAutoScroll() {
-            const container = document.getElementById('galleryContainer');
-            scrollInterval = setInterval(() => {
-                if (container.scrollWidth === 0) return;
-                const maxScroll = container.scrollWidth - container.clientWidth;
-                if (container.scrollLeft >= maxScroll - 10) {
-                    container.scrollTo({ left: 0, behavior: 'smooth' });
-                } else {
-                    container.scrollBy({ left: 320, behavior: 'smooth' });
-                }
-            }, 3000); 
-        }
-
-        function openModal(imgSrc) {
-            const modal = document.getElementById('imageModal');
-            const modalImg = document.getElementById('modalImage');
-            modalImg.src = imgSrc;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => modal.classList.remove('opacity-0'), 10);
-            clearInterval(scrollInterval);
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('imageModal');
-            modal.classList.add('opacity-0');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                document.getElementById('modalImage').src = ""; 
-                startAutoScroll();
-            }, 300);
-        }
-
-        // 🛒 CART ENGINE LOGIC
-        let allProducts = []; // Saare items yahan save honge
-        let cart = {}; // Customer ka live order
-
-        // 🍔 3. Fetch & Render Menu
+        // 🍔 2. Fetch & Render Menu
         async function fetchMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
-                allProducts = await res.json();
+                const products = await res.json();
                 const container = document.getElementById('menuContainer');
 
-                if (allProducts.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500 py-10 font-medium italic">Abhi menu add nahi kiya gaya hai.</p>';
+                if (products.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 py-10">Abhi menu add nahi kiya gaya hai.</p>';
                     return;
                 }
 
-                container.innerHTML = allProducts.map(item => {
-                    let dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-green-600 rounded-sm"><div class="w-2 h-2 bg-green-600 rounded-full"></div></div>';
-                    if(item.description.includes('[Non-Veg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-red-600 rounded-sm"><div class="w-2 h-2 bg-red-600 rounded-full"></div></div>';
-                    if(item.description.includes('[Egg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-yellow-500 rounded-sm"><div class="w-2 h-2 bg-yellow-500 rounded-full"></div></div>';
+                container.innerHTML = products.map(item => {
+                    // Smart Veg/Non-Veg extraction
+                    let dietIcon = '<span class="text-[10px] border border-green-600 text-green-600 px-1 rounded font-bold">🟢 VEG</span>';
+                    if(item.description.includes('[Non-Veg]')) dietIcon = '<span class="text-[10px] border border-red-600 text-red-600 px-1 rounded font-bold">🔴 NON-VEG</span>';
+                    if(item.description.includes('[Egg]')) dietIcon = '<span class="text-[10px] border border-yellow-500 text-yellow-600 px-1 rounded font-bold">🟡 EGG</span>';
                     
                     let cleanDesc = item.description.replace(/\[.*?\] /, '');
-                    let imgSrc = item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150';
 
                     return `
-                    <div class="bg-white rounded-2xl p-4 mb-4 flex justify-between items-center gap-4 border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 relative overflow-hidden">
-                        
-                        <div class="flex-1 pr-2">
-                            <div class="flex items-center gap-2 mb-2">
-                                ${dietIcon}
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${item.category}</span>
-                            </div>
-                            <h4 class="font-extrabold text-gray-900 text-[17px] leading-tight mb-1">${item.name}</h4>
-                            <p class="font-black text-gray-800 text-base mb-2">₹${item.price}</p>
-                            <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">${cleanDesc}</p>
+                    <div class="flex justify-between items-start gap-4 pb-6 border-b border-gray-100 last:border-0">
+                        <div class="flex-1">
+                            <div class="mb-1">${dietIcon}</div>
+                            <h4 class="font-bold text-gray-900 text-[15px]">${item.name}</h4>
+                            <p class="font-black text-gray-800 text-sm mt-0.5">₹${item.price}</p>
+                            <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">${cleanDesc}</p>
                         </div>
-                        
-                        <div class="relative w-36 h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100">
-                            <img src="${imgSrc}" onclick="openModal('${imgSrc}')" class="w-full h-full object-cover cursor-pointer hover:scale-110 transition duration-500">
-                            
-                            <div id="cart-btn-${item._id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-center">
-                                <button onclick="updateCart('${item._id}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
-                                    ADD <span class="text-green-600 text-lg leading-none">+</span>
-                                </button>
-                            </div>
+                        <div class="relative w-32 h-32 flex-shrink-0">
+                            <img src="${item.images[0]}" class="w-full h-full object-cover rounded-2xl shadow-sm">
+                            <button onclick="addToCart('${item.name}',${item.price})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-gray-200 font-black text-sm px-6 py-1.5 rounded-lg shadow-md hover:bg-orange-50 transition uppercase">
+                                ADD
+                            </button>
                         </div>
                     </div>
                     `;
@@ -238,77 +134,23 @@ Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me 
             }
         }
 
-        // 🔄 4. CART UPDATE LOGIC (Quantity + aur - karne ke liye)
-        function updateCart(itemId, change) {
-            // Find item from fetched products
-            const product = allProducts.find(p => p._id === itemId);
-            if(!product) return;
+        // 🛒 3. Simple Cart Logic (Temporary UI Demo)
+        let totalItems = 0;
+        let totalPrice = 0;
 
-            // Agar cart me pehle se nahi hai to blank create karo
-            if(!cart[itemId]) {
-                cart[itemId] = { name: product.name, price: parseInt(product.price), qty: 0 };
-            }
-            
-            // Quantity badhao ya ghatao
-            cart[itemId].qty += change;
-            
-            // Agar quantity 0 ho gayi to cart se hata do
-            if(cart[itemId].qty <= 0) {
-                delete cart[itemId];
-            }
-
-            // Us item ka button update karo
-            renderItemButton(itemId);
-            // Niche wala total bar update karo
-            updateGlobalCartUI();
-        }
-
-        // 🎛️ 5. RENDER SPECIFIC ITEM BUTTON (Add to Cart vs +/-)
-        function renderItemButton(itemId) {
-            const btnContainer = document.getElementById(`cart-btn-${itemId}`);
-            if(!btnContainer) return;
-
-            if (cart[itemId] && cart[itemId].qty > 0) {
-                // Jab cart me aa gaya to +/- wala controller dikhao
-                btnContainer.innerHTML = `
-                    <div class="bg-white/95 backdrop-blur-md border border-green-200 shadow-lg rounded-xl flex items-center justify-between px-1 w-28 h-9">
-                        <button onclick="updateCart('${itemId}', -1)" class="text-gray-600 font-black text-xl px-3 hover:text-red-500 transition active:scale-90">-</button>
-                        <span class="text-green-700 font-black text-[15px]">${cart[itemId].qty}</span>
-                        <button onclick="updateCart('${itemId}', 1)" class="text-green-600 font-black text-xl px-3 hover:text-green-800 transition active:scale-90">+</button>
-                    </div>
-                `;
-            } else {
-                // Jab cart khali ho jaye to wapas "ADD +" button lao
-                btnContainer.innerHTML = `
-                    <button onclick="updateCart('${itemId}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
-                        ADD <span class="text-green-600 text-lg leading-none">+</span>
-                    </button>
-                `;
-            }
-        }
-
-        // 🧾 6. BOTTOM CART BAR UPDATE
-        function updateGlobalCartUI() {
-            let totalItems = 0;
-            let totalPrice = 0;
-
-            for(let id in cart) {
-                totalItems += cart[id].qty;
-                totalPrice += (cart[id].price * cart[id].qty);
-            }
-
+        function addToCart(name, price) {
+            totalItems++;
+            totalPrice += parseInt(price);
             document.getElementById('cartCount').innerText = totalItems;
             document.getElementById('cartTotal').innerText = totalPrice;
-
-            // Bounce Animation
+            
+            // Chota sa animation button ke liye
             const cartBar = document.querySelector('.fixed.bottom-0');
             cartBar.classList.add('translate-y-[-10px]');
             setTimeout(() => cartBar.classList.remove('translate-y-[-10px]'), 200);
         }
 
-        // Sabse pehle ye sab load hoga
         fetchShopInfo();
-        fetchGallery();
         fetchMenu();
     </script>
 </body>
