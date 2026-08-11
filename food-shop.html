@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style> 
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
-        /* Hide scrollbar for horizontal gallery par scroll kaam karega */
+        /* Hide scrollbar for horizontal gallery */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -27,7 +27,7 @@
         </div>
     </header>
 
-    <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm">
+    <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm relative">
         
         <div id="galleryContainer" class="flex overflow-x-auto gap-4 p-4 no-scrollbar bg-gray-50 hidden snap-x snap-mandatory border-b border-gray-100">
             </div>
@@ -54,11 +54,11 @@
             
             <div id="menuContainer" class="space-y-6">
                 <p class="text-center text-gray-500 text-sm py-10 font-medium">Menu load ho raha hai... ⏳</p>
-                </div>
+            </div>
         </div>
     </main>
 
-    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-50">
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-40">
         <div class="max-w-3xl mx-auto flex justify-between items-center">
             <div>
                 <p class="text-xs text-gray-500 font-bold uppercase">Your Order</p>
@@ -68,6 +68,13 @@
                 View Cart 🛒
             </button>
         </div>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 z-[100] bg-black/95 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300">
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-white p-3 bg-white/10 rounded-full hover:bg-white/20 transition active:scale-95">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <img id="modalImage" src="" class="max-w-[95vw] max-h-[85vh] object-contain rounded-xl shadow-2xl">
     </div>
 
     <script>
@@ -92,7 +99,7 @@
             } catch (error) { console.error("Error loading shop info"); }
         }
 
-        // 📸 2. Fetch & Render Gallery (NAYA JADOO YAHAN HAI)
+        // 📸 2. Fetch & Render Gallery
         async function fetchGallery() {
             try {
                 const res = await fetch(`/api/vendor/gallery/${shopSlug}`);
@@ -102,14 +109,65 @@
                     const container = document.getElementById('galleryContainer');
                     
                     if (photos.length > 0) {
-                        // Agar photos hain toh slider design banayenge
+                        // NAYA: 'cursor-pointer' aur 'onclick' add kiya
                         container.innerHTML = photos.map(img => `
-                            <img src="${img}" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200">
+                            <img src="${img}" onclick="openModal('${img}')" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200 cursor-pointer active:scale-[0.98] transition">
                         `).join('');
-                        container.classList.remove('hidden'); // Gallery dikha do
+                        container.classList.remove('hidden'); 
+                        
+                        // 🚀 AUTO SCROLL START KARNA
+                        startAutoScroll();
                     }
                 }
             } catch (error) { console.error("Error loading gallery"); }
+        }
+
+        // 🚀 AUTO SCROLL LOGIC
+        let scrollInterval;
+        function startAutoScroll() {
+            const container = document.getElementById('galleryContainer');
+            // Har 3 second me agle photo par jayega
+            scrollInterval = setInterval(() => {
+                if (container.scrollWidth === 0) return;
+                
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                // Agar aakhiri me pahonch gaya, to wapas shuru me jao
+                if (container.scrollLeft >= maxScroll - 10) {
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    // Agle photo par slide karo (roughly 320px)
+                    container.scrollBy({ left: 320, behavior: 'smooth' });
+                }
+            }, 3000); 
+        }
+
+        // 🌌 MODAL LOGIC (FULL SCREEN IMAGE)
+        function openModal(imgSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            
+            modalImg.src = imgSrc;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Thoda sa timeout taaki fade animation dikhe
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            
+            // Modal khulne par auto-scroll rok do taaki distract na ho
+            clearInterval(scrollInterval);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalImage.src = ""; // Image hata do background se
+                // Modal band hone par wapas auto-scroll chalu karo
+                startAutoScroll();
+            }, 300);
         }
 
         // 🍔 3. Fetch & Render Menu
@@ -128,7 +186,6 @@
                     let dietIcon = '<span class="text-[10px] border border-green-600 text-green-600 px-1 rounded font-bold">🟢 VEG</span>';
                     if(item.description.includes('[Non-Veg]')) dietIcon = '<span class="text-[10px] border border-red-600 text-red-600 px-1 rounded font-bold">🔴 NON-VEG</span>';
                     if(item.description.includes('[Egg]')) dietIcon = '<span class="text-[10px] border border-yellow-500 text-yellow-600 px-1 rounded font-bold">🟡 EGG</span>';
-                    
                     let cleanDesc = item.description.replace(/\[.*?\] /, '');
 
                     return `
@@ -140,7 +197,7 @@
                             <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed font-medium">${cleanDesc}</p>
                         </div>
                         <div class="relative w-32 h-32 flex-shrink-0">
-                            <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" class="w-full h-full object-cover rounded-2xl shadow-sm border border-gray-100">
+                            <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" onclick="openModal('${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}')" class="w-full h-full object-cover rounded-2xl shadow-sm border border-gray-100 cursor-pointer active:scale-95 transition">
                             <button onclick="addToCart('${item.name}', ${item.price})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-gray-200 font-black text-sm px-6 py-1.5 rounded-lg shadow-md hover:bg-orange-50 transition uppercase active:scale-95">
                                 ADD
                             </button>
@@ -168,7 +225,6 @@
             setTimeout(() => cartBar.classList.remove('translate-y-[-10px]'), 200);
         }
 
-        // Sabkuch ek sath load karo!
         fetchShopInfo();
         fetchGallery();
         fetchMenu();
