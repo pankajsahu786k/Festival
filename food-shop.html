@@ -8,7 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style> 
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
-        /* Hide scrollbar for horizontal gallery */
+        /* Hide scrollbar for horizontal gallery par scroll kaam karega */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -17,11 +17,11 @@
 
     <header class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
-            <button onclick="window.history.back()" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
+            <button onclick="window.close(); window.history.back();" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
                 ⬅️ Back
             </button>
             <h1 class="text-xl font-black tracking-tight" id="headerShopName">Loading...</h1>
-            <button class="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition">
+            <button class="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition shadow-sm">
                 📞 Call
             </button>
         </div>
@@ -29,7 +29,7 @@
 
     <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm">
         
-        <div id="galleryContainer" class="flex overflow-x-auto gap-2 p-4 no-scrollbar bg-gray-100 hidden">
+        <div id="galleryContainer" class="flex overflow-x-auto gap-4 p-4 no-scrollbar bg-gray-50 hidden snap-x snap-mandatory border-b border-gray-100">
             </div>
 
         <div class="p-5 border-b border-gray-100">
@@ -38,14 +38,14 @@
                     <h2 id="shopName" class="text-2xl font-black text-gray-900">Loading...</h2>
                     <p id="shopCategory" class="text-sm font-medium text-gray-500 mt-1">...</p>
                 </div>
-                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-lg flex flex-col items-center justify-center">
+                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-lg flex flex-col items-center justify-center shadow-sm">
                     <span class="text-xs font-bold">⭐ 4.5</span>
                 </div>
             </div>
             <div class="mt-4 flex gap-3 text-xs font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <span class="flex items-center gap-1">🛵 30-40 mins</span>
                 <span>•</span>
-                <span class="flex items-center gap-1">📍 <span id="distanceText">Calculating...</span></span>
+                <span class="flex items-center gap-1">📍 <span id="distanceText">View Map</span></span>
             </div>
         </div>
 
@@ -76,10 +76,10 @@
 
         if (!shopSlug) {
             alert("Galat URL! Dukaan nahi mili.");
-            window.location.href = 'food-shop.html';
+            window.location.href = 'index.html';
         }
 
-        // 🏪 1. Fetch Shop Info & Gallery
+        // 🏪 1. Fetch Shop Info
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
@@ -92,7 +92,27 @@
             } catch (error) { console.error("Error loading shop info"); }
         }
 
-        // 🍔 2. Fetch & Render Menu
+        // 📸 2. Fetch & Render Gallery (NAYA JADOO YAHAN HAI)
+        async function fetchGallery() {
+            try {
+                const res = await fetch(`/api/vendor/gallery/${shopSlug}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const photos = data.galleryPhotos || [];
+                    const container = document.getElementById('galleryContainer');
+                    
+                    if (photos.length > 0) {
+                        // Agar photos hain toh slider design banayenge
+                        container.innerHTML = photos.map(img => `
+                            <img src="${img}" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200">
+                        `).join('');
+                        container.classList.remove('hidden'); // Gallery dikha do
+                    }
+                }
+            } catch (error) { console.error("Error loading gallery"); }
+        }
+
+        // 🍔 3. Fetch & Render Menu
         async function fetchMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
@@ -100,12 +120,11 @@
                 const container = document.getElementById('menuContainer');
 
                 if (products.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500 py-10">Abhi menu add nahi kiya gaya hai.</p>';
+                    container.innerHTML = '<p class="text-center text-gray-500 py-10 font-medium italic">Abhi menu add nahi kiya gaya hai.</p>';
                     return;
                 }
 
                 container.innerHTML = products.map(item => {
-                    // Smart Veg/Non-Veg extraction
                     let dietIcon = '<span class="text-[10px] border border-green-600 text-green-600 px-1 rounded font-bold">🟢 VEG</span>';
                     if(item.description.includes('[Non-Veg]')) dietIcon = '<span class="text-[10px] border border-red-600 text-red-600 px-1 rounded font-bold">🔴 NON-VEG</span>';
                     if(item.description.includes('[Egg]')) dietIcon = '<span class="text-[10px] border border-yellow-500 text-yellow-600 px-1 rounded font-bold">🟡 EGG</span>';
@@ -118,11 +137,11 @@
                             <div class="mb-1">${dietIcon}</div>
                             <h4 class="font-bold text-gray-900 text-[15px]">${item.name}</h4>
                             <p class="font-black text-gray-800 text-sm mt-0.5">₹${item.price}</p>
-                            <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed">${cleanDesc}</p>
+                            <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed font-medium">${cleanDesc}</p>
                         </div>
                         <div class="relative w-32 h-32 flex-shrink-0">
-                            <img src="${item.images[0]}" class="w-full h-full object-cover rounded-2xl shadow-sm">
-                            <button onclick="addToCart('${item.name}',${item.price})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-gray-200 font-black text-sm px-6 py-1.5 rounded-lg shadow-md hover:bg-orange-50 transition uppercase">
+                            <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" class="w-full h-full object-cover rounded-2xl shadow-sm border border-gray-100">
+                            <button onclick="addToCart('${item.name}', ${item.price})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-gray-200 font-black text-sm px-6 py-1.5 rounded-lg shadow-md hover:bg-orange-50 transition uppercase active:scale-95">
                                 ADD
                             </button>
                         </div>
@@ -134,7 +153,7 @@
             }
         }
 
-        // 🛒 3. Simple Cart Logic (Temporary UI Demo)
+        // 🛒 4. Simple Cart Logic (Temporary UI Demo)
         let totalItems = 0;
         let totalPrice = 0;
 
@@ -144,13 +163,14 @@
             document.getElementById('cartCount').innerText = totalItems;
             document.getElementById('cartTotal').innerText = totalPrice;
             
-            // Chota sa animation button ke liye
             const cartBar = document.querySelector('.fixed.bottom-0');
             cartBar.classList.add('translate-y-[-10px]');
             setTimeout(() => cartBar.classList.remove('translate-y-[-10px]'), 200);
         }
 
+        // Sabkuch ek sath load karo!
         fetchShopInfo();
+        fetchGallery();
         fetchMenu();
     </script>
 </body>
