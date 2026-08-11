@@ -243,10 +243,30 @@
 
         async function deletePhoto(index) {
             if(!confirm("Kya aap sach me ye photo hatana chahte hain?")) return;
+            
             const photoToRemove = uploadedPhotos[index];
+            
+            // 1. Pehle screen (UI) se turant hatao
             uploadedPhotos.splice(index, 1); 
             renderGallery();
-            // TODO: Connect Delete API in backend later
+
+            // 2. Ab Backend (Database) ko batao ki hamesha ke liye delete kar de
+            try {
+                const res = await fetch('/api/vendor/delete-gallery-photo', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ shopSlug, photoUrl: photoToRemove })
+                });
+
+                if (!res.ok) {
+                    alert("⚠️ Server par photo delete nahi hui. Kripya page refresh karein.");
+                }
+            } catch (error) {
+                console.error("Network Error during delete:", error);
+            }
         }
 
         // 🍔 4. FOOD MENU MANAGEMENT LOGIC
