@@ -10,9 +10,19 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 🖨️ PRINT JADOO CSS */
+        @media print {
+            body * { visibility: hidden; } /* Screen ki baaki cheezein chupa do */
+            #printArea, #printArea * { visibility: visible; } /* Sirf menu dikhao */
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            @page { margin: 0; size: A4 portrait; }
+        }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex">
+
+    <div id="printArea" class="hidden bg-white min-h-screen"></div>
 
     <aside class="w-64 bg-[#111827] text-white flex flex-col fixed h-full z-50">
         <div class="p-6 border-b border-gray-800">
@@ -38,9 +48,15 @@
                 <h2 class="text-2xl font-black">Welcome to Dashboard! 👨‍🍳</h2>
                 <p class="text-gray-500 text-sm mt-1">Owner Access Mode - Food Outlet</p>
             </div>
-            <a id="topLiveLink" href="#" target="_blank" class="text-sm font-bold bg-gray-900 text-white px-6 py-2.5 rounded-xl hover:bg-black transition shadow-md flex items-center gap-2">
-                Live Shop ↗
-            </a>
+            
+            <div class="flex gap-3">
+                <button onclick="generatePrintMenu()" class="text-sm font-bold bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center gap-2">
+                    🖨️ Print Menu
+                </button>
+                <a id="topLiveLink" href="#" target="_blank" class="text-sm font-bold bg-gray-900 text-white px-6 py-2.5 rounded-xl hover:bg-black transition shadow-md flex items-center gap-2">
+                    Live Shop ↗
+                </a>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -277,8 +293,8 @@
         const menuForm = document.getElementById('menuForm');
         const menuList = document.getElementById('menuList');
         
-        let allProducts = []; // Live menu ka data isme save hoga edit karne ke liye
-        let editingItemId = null; // Agar hum edit kar rahe hain, to uski ID isme aayegi
+        let allProducts = []; 
+        let editingItemId = null; 
 
         async function loadMenu() {
             try {
@@ -322,14 +338,12 @@
             }
         }
 
-        // ✏️ FUNCTION TO START EDITING
         function triggerEdit(id) {
             const item = allProducts.find(p => p._id === id);
             if(!item) return;
 
             editingItemId = id;
             
-            // Form me details bharna
             document.getElementById('itemName').value = item.name;
             document.getElementById('itemPrice').value = item.price;
             document.getElementById('itemCategory').value = item.category || 'Starters';
@@ -341,11 +355,9 @@
             
             document.getElementById('itemDesc').value = item.description.replace(/\[.*?\] /, '');
 
-            // Photo required nahi rakhni edit karte time
             document.getElementById('itemPhoto').required = false;
             document.getElementById('photoHelpText').classList.remove('hidden');
 
-            // Button update
             const submitBtn = document.getElementById('submitMenuBtn');
             submitBtn.innerHTML = "🔄 Update Menu Item";
             submitBtn.classList.replace('bg-orange-600', 'bg-blue-600');
@@ -354,11 +366,9 @@
             document.getElementById('menuFormTitle').innerText = "✏️ Edit Menu Item";
             document.getElementById('cancelEditBtn').classList.remove('hidden');
 
-            // Scroll up to form
             document.getElementById('menuFormSection').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ❌ CANCEL EDITING
         document.getElementById('cancelEditBtn').addEventListener('click', () => {
             resetMenuForm();
         });
@@ -410,7 +420,6 @@
                     payload.images = [await getBase64(photoFile)];
                 }
 
-                // Agar editing ho rahi hai to PUT method, warna naya item add karne ke liye POST
                 const apiUrl = editingItemId ? `/api/products/edit/${editingItemId}` : '/api/products/add';
                 const apiMethod = editingItemId ? 'PUT' : 'POST';
 
@@ -440,7 +449,7 @@
             try {
                 const res = await fetch(`/api/products/delete/${id}`, { method: 'DELETE' });
                 if (res.ok) {
-                    if (editingItemId === id) resetMenuForm(); // Agar delete karte time edit kar rahe the to cancel ho jaye
+                    if (editingItemId === id) resetMenuForm(); 
                     loadMenu();
                 } else {
                     alert("Delete fail ho gaya.");
@@ -450,7 +459,69 @@
             }
         }
 
-        // Initialize
+        // ==========================================
+        // 🖨️ PREMIUM MENU PRINTING ENGINE (MASTERSTROKE)
+        // ==========================================
+        function generatePrintMenu() {
+            if (allProducts.length === 0) {
+                return alert("Aapka menu khali hai! Pehle kuch dishes add karein.");
+            }
+
+            const printArea = document.getElementById('printArea');
+            
+            const menuHTML = allProducts.map(item => {
+                let dietIcon = '🟢';
+                if(item.description.includes('[Non-Veg]')) dietIcon = '🔴';
+                if(item.description.includes('[Egg]')) dietIcon = '🟡';
+                let cleanDesc = item.description.replace(/\[.*?\] /, '');
+
+                return `
+                <div style="border-bottom: 1px dashed #e5e7eb; padding-bottom: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1; padding-right: 10px;">
+                            <h4 style="font-size: 16px; font-weight: 800; margin: 0; color: #111827;">
+                                ${dietIcon} ${item.name}
+                            </h4>
+                            <p style="font-size: 11px; color: #6b7280; margin-top: 4px; margin-bottom: 0;">${cleanDesc}</p>
+                        </div>
+                        <span style="font-size: 16px; font-weight: 900; color: #111827;">₹${item.price}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            printArea.innerHTML = `
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; background: white; color: black; max-width: 800px; margin: 0 auto;">
+                    
+                    <div style="text-align: center; border-bottom: 4px solid #111827; padding-bottom: 20px; margin-bottom: 30px;">
+                        <h1 style="font-size: 40px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Our Menu</h1>
+                        <p style="font-size: 16px; font-weight: bold; color: #4b5563; margin-top: 5px;">Fresh & Delicious</p>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                        ${menuHTML}
+                    </div>
+
+                    <div style="margin-top: 50px; padding: 20px; background-color: #fff7ed; border: 2px dashed #ea580c; border-radius: 16px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 20px;">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(liveShopUrl)}" style="width: 80px; height: 80px; border-radius: 8px;">
+                        <div style="text-align: left;">
+                            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #ea580c;">Smart<span style="color: #111827;">Shop</span></h3>
+                            <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: bold; color: #374151;">Scan this QR to order online directly from your phone!</p>
+                            <p style="margin: 2px 0 0 0; font-size: 11px; color: #6b7280;">Get 100% Free Digital Menu for your Cafe at smartshop.com</p>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+
+            printArea.classList.remove('hidden');
+            window.print();
+            
+            setTimeout(() => {
+                printArea.classList.add('hidden');
+            }, 1000);
+        }
+
         loadGallery();
         loadMenu();
     </script>

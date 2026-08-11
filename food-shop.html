@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurant Dashboard - SmartShop</title>
+    <title>Restaurant Menu - SmartShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800;900&display=swap" rel="stylesheet">
     <style> 
@@ -24,31 +24,15 @@
 
     <div id="printArea" class="hidden bg-white min-h-screen"></div>
 
-    <aside class="w-64 bg-[#111827] text-white flex flex-col fixed h-full z-50">
-        <div class="p-6 border-b border-gray-800">
-            <h1 class="text-2xl font-black tracking-tight">Smart<span class="text-orange-500">Shop</span></h1>
-            <span class="bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded mt-1 inline-block uppercase tracking-wider">Food Partner</span>
-        </div>
-        <nav class="flex-1 p-4 space-y-2">
-            <a href="#" class="block px-4 py-3 bg-orange-600 text-white rounded-xl font-bold text-sm shadow-md">🍔 Dashboard</a>
-            <a href="#" class="block px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl font-bold text-sm transition">📦 Manage Orders</a>
-            <a href="#" class="block px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl font-bold text-sm transition">⚙️ Edit Profile</a>
-        </nav>
-        <div class="p-4 border-t border-gray-800">
-            <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl font-bold text-sm transition">
-                🚪 Logout
-            </button>
-        </div>
-    </aside>
+    ```
 
-    <main class="flex-1 ml-64 p-8 space-y-6 max-w-7xl">
-        
+Aur jo aapka **Header (Welcome to Dashboard)** hai, wahan Live Shop ke bagal me Print button add kijiye:
+```html
         <div class="flex justify-between items-center mb-4">
             <div>
                 <h2 class="text-2xl font-black">Welcome to Dashboard! 👨‍🍳</h2>
                 <p class="text-gray-500 text-sm mt-1">Owner Access Mode - Food Outlet</p>
             </div>
-            
             <div class="flex gap-3">
                 <button onclick="generatePrintMenu()" class="text-sm font-bold bg-blue-600 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 transition shadow-md flex items-center gap-2">
                     🖨️ Print Menu
@@ -58,472 +42,274 @@
                 </a>
             </div>
         </div>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen pb-20">
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-center">
-                <div class="flex justify-between items-center mb-3">
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Live Shop Link</p>
-                    <a id="cardLiveLink" href="#" target="_blank" class="text-xs font-bold text-orange-600 bg-orange-50 px-3 py-1 rounded-lg hover:bg-orange-100 transition">Open Link ↗</a>
-                </div>
-                <input type="text" id="shopLinkInput" readonly class="w-full bg-gray-50 border border-gray-200 text-gray-600 text-sm px-4 py-3.5 rounded-xl outline-none font-medium cursor-copy" onclick="this.select(); document.execCommand('copy'); alert('Link Copied!');">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto px-4 py-3 flex justify-between items-center">
+            <button onclick="window.close(); window.history.back();" class="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
+                ⬅️ Back
+            </button>
+            <h1 class="text-xl font-black tracking-tight" id="headerShopName">Loading...</h1>
+            <button class="bg-orange-100 text-orange-600 p-2 rounded-full hover:bg-orange-200 transition shadow-sm">
+                📞 Call
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto bg-white min-h-screen shadow-sm relative">
+        
+        <div id="galleryContainer" class="flex overflow-x-auto gap-4 p-4 no-scrollbar bg-gray-50 hidden snap-x snap-mandatory border-b border-gray-100">
             </div>
 
-            <div class="lg:col-span-2 bg-gradient-to-r from-orange-600 to-red-500 p-6 rounded-2xl shadow-md text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="p-5 border-b border-gray-100">
+            <div class="flex justify-between items-start">
                 <div>
-                    <h3 class="text-xl font-black mb-1">Get Store QR Code 📲</h3>
-                    <p class="text-orange-100 text-sm mb-4">Grahak ise scan karke aapka live menu dekh sakte hain aur order kar sakte hain.</p>
-                    <button onclick="generateQR()" class="bg-white text-orange-600 font-bold px-6 py-2.5 rounded-xl text-sm shadow-sm hover:bg-gray-50 transition active:scale-95">
-                        Generate QR Code
-                    </button>
+                    <h2 id="shopName" class="text-2xl font-black text-gray-900">Loading...</h2>
+                    <p id="shopCategory" class="text-sm font-medium text-gray-500 mt-1">...</p>
                 </div>
-                <div id="qrCodeContainer" class="bg-white p-3 rounded-xl hidden shadow-lg">
-                    <img id="qrImage" src="" class="w-24 h-24 object-contain">
+                <div class="bg-green-100 text-green-700 px-3 py-1 rounded-lg flex flex-col items-center justify-center shadow-sm">
+                    <span class="text-xs font-bold">⭐ 4.5</span>
                 </div>
+            </div>
+            <div class="mt-4 flex gap-3 text-xs font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <span class="flex items-center gap-1">🛵 30-40 mins</span>
+                <span>•</span>
+                <span class="flex items-center gap-1">📍 <span id="distanceText">View Map</span></span>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="p-5">
+            <h3 class="text-lg font-extrabold mb-4 flex items-center gap-2">Recommended 👨‍🍳</h3>
             
-            <div class="xl:col-span-2 space-y-6">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-extrabold">Cafe/Restaurant Gallery 📸</h3>
-                        <span class="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full">Max 5 Photos</span>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-4 font-medium">Upload photos of your interior, seating, and exterior to give customers the vibe of your place.</p>
-                    
-                    <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
-                        <input type="file" id="galleryInput" multiple accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 transition cursor-pointer">
-                        <button id="uploadGalleryBtn" class="bg-gray-900 w-full sm:w-auto text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-black transition whitespace-nowrap">Upload Photos</button>
-                    </div>
-                    <div id="galleryGrid" class="grid grid-cols-2 md:grid-cols-5 gap-3">
-                        <p class="col-span-full text-sm text-gray-400 font-medium italic">No photos uploaded yet.</p>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6" id="menuFormSection">
-                    <div class="flex justify-between items-center mb-1">
-                        <h3 id="menuFormTitle" class="text-xl font-extrabold">+ Add Menu Item 🍔</h3>
-                        <button id="cancelEditBtn" class="hidden text-xs font-bold text-red-500 hover:underline">Cancel Edit</button>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-6 font-medium">Create mouth-watering listings for your dishes.</p>
-                    
-                    <form id="menuForm" class="space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Dish Name</label>
-                                <input type="text" id="itemName" placeholder="e.g. Farmhouse Pizza" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Price (₹)</label>
-                                <input type="number" id="itemPrice" placeholder="299" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Category</label>
-                                <select id="itemCategory" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium cursor-pointer">
-                                    <option value="Starters">Starters & Appetizers</option>
-                                    <option value="Main Course">Main Course</option>
-                                    <option value="Fast Food">Fast Food & Snacks</option>
-                                    <option value="Beverages">Beverages & Drinks</option>
-                                    <option value="Desserts">Desserts & Sweets</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Dietary Tag</label>
-                                <select id="itemDiet" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium cursor-pointer">
-                                    <option value="Veg">🟢 Veg</option>
-                                    <option value="Non-Veg">🔴 Non-Veg</option>
-                                    <option value="Egg">🟡 Contains Egg</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-1">Dish Photo</label>
-                                <input type="file" id="itemPhoto" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-3 file:px-4 file:rounded-l-xl file:border-0 file:text-sm file:font-bold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300 transition cursor-pointer border border-gray-200 rounded-xl bg-gray-50">
-                                <p id="photoHelpText" class="text-[10px] text-gray-400 mt-1 hidden">Leave empty to keep old photo.</p>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700 mb-1">Short Description (Optional)</label>
-                            <textarea id="itemDesc" rows="2" placeholder="e.g. Loaded with extra cheese, jalapenos, and fresh veggies." class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-orange-500 outline-none transition font-medium"></textarea>
-                        </div>
-
-                        <button type="submit" id="submitMenuBtn" class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl hover:bg-orange-700 transition shadow-md shadow-orange-600/20">
-                            + Add to Live Menu
-                        </button>
-                    </form>
-                </div>
+            <div id="menuContainer" class="space-y-6">
+                <p class="text-center text-gray-500 text-sm py-10 font-medium">Menu load ho raha hai... ⏳</p>
             </div>
-
-            <div class="xl:col-span-1">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
-                    <h3 class="text-xl font-extrabold mb-4">Your Live Menu 📋</h3>
-                    <div id="menuList" class="flex flex-col gap-3 max-h-[700px] overflow-y-auto no-scrollbar pr-2">
-                        <p class="text-sm text-gray-400 font-medium italic text-center py-4">Your menu is empty.</p>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </main>
 
+    <div class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] p-4 z-40">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <div>
+                <p class="text-xs text-gray-500 font-bold uppercase">Your Order</p>
+                <p class="text-lg font-black text-gray-900"><span id="cartCount">0</span> Items | ₹<span id="cartTotal">0</span></p>
+            </div>
+            <button class="bg-orange-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-orange-700 transition shadow-md flex items-center gap-2">
+                View Cart 🛒
+            </button>
+        </div>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 z-[100] bg-black/95 hidden flex-col justify-center items-center opacity-0 transition-opacity duration-300">
+        <button onclick="closeModal()" class="absolute top-4 right-4 text-white p-3 bg-white/10 rounded-full hover:bg-white/20 transition active:scale-95">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+        <img id="modalImage" src="" class="max-w-[95vw] max-h-[85vh] object-contain rounded-xl shadow-2xl">
+    </div>
+
     <script>
-        // 🔒 SECURITY, SETUP & LOGOUT
-        const token = localStorage.getItem('token');
-        const shopSlug = localStorage.getItem('shopSlug');
+        const urlParams = new URLSearchParams(window.location.search);
+        const shopSlug = urlParams.get('store');
 
-        if (!token || !shopSlug) {
-            alert("Aap logged in nahi hain! Kripya login karein.");
-            window.location.href = 'login.html';
+        if (!shopSlug) {
+            alert("Galat URL! Dukaan nahi mili.");
+            window.location.href = 'index.html';
         }
 
-        function logout() {
-            if(confirm("Kya aap sach me logout karna chahte hain?")) {
-                localStorage.clear();
-                window.location.href = 'login.html';
-            }
-        }
-
-        // 🔗 DYNAMIC LIVE SHOP LINK & QR CODE
-        const liveShopUrl = `${window.location.origin}/food-shop.html?store=${shopSlug}`;
-        document.getElementById('shopLinkInput').value = liveShopUrl;
-        document.getElementById('topLiveLink').href = liveShopUrl;
-        document.getElementById('cardLiveLink').href = liveShopUrl;
-
-        function generateQR() {
-            const qrContainer = document.getElementById('qrCodeContainer');
-            const qrImage = document.getElementById('qrImage');
-            qrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(liveShopUrl)}`;
-            qrContainer.classList.remove('hidden');
-        }
-
-        // 📸 GALLERY MANAGEMENT
-        const galleryInput = document.getElementById('galleryInput');
-        const uploadBtn = document.getElementById('uploadGalleryBtn');
-        const galleryGrid = document.getElementById('galleryGrid');
-        let uploadedPhotos = []; 
-
-        async function loadGallery() {
+        // 🏪 1. Fetch Shop Info
+        async function fetchShopInfo() {
             try {
-                const res = await fetch(`/api/vendor/gallery/${shopSlug}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await fetch(`/api/shop/${shopSlug}`);
+                if (res.ok) {
+                    const shop = await res.json();
+                    document.getElementById('headerShopName').innerText = shop.shopName;
+                    document.getElementById('shopName').innerText = shop.shopName;
+                    document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
+                }
+            } catch (error) { console.error("Error loading shop info"); }
+        }
+
+        // 📸 2. Fetch & Render Gallery
+        async function fetchGallery() {
+            try {
+                const res = await fetch(`/api/vendor/gallery/${shopSlug}`);
                 if (res.ok) {
                     const data = await res.json();
-                    uploadedPhotos = data.galleryPhotos || [];
-                    renderGallery();
+                    const photos = data.galleryPhotos || [];
+                    const container = document.getElementById('galleryContainer');
+                    
+                    if (photos.length > 0) {
+                        container.innerHTML = photos.map(img => `
+                            <img src="${img}" onclick="openModal('${img}')" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200 cursor-pointer active:scale-[0.98] transition">
+                        `).join('');
+                        container.classList.remove('hidden'); 
+                        startAutoScroll();
+                    }
                 }
-            } catch (error) { console.log("Gallery fetch error"); }
+            } catch (error) { console.error("Error loading gallery"); }
         }
 
-        function renderGallery() {
-            if (uploadedPhotos.length === 0) {
-                galleryGrid.innerHTML = '<p class="col-span-full text-sm text-gray-400 font-medium italic">No photos uploaded yet.</p>';
-                return;
-            }
-            galleryGrid.innerHTML = uploadedPhotos.map((imgUrl, index) => `
-                <div class="relative group rounded-xl overflow-hidden shadow-sm border border-gray-200 h-24">
-                    <img src="${imgUrl}" class="w-full h-full object-cover">
-                    <button onclick="deletePhoto(${index})" class="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition shadow-md">🗑️</button>
-                </div>
-            `).join('');
+        let scrollInterval;
+        function startAutoScroll() {
+            const container = document.getElementById('galleryContainer');
+            scrollInterval = setInterval(() => {
+                if (container.scrollWidth === 0) return;
+                const maxScroll = container.scrollWidth - container.clientWidth;
+                if (container.scrollLeft >= maxScroll - 10) {
+                    container.scrollTo({ left: 0, behavior: 'smooth' });
+                } else {
+                    container.scrollBy({ left: 320, behavior: 'smooth' });
+                }
+            }, 3000); 
         }
 
-        function getBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
+        function openModal(imgSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modalImg.src = imgSrc;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            clearInterval(scrollInterval);
         }
 
-        uploadBtn.addEventListener('click', async () => {
-            const files = galleryInput.files;
-            if (files.length === 0) return alert("⚠️ Pehle photo select karein!");
-            if (uploadedPhotos.length + files.length > 5) return alert(`⚠️ Maximum 5 photos allowed!`);
-
-            uploadBtn.innerText = "Uploading... ⏳";
-            uploadBtn.disabled = true;
-
-            try {
-                const base64Photos = await Promise.all(
-                    Array.from(files).map(file => getBase64(file))
-                );
-
-                const res = await fetch('/api/vendor/upload-gallery', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
-                    body: JSON.stringify({ shopSlug: shopSlug, photos: base64Photos })
-                });
-
-                const data = await res.json();
-                if (res.ok) {
-                    uploadedPhotos = data.updatedGallery; 
-                    renderGallery(); 
-                    galleryInput.value = ""; 
-                    alert("✅ Photos permanently save ho gayi!");
-                } else { alert(`Error: ${data.message}`); }
-            } catch (error) { alert("Upload failed! Kripya internet connection check karein."); } 
-            finally { uploadBtn.innerText = "Upload Photos"; uploadBtn.disabled = false; }
-        });
-
-        async function deletePhoto(index) {
-            if(!confirm("Kya aap sach me ye photo hatana chahte hain?")) return;
-            const photoToRemove = uploadedPhotos[index];
-            uploadedPhotos.splice(index, 1); 
-            renderGallery();
-
-            try {
-                await fetch('/api/vendor/delete-gallery-photo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ shopSlug, photoUrl: photoToRemove })
-                });
-            } catch (error) { console.error("Error deleting"); }
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                document.getElementById('modalImage').src = ""; 
+                startAutoScroll();
+            }, 300);
         }
 
-        // 🍔 FOOD MENU MANAGEMENT (WITH EDIT LOGIC)
-        const menuForm = document.getElementById('menuForm');
-        const menuList = document.getElementById('menuList');
-        
-        let allProducts = []; 
-        let editingItemId = null; 
+        // 🛒 CART ENGINE LOGIC
+        let allProducts = []; // Saare items yahan save honge
+        let cart = {}; // Customer ka live order
 
-        async function loadMenu() {
+        // 🍔 3. Fetch & Render Menu
+        async function fetchMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
                 allProducts = await res.json();
+                const container = document.getElementById('menuContainer');
 
                 if (allProducts.length === 0) {
-                    menuList.innerHTML = '<p class="text-sm text-gray-400 font-medium italic text-center py-4">Your menu is empty.</p>';
+                    container.innerHTML = '<p class="text-center text-gray-500 py-10 font-medium italic">Abhi menu add nahi kiya gaya hai.</p>';
                     return;
                 }
 
-                menuList.innerHTML = allProducts.map(item => {
-                    let dietIcon = '🟢 Veg';
-                    if(item.description.includes('[Non-Veg]')) dietIcon = '🔴 Non-Veg';
-                    if(item.description.includes('[Egg]')) dietIcon = '🟡 Egg';
+                container.innerHTML = allProducts.map(item => {
+                    let dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-green-600 rounded-sm"><div class="w-2 h-2 bg-green-600 rounded-full"></div></div>';
+                    if(item.description.includes('[Non-Veg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-red-600 rounded-sm"><div class="w-2 h-2 bg-red-600 rounded-full"></div></div>';
+                    if(item.description.includes('[Egg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-yellow-500 rounded-sm"><div class="w-2 h-2 bg-yellow-500 rounded-full"></div></div>';
+                    
                     let cleanDesc = item.description.replace(/\[.*?\] /, '');
+                    let imgSrc = item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150';
 
                     return `
-                    <div class="flex gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50 hover:border-orange-200 transition relative group">
-                        <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" class="w-16 h-16 object-cover rounded-lg shadow-sm shrink-0">
-                        <div class="flex-1 min-w-0 pr-8">
-                            <div class="flex justify-between items-start">
-                                <h4 class="font-bold text-gray-900 text-sm truncate pr-2">${item.name}</h4>
-                                <span class="font-black text-orange-600 text-sm">₹${item.price}</span>
+                    <div class="bg-white rounded-2xl p-4 mb-4 flex justify-between items-center gap-4 border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                        
+                        <div class="flex-1 pr-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                ${dietIcon}
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${item.category}</span>
                             </div>
-                            <p class="text-[10px] text-gray-500 mt-0.5 font-bold uppercase tracking-wider">${dietIcon} • ${item.category}</p>
+                            <h4 class="font-extrabold text-gray-900 text-[17px] leading-tight mb-1">${item.name}</h4>
+                            <p class="font-black text-gray-800 text-base mb-2">₹${item.price}</p>
+                            <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">${cleanDesc}</p>
                         </div>
                         
-                        <button onclick="triggerEdit('${item._id}')" class="absolute top-2 right-9 bg-blue-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition shadow-md" title="Edit Dish">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                        </button>
-
-                        <button onclick="deleteMenuItem('${item._id}')" class="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition shadow-md" title="Delete Dish">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
+                        <div class="relative w-36 h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100">
+                            <img src="${imgSrc}" onclick="openModal('${imgSrc}')" class="w-full h-full object-cover cursor-pointer hover:scale-110 transition duration-500">
+                            
+                            <div id="cart-btn-${item._id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-center">
+                                <button onclick="updateCart('${item._id}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
+                                    ADD <span class="text-green-600 text-lg leading-none">+</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     `;
                 }).join('');
             } catch (error) {
-                menuList.innerHTML = '<p class="text-red-500 font-bold text-sm text-center py-4">Menu load nahi ho paya.</p>';
+                document.getElementById('menuContainer').innerHTML = '<p class="text-red-500 text-center font-bold">Menu load nahi ho paya.</p>';
             }
         }
 
-        function triggerEdit(id) {
-            const item = allProducts.find(p => p._id === id);
-            if(!item) return;
+        // 🔄 4. CART UPDATE LOGIC (Quantity + aur - karne ke liye)
+        function updateCart(itemId, change) {
+            // Find item from fetched products
+            const product = allProducts.find(p => p._id === itemId);
+            if(!product) return;
 
-            editingItemId = id;
-            
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemPrice').value = item.price;
-            document.getElementById('itemCategory').value = item.category || 'Starters';
-            
-            let diet = 'Veg';
-            if(item.description.includes('[Non-Veg]')) diet = 'Non-Veg';
-            if(item.description.includes('[Egg]')) diet = 'Egg';
-            document.getElementById('itemDiet').value = diet;
-            
-            document.getElementById('itemDesc').value = item.description.replace(/\[.*?\] /, '');
-
-            document.getElementById('itemPhoto').required = false;
-            document.getElementById('photoHelpText').classList.remove('hidden');
-
-            const submitBtn = document.getElementById('submitMenuBtn');
-            submitBtn.innerHTML = "🔄 Update Menu Item";
-            submitBtn.classList.replace('bg-orange-600', 'bg-blue-600');
-            submitBtn.classList.replace('hover:bg-orange-700', 'hover:bg-blue-700');
-            
-            document.getElementById('menuFormTitle').innerText = "✏️ Edit Menu Item";
-            document.getElementById('cancelEditBtn').classList.remove('hidden');
-
-            document.getElementById('menuFormSection').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        document.getElementById('cancelEditBtn').addEventListener('click', () => {
-            resetMenuForm();
-        });
-
-        function resetMenuForm() {
-            editingItemId = null;
-            menuForm.reset();
-            
-            document.getElementById('itemPhoto').required = true;
-            document.getElementById('photoHelpText').classList.add('hidden');
-            
-            const submitBtn = document.getElementById('submitMenuBtn');
-            submitBtn.innerHTML = "+ Add to Live Menu";
-            submitBtn.classList.replace('bg-blue-600', 'bg-orange-600');
-            submitBtn.classList.replace('hover:bg-blue-700', 'hover:bg-orange-700');
-            
-            document.getElementById('menuFormTitle').innerText = "+ Add Menu Item 🍔";
-            document.getElementById('cancelEditBtn').classList.add('hidden');
-        }
-
-        menuForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitMenuBtn');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = "Saving... ⏳";
-            submitBtn.disabled = true;
-
-            try {
-                const name = document.getElementById('itemName').value;
-                const price = document.getElementById('itemPrice').value;
-                const category = document.getElementById('itemCategory').value;
-                const dietTag = document.getElementById('itemDiet').value;
-                const description = document.getElementById('itemDesc').value;
-                
-                const finalDescription = `[${dietTag}] ${description}`;
-                
-                const payload = {
-                    shopSlug: shopSlug,
-                    name: name,
-                    price: price,
-                    category: category,
-                    description: finalDescription,
-                    stockQuantity: 999 
-                };
-
-                const photoFile = document.getElementById('itemPhoto').files[0];
-                if (photoFile) {
-                    payload.images = [await getBase64(photoFile)];
-                }
-
-                const apiUrl = editingItemId ? `/api/products/edit/${editingItemId}` : '/api/products/add';
-                const apiMethod = editingItemId ? 'PUT' : 'POST';
-
-                const res = await fetch(apiUrl, {
-                    method: apiMethod,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    resetMenuForm();
-                    loadMenu(); 
-                    alert(editingItemId ? "✅ Dish update ho gayi!" : "✅ Nayi dish add ho gayi!");
-                } else {
-                    alert("Error aayi details save karne me.");
-                }
-            } catch (error) {
-                alert("Network Error! Action fail ho gaya.");
-            } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+            // Agar cart me pehle se nahi hai to blank create karo
+            if(!cart[itemId]) {
+                cart[itemId] = { name: product.name, price: parseInt(product.price), qty: 0 };
             }
-        });
-
-        async function deleteMenuItem(id) {
-            if (!confirm("Kya aap sach me ye dish menu se hatana chahte hain?")) return;
-            try {
-                const res = await fetch(`/api/products/delete/${id}`, { method: 'DELETE' });
-                if (res.ok) {
-                    if (editingItemId === id) resetMenuForm(); 
-                    loadMenu();
-                } else {
-                    alert("Delete fail ho gaya.");
-                }
-            } catch (error) {
-                alert("Network Error.");
-            }
-        }
-
-        // ==========================================
-        // 🖨️ PREMIUM MENU PRINTING ENGINE (MASTERSTROKE)
-        // ==========================================
-        function generatePrintMenu() {
-            if (allProducts.length === 0) {
-                return alert("Aapka menu khali hai! Pehle kuch dishes add karein.");
+            
+            // Quantity badhao ya ghatao
+            cart[itemId].qty += change;
+            
+            // Agar quantity 0 ho gayi to cart se hata do
+            if(cart[itemId].qty <= 0) {
+                delete cart[itemId];
             }
 
-            const printArea = document.getElementById('printArea');
-            
-            const menuHTML = allProducts.map(item => {
-                let dietIcon = '🟢';
-                if(item.description.includes('[Non-Veg]')) dietIcon = '🔴';
-                if(item.description.includes('[Egg]')) dietIcon = '🟡';
-                let cleanDesc = item.description.replace(/\[.*?\] /, '');
+            // Us item ka button update karo
+            renderItemButton(itemId);
+            // Niche wala total bar update karo
+            updateGlobalCartUI();
+        }
 
-                return `
-                <div style="border-bottom: 1px dashed #e5e7eb; padding-bottom: 12px; margin-bottom: 12px;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div style="flex: 1; padding-right: 10px;">
-                            <h4 style="font-size: 16px; font-weight: 800; margin: 0; color: #111827;">
-                                ${dietIcon} ${item.name}
-                            </h4>
-                            <p style="font-size: 11px; color: #6b7280; margin-top: 4px; margin-bottom: 0;">${cleanDesc}</p>
-                        </div>
-                        <span style="font-size: 16px; font-weight: 900; color: #111827;">₹${item.price}</span>
+        // 🎛️ 5. RENDER SPECIFIC ITEM BUTTON (Add to Cart vs +/-)
+        function renderItemButton(itemId) {
+            const btnContainer = document.getElementById(`cart-btn-${itemId}`);
+            if(!btnContainer) return;
+
+            if (cart[itemId] && cart[itemId].qty > 0) {
+                // Jab cart me aa gaya to +/- wala controller dikhao
+                btnContainer.innerHTML = `
+                    <div class="bg-white/95 backdrop-blur-md border border-green-200 shadow-lg rounded-xl flex items-center justify-between px-1 w-28 h-9">
+                        <button onclick="updateCart('${itemId}', -1)" class="text-gray-600 font-black text-xl px-3 hover:text-red-500 transition active:scale-90">-</button>
+                        <span class="text-green-700 font-black text-[15px]">${cart[itemId].qty}</span>
+                        <button onclick="updateCart('${itemId}', 1)" class="text-green-600 font-black text-xl px-3 hover:text-green-800 transition active:scale-90">+</button>
                     </div>
-                </div>
                 `;
-            }).join('');
-
-            printArea.innerHTML = `
-                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 40px; background: white; color: black; max-width: 800px; margin: 0 auto;">
-                    
-                    <div style="text-align: center; border-bottom: 4px solid #111827; padding-bottom: 20px; margin-bottom: 30px;">
-                        <h1 style="font-size: 40px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 2px;">Our Menu</h1>
-                        <p style="font-size: 16px; font-weight: bold; color: #4b5563; margin-top: 5px;">Fresh & Delicious</p>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
-                        ${menuHTML}
-                    </div>
-
-                    <div style="margin-top: 50px; padding: 20px; background-color: #fff7ed; border: 2px dashed #ea580c; border-radius: 16px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 20px;">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(liveShopUrl)}" style="width: 80px; height: 80px; border-radius: 8px;">
-                        <div style="text-align: left;">
-                            <h3 style="margin: 0; font-size: 18px; font-weight: 900; color: #ea580c;">Smart<span style="color: #111827;">Shop</span></h3>
-                            <p style="margin: 4px 0 0 0; font-size: 13px; font-weight: bold; color: #374151;">Scan this QR to order online directly from your phone!</p>
-                            <p style="margin: 2px 0 0 0; font-size: 11px; color: #6b7280;">Get 100% Free Digital Menu for your Cafe at smartshop.com</p>
-                        </div>
-                    </div>
-
-                </div>
-            `;
-
-            printArea.classList.remove('hidden');
-            window.print();
-            
-            setTimeout(() => {
-                printArea.classList.add('hidden');
-            }, 1000);
+            } else {
+                // Jab cart khali ho jaye to wapas "ADD +" button lao
+                btnContainer.innerHTML = `
+                    <button onclick="updateCart('${itemId}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
+                        ADD <span class="text-green-600 text-lg leading-none">+</span>
+                    </button>
+                `;
+            }
         }
 
-        loadGallery();
-        loadMenu();
+        // 🧾 6. BOTTOM CART BAR UPDATE
+        function updateGlobalCartUI() {
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            for(let id in cart) {
+                totalItems += cart[id].qty;
+                totalPrice += (cart[id].price * cart[id].qty);
+            }
+
+            document.getElementById('cartCount').innerText = totalItems;
+            document.getElementById('cartTotal').innerText = totalPrice;
+
+            // Bounce Animation
+            const cartBar = document.querySelector('.fixed.bottom-0');
+            cartBar.classList.add('translate-y-[-10px]');
+            setTimeout(() => cartBar.classList.remove('translate-y-[-10px]'), 200);
+        }
+
+        // Sabse pehle ye sab load hoga
+        fetchShopInfo();
+        fetchGallery();
+        fetchMenu();
     </script>
 </body>
 </html>
