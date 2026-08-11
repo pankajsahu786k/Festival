@@ -109,81 +109,68 @@
                     const container = document.getElementById('galleryContainer');
                     
                     if (photos.length > 0) {
-                        // NAYA: 'cursor-pointer' aur 'onclick' add kiya
                         container.innerHTML = photos.map(img => `
                             <img src="${img}" onclick="openModal('${img}')" class="w-[85vw] md:w-80 h-56 object-cover rounded-2xl shadow-sm flex-shrink-0 snap-center border border-gray-200 cursor-pointer active:scale-[0.98] transition">
                         `).join('');
                         container.classList.remove('hidden'); 
-                        
-                        // 🚀 AUTO SCROLL START KARNA
                         startAutoScroll();
                     }
                 }
             } catch (error) { console.error("Error loading gallery"); }
         }
 
-        // 🚀 AUTO SCROLL LOGIC
         let scrollInterval;
         function startAutoScroll() {
             const container = document.getElementById('galleryContainer');
-            // Har 3 second me agle photo par jayega
             scrollInterval = setInterval(() => {
                 if (container.scrollWidth === 0) return;
-                
                 const maxScroll = container.scrollWidth - container.clientWidth;
-                // Agar aakhiri me pahonch gaya, to wapas shuru me jao
                 if (container.scrollLeft >= maxScroll - 10) {
                     container.scrollTo({ left: 0, behavior: 'smooth' });
                 } else {
-                    // Agle photo par slide karo (roughly 320px)
                     container.scrollBy({ left: 320, behavior: 'smooth' });
                 }
             }, 3000); 
         }
 
-        // 🌌 MODAL LOGIC (FULL SCREEN IMAGE)
         function openModal(imgSrc) {
             const modal = document.getElementById('imageModal');
             const modalImg = document.getElementById('modalImage');
-            
             modalImg.src = imgSrc;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
-            // Thoda sa timeout taaki fade animation dikhe
             setTimeout(() => modal.classList.remove('opacity-0'), 10);
-            
-            // Modal khulne par auto-scroll rok do taaki distract na ho
             clearInterval(scrollInterval);
         }
 
         function closeModal() {
             const modal = document.getElementById('imageModal');
             modal.classList.add('opacity-0');
-            
             setTimeout(() => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
-                modalImage.src = ""; // Image hata do background se
-                // Modal band hone par wapas auto-scroll chalu karo
+                document.getElementById('modalImage').src = ""; 
                 startAutoScroll();
             }, 300);
         }
 
-       // 🍔 3. Fetch & Render Menu (CLASSIC PREMIUM LOOK)
+        // 🛒 CART ENGINE LOGIC
+        let allProducts = []; // Saare items yahan save honge
+        let cart = {}; // Customer ka live order
+
+        // 🍔 3. Fetch & Render Menu
         async function fetchMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
-                const products = await res.json();
+                allProducts = await res.json();
                 const container = document.getElementById('menuContainer');
 
-                if (products.length === 0) {
+                if (allProducts.length === 0) {
                     container.innerHTML = '<p class="text-center text-gray-500 py-10 font-medium italic">Abhi menu add nahi kiya gaya hai.</p>';
                     return;
                 }
 
-                container.innerHTML = products.map(item => {
-                    // 🌟 Classic Authentic Indian Veg/Non-Veg Symbols
+                container.innerHTML = allProducts.map(item => {
                     let dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-green-600 rounded-sm"><div class="w-2 h-2 bg-green-600 rounded-full"></div></div>';
                     if(item.description.includes('[Non-Veg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-red-600 rounded-sm"><div class="w-2 h-2 bg-red-600 rounded-full"></div></div>';
                     if(item.description.includes('[Egg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-yellow-500 rounded-sm"><div class="w-2 h-2 bg-yellow-500 rounded-full"></div></div>';
@@ -207,13 +194,12 @@
                         <div class="relative w-36 h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100">
                             <img src="${imgSrc}" onclick="openModal('${imgSrc}')" class="w-full h-full object-cover cursor-pointer hover:scale-110 transition duration-500">
                             
-                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-center">
-                                <button onclick="addToCart('${item.name}', ${item.price})" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
+                            <div id="cart-btn-${item._id}" class="absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-center">
+                                <button onclick="updateCart('${item._id}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
                                     ADD <span class="text-green-600 text-lg leading-none">+</span>
                                 </button>
                             </div>
                         </div>
-
                     </div>
                     `;
                 }).join('');
@@ -222,21 +208,75 @@
             }
         }
 
-        // 🛒 4. Simple Cart Logic (Temporary UI Demo)
-        let totalItems = 0;
-        let totalPrice = 0;
+        // 🔄 4. CART UPDATE LOGIC (Quantity + aur - karne ke liye)
+        function updateCart(itemId, change) {
+            // Find item from fetched products
+            const product = allProducts.find(p => p._id === itemId);
+            if(!product) return;
 
-        function addToCart(name, price) {
-            totalItems++;
-            totalPrice += parseInt(price);
+            // Agar cart me pehle se nahi hai to blank create karo
+            if(!cart[itemId]) {
+                cart[itemId] = { name: product.name, price: parseInt(product.price), qty: 0 };
+            }
+            
+            // Quantity badhao ya ghatao
+            cart[itemId].qty += change;
+            
+            // Agar quantity 0 ho gayi to cart se hata do
+            if(cart[itemId].qty <= 0) {
+                delete cart[itemId];
+            }
+
+            // Us item ka button update karo
+            renderItemButton(itemId);
+            // Niche wala total bar update karo
+            updateGlobalCartUI();
+        }
+
+        // 🎛️ 5. RENDER SPECIFIC ITEM BUTTON (Add to Cart vs +/-)
+        function renderItemButton(itemId) {
+            const btnContainer = document.getElementById(`cart-btn-${itemId}`);
+            if(!btnContainer) return;
+
+            if (cart[itemId] && cart[itemId].qty > 0) {
+                // Jab cart me aa gaya to +/- wala controller dikhao
+                btnContainer.innerHTML = `
+                    <div class="bg-white/95 backdrop-blur-md border border-green-200 shadow-lg rounded-xl flex items-center justify-between px-1 w-28 h-9">
+                        <button onclick="updateCart('${itemId}', -1)" class="text-gray-600 font-black text-xl px-3 hover:text-red-500 transition active:scale-90">-</button>
+                        <span class="text-green-700 font-black text-[15px]">${cart[itemId].qty}</span>
+                        <button onclick="updateCart('${itemId}', 1)" class="text-green-600 font-black text-xl px-3 hover:text-green-800 transition active:scale-90">+</button>
+                    </div>
+                `;
+            } else {
+                // Jab cart khali ho jaye to wapas "ADD +" button lao
+                btnContainer.innerHTML = `
+                    <button onclick="updateCart('${itemId}', 1)" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
+                        ADD <span class="text-green-600 text-lg leading-none">+</span>
+                    </button>
+                `;
+            }
+        }
+
+        // 🧾 6. BOTTOM CART BAR UPDATE
+        function updateGlobalCartUI() {
+            let totalItems = 0;
+            let totalPrice = 0;
+
+            for(let id in cart) {
+                totalItems += cart[id].qty;
+                totalPrice += (cart[id].price * cart[id].qty);
+            }
+
             document.getElementById('cartCount').innerText = totalItems;
             document.getElementById('cartTotal').innerText = totalPrice;
-            
+
+            // Bounce Animation
             const cartBar = document.querySelector('.fixed.bottom-0');
             cartBar.classList.add('translate-y-[-10px]');
             setTimeout(() => cartBar.classList.remove('translate-y-[-10px]'), 200);
         }
 
+        // Sabse pehle ye sab load hoga
         fetchShopInfo();
         fetchGallery();
         fetchMenu();
