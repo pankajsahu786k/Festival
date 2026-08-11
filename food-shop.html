@@ -170,7 +170,7 @@
             }, 300);
         }
 
-        // 🍔 3. Fetch & Render Menu
+       // 🍔 3. Fetch & Render Menu (CLASSIC PREMIUM LOOK)
         async function fetchMenu() {
             try {
                 const res = await fetch(`/api/products/${shopSlug}`);
@@ -183,25 +183,37 @@
                 }
 
                 container.innerHTML = products.map(item => {
-                    let dietIcon = '<span class="text-[10px] border border-green-600 text-green-600 px-1 rounded font-bold">🟢 VEG</span>';
-                    if(item.description.includes('[Non-Veg]')) dietIcon = '<span class="text-[10px] border border-red-600 text-red-600 px-1 rounded font-bold">🔴 NON-VEG</span>';
-                    if(item.description.includes('[Egg]')) dietIcon = '<span class="text-[10px] border border-yellow-500 text-yellow-600 px-1 rounded font-bold">🟡 EGG</span>';
+                    // 🌟 Classic Authentic Indian Veg/Non-Veg Symbols
+                    let dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-green-600 rounded-sm"><div class="w-2 h-2 bg-green-600 rounded-full"></div></div>';
+                    if(item.description.includes('[Non-Veg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-red-600 rounded-sm"><div class="w-2 h-2 bg-red-600 rounded-full"></div></div>';
+                    if(item.description.includes('[Egg]')) dietIcon = '<div class="flex items-center justify-center w-4 h-4 border-2 border-yellow-500 rounded-sm"><div class="w-2 h-2 bg-yellow-500 rounded-full"></div></div>';
+                    
                     let cleanDesc = item.description.replace(/\[.*?\] /, '');
+                    let imgSrc = item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150';
 
                     return `
-                    <div class="flex justify-between items-start gap-4 pb-6 border-b border-gray-100 last:border-0">
-                        <div class="flex-1">
-                            <div class="mb-1">${dietIcon}</div>
-                            <h4 class="font-bold text-gray-900 text-[15px]">${item.name}</h4>
-                            <p class="font-black text-gray-800 text-sm mt-0.5">₹${item.price}</p>
-                            <p class="text-xs text-gray-500 mt-2 line-clamp-2 leading-relaxed font-medium">${cleanDesc}</p>
+                    <div class="bg-white rounded-2xl p-4 mb-4 flex justify-between items-center gap-4 border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.04)] hover:shadow-lg transition-all duration-300 relative overflow-hidden">
+                        
+                        <div class="flex-1 pr-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                ${dietIcon}
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">${item.category}</span>
+                            </div>
+                            <h4 class="font-extrabold text-gray-900 text-[17px] leading-tight mb-1">${item.name}</h4>
+                            <p class="font-black text-gray-800 text-base mb-2">₹${item.price}</p>
+                            <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed">${cleanDesc}</p>
                         </div>
-                        <div class="relative w-32 h-32 flex-shrink-0">
-                            <img src="${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}" onclick="openModal('${item.images && item.images[0] ? item.images[0] : 'https://via.placeholder.com/150'}')" class="w-full h-full object-cover rounded-2xl shadow-sm border border-gray-100 cursor-pointer active:scale-95 transition">
-                            <button onclick="addToCart('${item.name}', ${item.price})" class="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-white text-orange-600 border border-gray-200 font-black text-sm px-6 py-1.5 rounded-lg shadow-md hover:bg-orange-50 transition uppercase active:scale-95">
-                                ADD
-                            </button>
+                        
+                        <div class="relative w-36 h-36 flex-shrink-0 rounded-2xl overflow-hidden shadow-sm bg-gray-50 border border-gray-100">
+                            <img src="${imgSrc}" onclick="openModal('${imgSrc}')" class="w-full h-full object-cover cursor-pointer hover:scale-110 transition duration-500">
+                            
+                            <div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-full flex justify-center">
+                                <button onclick="addToCart('${item.name}', ${item.price})" class="bg-white/95 backdrop-blur-md text-green-600 border border-green-100 font-black text-sm px-6 py-2 rounded-xl shadow-lg hover:bg-green-50 hover:text-green-700 transition uppercase active:scale-95 flex items-center gap-1">
+                                    ADD <span class="text-green-600 text-lg leading-none">+</span>
+                                </button>
+                            </div>
                         </div>
+
                     </div>
                     `;
                 }).join('');
