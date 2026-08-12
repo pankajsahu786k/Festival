@@ -17,6 +17,9 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; } 
         .tab-active { background-color: #111827; color: white; border-color: #111827; }
         .tab-inactive { background-color: white; color: #374151; border-color: #e5e7eb; }
+        
+        .diet-active { background-color: #ea580c; color: white; border-color: #ea580c; }
+        .diet-inactive { background-color: #f3f4f6; color: #4b5563; border-color: #e5e7eb; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
@@ -60,6 +63,14 @@
                     Search
                 </button>
             </div>
+
+            <div id="dietFilterSection" class="hidden flex justify-center gap-2 mt-3">
+                <span class="text-white text-xs font-bold self-center mr-1">Filter Food:</span>
+                <button onclick="setDietFilter('all')" id="diet-all" class="diet-active px-4 py-1.5 rounded-xl font-bold text-xs border transition">All Dishes</button>
+                <button onclick="setDietFilter('veg')" id="diet-veg" class="diet-inactive px-4 py-1.5 rounded-xl font-bold text-xs border transition flex items-center gap-1">🟢 Pure Veg</button>
+                <button onclick="setDietFilter('non-veg')" id="diet-non-veg" class="diet-inactive px-4 py-1.5 rounded-xl font-bold text-xs border transition flex items-center gap-1">🔴 Non-Veg</button>
+            </div>
+
         </div>
     </section>
 
@@ -79,9 +90,9 @@
     let userLat = null;
     let userLng = null;
     let currentTab = 'retail';
+    let currentDiet = 'all'; 
     let dbDynamicCategories = [];
 
-    // 🌟 SMART CATEGORY DICTIONARY
     const categoryData = {
         retail: [
             "Grocery & Kirana Store", "Clothing & Fashion", "Electronics & Mobile Accessories",
@@ -98,7 +109,6 @@
         ]
     };
 
-    // 1. DYNAMIC CATEGORIES LOAD FUNCTION
     async function loadCategories() {
         try {
             const res = await fetch(`${API_URL}/api/categories`);
@@ -108,16 +118,13 @@
         } catch (error) {
             console.error("Categories load karne mein error:", error);
         }
-        // Page load hote hi Retail tab ki categories bharna
         updateCategoryDropdown(currentTab);
     }
 
-    // 2. 🌟 DROPDOWN UPDATE LOGIC (Yeh solve karega lafda)
     function updateCategoryDropdown(tabName) {
         const select = document.getElementById('categorySelect');
         select.innerHTML = '<option value="">All Categories</option>';
 
-        // 1. Default categories uss particular tab ke liye
         if (categoryData[tabName]) {
             categoryData[tabName].forEach(cat => {
                 const option = document.createElement('option');
@@ -127,7 +134,6 @@
             });
         }
 
-        // 2. Nayi Dynamic (User added) categories filter karke lagana
         let newAdditions = [];
         dbDynamicCategories.forEach(item => {
             if (typeof item === 'object' && item.category && item.storeType) {
@@ -158,11 +164,11 @@
 
     loadCategories();
 
-    // 🌟 TAB SWITCHING LOGIC 🌟
     function switchTab(tabName) {
         currentTab = tabName;
+        currentDiet = 'all';
+        resetDietButtonsUI();
         
-        // Tab buttons ko update karna
         const tabs = ['retail', 'food', 'service'];
         tabs.forEach(t => {
             const btn = document.getElementById(`btn-${t}`);
@@ -173,7 +179,13 @@
             }
         });
 
-        // 🌟 DROPDOWN KO NAYE TAB KE HISAAB SE REFRESH KARNA
+        const dietBar = document.getElementById('dietFilterSection');
+        if (tabName === 'food') {
+            dietBar.classList.remove('hidden');
+        } else {
+            dietBar.classList.add('hidden');
+        }
+
         updateCategoryDropdown(tabName);
 
         const searchInput = document.getElementById('searchInput');
@@ -186,7 +198,27 @@
         triggerSearch();
     }
 
-    // 📍 LOCATION DETECTION
+    function setDietFilter(dietType) {
+        currentDiet = dietType;
+        resetDietButtonsUI();
+        
+        const selectedBtn = document.getElementById(`diet-${dietType}`);
+        if(selectedBtn) {
+            selectedBtn.classList.replace('diet-inactive', 'diet-active');
+        }
+        
+        triggerSearch();
+    }
+
+    function resetDietButtonsUI() {
+        ['all', 'veg', 'non-veg'].forEach(d => {
+            const b = document.getElementById(`diet-${d}`);
+            if(b) {
+                b.classList.replace('diet-active', 'diet-inactive');
+            }
+        });
+    }
+
     document.getElementById('locBtn').addEventListener('click', () => {
         const locText = document.getElementById('locText');
         locText.innerText = "Locating... ⏳";
@@ -212,7 +244,6 @@
         }
     });
 
-    // 🔍 SEARCH TRIGGERS
     function triggerSearch() {
         const query = document.getElementById('searchInput').value.trim();
         const category = document.getElementById('categorySelect').value; 
@@ -223,7 +254,6 @@
     document.getElementById('searchInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') triggerSearch(); });
     document.getElementById('categorySelect').addEventListener('change', triggerSearch);
 
-    // 🛍️ STRICT FETCH & SEPARATION LOGIC
     async function fetchProducts(searchQuery, category = "") {
         const grid = document.getElementById('productsGrid');
         const title = document.getElementById('resultTitle');
@@ -255,38 +285,60 @@
             if (!res.ok) throw new Error(`Server Error`);
             const data = await res.json();
 
-            // 🌟 100% STRICT TAB SEPARATION FILTER 🌟
+            // 🌟 SMART FOOD DETECTION USING VEG / NON-VEG / EGG KEYWORDS
             let finalData = data.filter(item => {
                 const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
                 const catString = (item.category || item.shopCategory || item.shopName || '').toLowerCase();
+                const itemDesc = (item.description || '').toLowerCase();
+                const itemName = (item.name || '').toLowerCase();
 
-                // Strict check by storeType
-                if (itemStoreType === 'retail' || itemStoreType === 'food' || itemStoreType === 'service') {
-                    return itemStoreType === currentTab;
-                }
+                // 🚦 Check for Veg / Non-Veg / Egg tags or words anywhere in Item Name or Description
+                const hasVegNonVegKeyword = itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') ||
+                                            itemDesc.includes('veg') || itemDesc.includes('non-veg') || itemDesc.includes('nonveg') || itemDesc.includes('egg') ||
+                                            itemName.includes('veg') || itemName.includes('non-veg') || itemName.includes('nonveg') || itemName.includes('egg');
 
-                // Fallback check for legacy data
-                const isFoodItem = catString.includes('food') || catString.includes('restaurant') || 
+                const isFoodItem = itemStoreType === 'food' || 
+                                   hasVegNonVegKeyword ||
+                                   catString.includes('food') || catString.includes('restaurant') || 
                                    catString.includes('cafe') || catString.includes('bakery') || 
                                    catString.includes('sweet') || catString.includes('mithai') || 
                                    catString.includes('dine') || catString.includes('snack') ||
-                                   catString.includes('beverage') || catString.includes('juice');
+                                   catString.includes('beverage') || catString.includes('juice') ||
+                                   catString.includes('starter') || catString.includes('main course') ||
+                                   catString.includes('dessert') || catString.includes('fast food') ||
+                                   catString.includes('pizza') || catString.includes('dosa') || 
+                                   catString.includes('samosa') || catString.includes('kachori');
 
-                const isServiceItem = catString.includes('barber') || catString.includes('salon') || 
+                const isServiceItem = itemStoreType === 'service' ||
+                                      catString.includes('barber') || catString.includes('salon') || 
                                       catString.includes('repair') || catString.includes('service') || 
                                       catString.includes('plumber') || catString.includes('electrician') ||
                                       catString.includes('tailor') || catString.includes('parlour') ||
                                       catString.includes('spa') || catString.includes('broker');
 
-                if (currentTab === 'food') return isFoodItem;
-                if (currentTab === 'service') return isServiceItem;
-                if (currentTab === 'retail') return !isFoodItem && !isServiceItem;
+                let matchesTab = false;
+                if (currentTab === 'food') matchesTab = isFoodItem;
+                else if (currentTab === 'service') matchesTab = isServiceItem;
+                else if (currentTab === 'retail') matchesTab = !isFoodItem && !isServiceItem;
 
-                return false;
+                if (!matchesTab) return false;
+
+                // Diet Filter for Food Tab
+                if (currentTab === 'food' && currentDiet !== 'all') {
+                    const isNonVegTag = itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') || itemDesc.includes('non-veg') || itemDesc.includes('nonveg') || itemName.includes('non-veg') || itemName.includes('nonveg');
+                    if (currentDiet === 'veg') {
+                        return !isNonVegTag;
+                    }
+                    if (currentDiet === 'non-veg') {
+                        return isNonVegTag;
+                    }
+                }
+
+                return true;
             });
 
             if (finalData.length === 0) {
-                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Is category me koi item nahi mila. 😔</p>`;
+                grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Is category / filter me koi item nahi mila. 😔</p>`;
                 return;
             }
 
@@ -296,9 +348,14 @@
                     distanceHtml = `<span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">📍 ${item.distance.toFixed(1)} KM away</span>`;
                 }
 
-                // 🚦 🚦 TRAFFIC POLICE YAHAN ADD KI HAI MAIN NE 🚦 🚦
                 const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
-                const isFood = (itemStoreType === 'food' || currentTab === 'food');
+                const itemDesc = (item.description || '').toLowerCase();
+                const itemName = (item.name || '').toLowerCase();
+                
+                const isFood = itemStoreType === 'food' || currentTab === 'food' || 
+                               itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') ||
+                               itemName.includes('veg') || itemName.includes('non-veg') || itemName.includes('nonveg');
+                               
                 const targetPage = isFood ? 'food-shop.html' : 'shop.html';
 
                 return `
@@ -329,7 +386,6 @@
         }
     }
 
-    // Initial Load
     fetchProducts('', '');
     </script>
 </body>
