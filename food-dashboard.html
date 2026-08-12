@@ -477,7 +477,7 @@
         }
 
         // ==========================================
-        // 🖨️ PREMIUM MENU PRINTING ENGINE (TAILWIND CSS FIX)
+        // 🖨️ PREMIUM MENU PRINTING ENGINE (ULTIMATE WATERMARK FIX)
         // ==========================================
         function generatePrintMenu() {
             if (allProducts.length === 0) {
@@ -487,7 +487,6 @@
             const printArea = document.getElementById('printArea');
             
             const menuHTML = allProducts.map(item => {
-                // 🔴 TAILWIND FIX: background-color ke aage !important lagaya
                 let dietIcon = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border: 1.5px solid #16a34a; border-radius: 2px; margin-right: 4px; vertical-align: middle;"><span style="width: 5px; height: 5px; background-color: #16a34a !important; border-radius: 50%;"></span></span>';
                 
                 if(item.description.includes('[Non-Veg]')) {
@@ -515,9 +514,9 @@
             }).join('');
 
             printArea.innerHTML = `
-                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 30px; background-color: #ffffff !important; color: black; max-width: 800px; margin: 0 auto; position: relative; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; min-height: 100vh;">
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 30px; background-color: #ffffff !important; color: black; max-width: 800px; margin: 0 auto; position: relative; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; min-height: 100vh; overflow: hidden;">
                     
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background-image: url('https://img.freepik.com/premium-vector/hand-drawn-doodle-seamless-food-pattern_161981-64.jpg') !important; background-repeat: repeat !important; opacity: 0.05 !important; background-size: 240px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
+                    <img src="https://img.freepik.com/premium-vector/hand-drawn-doodle-seamless-food-pattern_161981-64.jpg" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.08 !important; z-index: 0; pointer-events: none;" />
 
                     <div style="position: relative; z-index: 2;">
                         
@@ -530,7 +529,6 @@
                             <div style="text-align: left; flex: 1;">
                                 <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: #ea580c !important;">Smart<span style="color: #111827 !important;">Shop</span> Partner</h3>
                                 <p style="margin: 2px 0 0 0; font-size: 11px; font-weight: 700; color: #374151 !important;">Scan QR to order online directly from your table!</p>
-                                
                                 <p style="margin: 6px 0 0 0; font-size: 13px; font-weight: 900; color: #ffffff !important; background-color: #111827 !important; padding: 3px 10px; border-radius: 6px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">smartshop19.online</p>
                             </div>
                         </div>
@@ -561,6 +559,7 @@
 
             printArea.classList.remove('hidden');
             
+            // Ab image tag browser hamesha load karega, par safe side ke liye thoda ruk ke print layenge
             setTimeout(() => {
                 window.print();
                 
@@ -568,7 +567,7 @@
                     printArea.classList.add('hidden');
                 }, 1000);
                 
-            }, 800);
+            }, 500);
         }
 
         loadGallery();
