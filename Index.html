@@ -285,47 +285,18 @@
             if (!res.ok) throw new Error(`Server Error`);
             const data = await res.json();
 
-            // 🌟 SMART FOOD DETECTION USING VEG / NON-VEG / EGG KEYWORDS
+            // 🌟 FAST & LIGHTWEIGHT FILTER (NO HEAVY KEYWORD SEARCH) 🌟
             let finalData = data.filter(item => {
                 const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
-                const catString = (item.category || item.shopCategory || item.shopName || '').toLowerCase();
-                const itemDesc = (item.description || '').toLowerCase();
-                const itemName = (item.name || '').toLowerCase();
-
-                // 🚦 Check for Veg / Non-Veg / Egg tags or words anywhere in Item Name or Description
-                const hasVegNonVegKeyword = itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') ||
-                                            itemDesc.includes('veg') || itemDesc.includes('non-veg') || itemDesc.includes('nonveg') || itemDesc.includes('egg') ||
-                                            itemName.includes('veg') || itemName.includes('non-veg') || itemName.includes('nonveg') || itemName.includes('egg');
-
-                const isFoodItem = itemStoreType === 'food' || 
-                                   hasVegNonVegKeyword ||
-                                   catString.includes('food') || catString.includes('restaurant') || 
-                                   catString.includes('cafe') || catString.includes('bakery') || 
-                                   catString.includes('sweet') || catString.includes('mithai') || 
-                                   catString.includes('dine') || catString.includes('snack') ||
-                                   catString.includes('beverage') || catString.includes('juice') ||
-                                   catString.includes('starter') || catString.includes('main course') ||
-                                   catString.includes('dessert') || catString.includes('fast food') ||
-                                   catString.includes('pizza') || catString.includes('dosa') || 
-                                   catString.includes('samosa') || catString.includes('kachori');
-
-                const isServiceItem = itemStoreType === 'service' ||
-                                      catString.includes('barber') || catString.includes('salon') || 
-                                      catString.includes('repair') || catString.includes('service') || 
-                                      catString.includes('plumber') || catString.includes('electrician') ||
-                                      catString.includes('tailor') || catString.includes('parlour') ||
-                                      catString.includes('spa') || catString.includes('broker');
-
-                let matchesTab = false;
-                if (currentTab === 'food') matchesTab = isFoodItem;
-                else if (currentTab === 'service') matchesTab = isServiceItem;
-                else if (currentTab === 'retail') matchesTab = !isFoodItem && !isServiceItem;
-
-                if (!matchesTab) return false;
+                
+                // Agar item ka storeType current tab se match nahi karta, toh turant hata do
+                if (itemStoreType !== currentTab) return false;
 
                 // Diet Filter for Food Tab
                 if (currentTab === 'food' && currentDiet !== 'all') {
-                    const isNonVegTag = itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') || itemDesc.includes('non-veg') || itemDesc.includes('nonveg') || itemName.includes('non-veg') || itemName.includes('nonveg');
+                    const itemDesc = (item.description || '').toLowerCase();
+                    const isNonVegTag = itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]');
+                    
                     if (currentDiet === 'veg') {
                         return !isNonVegTag;
                     }
@@ -349,14 +320,7 @@
                 }
 
                 const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
-                const itemDesc = (item.description || '').toLowerCase();
-                const itemName = (item.name || '').toLowerCase();
-                
-                const isFood = itemStoreType === 'food' || currentTab === 'food' || 
-                               itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]') ||
-                               itemName.includes('veg') || itemName.includes('non-veg') || itemName.includes('nonveg');
-                               
-                const targetPage = isFood ? 'food-shop.html' : 'shop.html';
+                const targetPage = itemStoreType === 'food' ? 'food-shop.html' : 'shop.html';
 
                 return `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition overflow-hidden group flex flex-col">

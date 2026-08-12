@@ -11,7 +11,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 🖨️ PERFECT PRINT CSS (BACKGROUND IMAGE & COLOR FIX) */
+        /* 🖨️ PERFECT PRINT CSS */
         @media print {
             body * { visibility: hidden; } 
             #printArea, #printArea * { 
@@ -423,6 +423,7 @@
                 
                 const finalDescription = `[${dietTag}] ${description}`;
                 
+                // 🚀 YAHAN MAINE 'storeType' ADD KIYA HAI TAAKI DATABASE SAMAJH JAYE 🚀
                 const payload = {
                     shopSlug: shopSlug,
                     name: name,
@@ -430,7 +431,7 @@
                     category: category,
                     description: finalDescription,
                     stockQuantity: 999,
-                    storeType: 'food' // 🌟 YEH NAYI LINE ADD KARNI HAI
+                    storeType: 'food' 
                 };
 
                 const photoFile = document.getElementById('itemPhoto').files[0];
@@ -477,9 +478,6 @@
             }
         }
 
-        // ==========================================
-        // 🖨️ PREMIUM MENU PRINTING ENGINE (ULTIMATE WATERMARK FIX)
-        // ==========================================
         function generatePrintMenu() {
             if (allProducts.length === 0) {
                 return alert("Aapka menu khali hai! Pehle kuch dishes add karein.");
@@ -560,7 +558,6 @@
 
             printArea.classList.remove('hidden');
             
-            // Ab image tag browser hamesha load karega, par safe side ke liye thoda ruk ke print layenge
             setTimeout(() => {
                 window.print();
                 
