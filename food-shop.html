@@ -36,6 +36,20 @@
                     <span class="text-xs font-bold">⭐ 4.5</span>
                 </div>
             </div>
+            <div class="p-5 border-b border-gray-100 bg-white hidden" id="mapSection">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-extrabold text-gray-900">Store Location 📍</h3>
+                <a id="getDirectionsBtn" href="#" target="_blank" class="text-[11px] font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition shadow-sm border border-blue-100 flex items-center gap-1">
+                    Get Directions ↗
+                </a>
+            </div>
+            <div class="w-full h-36 rounded-xl overflow-hidden border border-gray-200 shadow-inner relative bg-gray-50">
+                <iframe id="shopMapIframe" width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src=""></iframe>
+            </div>
+            <p id="shopAddressFull" class="text-xs text-gray-500 font-medium mt-2 leading-relaxed flex gap-1">
+                <span class="text-gray-400">🏠</span> <span id="addressText">Address yahan aayega...</span>
+            </p>
+        </div>
             <div class="mt-4 flex gap-3 text-xs font-bold text-gray-500 bg-gray-50 p-3 rounded-xl border border-gray-100">
                 <span class="flex items-center gap-1">🛵 30-40 mins</span>
                 <span>•</span>
@@ -79,17 +93,42 @@
             window.location.href = 'index.html';
         }
 
-        // 🏪 1. Fetch Shop Info
+        // 🏪 1. Fetch Shop Info & Set Map
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
                 if (res.ok) {
                     const shop = await res.json();
+                    
+                    // Shop ke basic details update karna
                     document.getElementById('headerShopName').innerText = shop.shopName;
                     document.getElementById('shopName').innerText = shop.shopName;
                     document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
+                    
+                    // 🗺️ MAP ENGINE: Agar vendor ke paas latitude/longitude hai
+                    if (shop.latitude && shop.longitude) {
+                        // 1. Google Map Embed Iframe Link (100% Free)
+                        const mapUrl = `https://maps.google.com/maps?q=${shop.latitude},${shop.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                        document.getElementById('shopMapIframe').src = mapUrl;
+                        
+                        // 2. Direct Navigation Link (Phone ka Maps app kholne ke liye)
+                        const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
+                        document.getElementById('getDirectionsBtn').href = dirUrl;
+                        
+                        // 3. Address dikhana
+                        if (shop.address) {
+                            document.getElementById('addressText').innerText = shop.address;
+                        } else {
+                            document.getElementById('shopAddressFull').classList.add('hidden');
+                        }
+                        
+                        // Sab set hone ke baad map section dikha do
+                        document.getElementById('mapSection').classList.remove('hidden');
+                    }
                 }
-            } catch (error) { console.error("Error loading shop info"); }
+            } catch (error) { 
+                console.error("Error loading shop info"); 
+            }
         }
 
         // 📸 2. Fetch & Render Gallery
