@@ -11,11 +11,21 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* 🖨️ PREMIUM PRINT JADOO CSS */
+        /* 🖨️ PERFECT PRINT CSS (BACKGROUND IMAGE & COLOR FIX) */
         @media print {
-            body * { visibility: hidden; } /* Screen ki baaki cheezein chupa do */
-            #printArea, #printArea * { visibility: visible; } /* Sirf menu dikhao */
-            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 0px; }
+            body * { visibility: hidden; } 
+            #printArea, #printArea * { 
+                visibility: visible; 
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            } 
+            #printArea { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                padding: 0px; 
+            }
             @page { margin: 0; size: A4 portrait; }
         }
     </style>
@@ -173,7 +183,6 @@
     </main>
 
     <script>
-        // 🔒 SECURITY, SETUP & LOGOUT
         const token = localStorage.getItem('token');
         const shopSlug = localStorage.getItem('shopSlug');
         
@@ -191,7 +200,6 @@
             }
         }
 
-        // 🔗 DYNAMIC LIVE SHOP LINK & QR CODE
         const liveShopUrl = `${window.location.origin}/food-shop.html?store=${shopSlug}`;
         document.getElementById('shopLinkInput').value = liveShopUrl;
         document.getElementById('topLiveLink').href = liveShopUrl;
@@ -204,7 +212,6 @@
             qrContainer.classList.remove('hidden');
         }
 
-        // 📸 GALLERY MANAGEMENT
         const galleryInput = document.getElementById('galleryInput');
         const uploadBtn = document.getElementById('uploadGalleryBtn');
         const galleryGrid = document.getElementById('galleryGrid');
@@ -293,7 +300,6 @@
             } catch (error) { console.error("Error deleting"); }
         }
 
-        // 🍔 FOOD MENU MANAGEMENT (WITH EDIT LOGIC)
         const menuForm = document.getElementById('menuForm');
         const menuList = document.getElementById('menuList');
         
@@ -302,12 +308,11 @@
 
         async function loadMenu() {
             try {
-                // Fetch Shop Info properly first to update shopNameDisplay
                 const shopRes = await fetch(`/api/shop/${shopSlug}`);
                 if (shopRes.ok) {
                     const shopData = await shopRes.json();
                     shopNameDisplay = shopData.shopName;
-                    document.getElementById('welcomeHeader').innerText = `Welcome, ${shopNameDisplay}!👨‍🍳`;
+                    document.getElementById('welcomeHeader').innerText = `Welcome, ${shopNameDisplay}! 👨‍🍳`;
                 }
 
                 const res = await fetch(`/api/products/${shopSlug}`);
@@ -472,7 +477,7 @@
         }
 
         // ==========================================
-        // 🖨️ PREMIUM MENU PRINTING ENGINE (User Vision)
+        // 🖨️ PREMIUM MENU PRINTING ENGINE (UPDATED WITH BACKGROUND & LEGEND)
         // ==========================================
         function generatePrintMenu() {
             if (allProducts.length === 0) {
@@ -482,64 +487,79 @@
             const printArea = document.getElementById('printArea');
             
             const menuHTML = allProducts.map(item => {
-                let dietIcon = '🟢';
-                if(item.description.includes('[Non-Veg]')) dietIcon = '🔴';
-                if(item.description.includes('[Egg]')) dietIcon = '🟡';
+                // Authentic Square Dot Veg/Non-Veg Symbols
+                let dietIcon = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border: 1.5px solid #16a34a; border-radius: 2px; margin-right: 4px; vertical-align: middle;"><span style="width: 5px; height: 5px; background-color: #16a34a; border-radius: 50%;"></span></span>';
+                
+                if(item.description.includes('[Non-Veg]')) {
+                    dietIcon = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border: 1.5px solid #dc2626; border-radius: 2px; margin-right: 4px; vertical-align: middle;"><span style="width: 5px; height: 5px; background-color: #dc2626; border-radius: 50%;"></span></span>';
+                }
+                if(item.description.includes('[Egg]')) {
+                    dietIcon = '<span style="display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; border: 1.5px solid #ca8a04; border-radius: 2px; margin-right: 4px; vertical-align: middle;"><span style="width: 5px; height: 5px; background-color: #ca8a04; border-radius: 50%;"></span></span>';
+                }
+                
                 let cleanDesc = item.description.replace(/\[.*?\] /, '');
 
                 return `
-                <div style="border-bottom: 1px dashed #e5e7eb; padding-bottom: 12px; margin-bottom: 12px; z-index: 2; position: relative;">
+                <div style="border-bottom: 1px dashed #e5e7eb; padding-bottom: 10px; margin-bottom: 10px; z-index: 2; position: relative;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                         <div style="flex: 1; padding-right: 10px;">
-                            <h4 style="font-size: 16px; font-weight: 800; margin: 0; color: #111827;">
+                            <h4 style="font-size: 15px; font-weight: 800; margin: 0; color: #111827;">
                                 ${dietIcon} ${item.name}
                             </h4>
-                            <p style="font-size: 11px; color: #6b7280; margin-top: 4px; margin-bottom: 0;">${cleanDesc}</p>
+                            <p style="font-size: 11px; color: #4b5563; margin-top: 3px; margin-bottom: 0;">${cleanDesc}</p>
                         </div>
-                        <span style="font-size: 16px; font-weight: 900; color: #111827;">₹${item.price}</span>
+                        <span style="font-size: 15px; font-weight: 900; color: #111827;">₹${item.price}</span>
                     </div>
                 </div>
                 `;
             }).join('');
 
-            // Print Area Design
             printArea.innerHTML = `
-                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 30px; background-color: #ffffff; color: black; max-width: 800px; margin: 0 auto; position: relative; print-color-adjust: exact; -webkit-print-color-adjust: exact; box-sizing: border-box; min-h-screen;">
+                <div style="font-family: 'Plus Jakarta Sans', sans-serif; padding: 30px; background-color: #ffffff; color: black; max-width: 800px; margin: 0 auto; position: relative; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; box-sizing: border-box; min-height: 100vh;">
                     
-                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background-image: url('https://img.freepik.com/premium-vector/hand-drawn-doodle-seamless-food-pattern_161981-64.jpg'); background-repeat: repeat; opacity: 0.04; background-size: 250px;"></div>
+                    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background-image: url('https://img.freepik.com/premium-vector/hand-drawn-doodle-seamless-food-pattern_161981-64.jpg'); background-repeat: repeat; opacity: 0.05; background-size: 240px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;"></div>
 
                     <div style="position: relative; z-index: 2;">
                         
-                        <div style="text-align: center; margin-bottom: 20px;">
-                            <h1 style="font-size: 32px; font-weight: 900; margin: 0; color: #111827; letter-spacing: -1px;">${shopNameDisplay}</h1>
+                        <div style="text-align: center; margin-bottom: 15px;">
+                            <h1 style="font-size: 34px; font-weight: 900; margin: 0; color: #111827; letter-spacing: -0.5px; text-transform: uppercase;">${shopNameDisplay}</h1>
                         </div>
 
-                        <div style="margin-bottom: 30px; padding: 15px; background-color: rgba(255, 247, 237, 0.9); border: 2px dashed #ea580c; border-radius: 12px; text-align: center; display: flex; items: center; justify-content: center; gap: 15px; border-style: dotted;">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(liveShopUrl)}" style="width: 70px; height: 70px; border-radius: 6px; border: 1px solid #e5e7eb;">
+                        <div style="margin-bottom: 25px; padding: 12px 18px; background-color: #fff7ed !important; border: 2px dashed #ea580c; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(liveShopUrl)}" style="width: 75px; height: 75px; border-radius: 6px; border: 1px solid #fed7aa;">
                             <div style="text-align: left; flex: 1;">
                                 <h3 style="margin: 0; font-size: 16px; font-weight: 900; color: #ea580c;">Smart<span style="color: #111827;">Shop</span> Partner</h3>
-                                <p style="margin: 2px 0 0 0; font-size: 11px; font-weight: bold; color: #374151;">Order digitally at this restaurant!</p>
+                                <p style="margin: 2px 0 0 0; font-size: 11px; font-weight: 700; color: #374151;">Scan QR to order online directly from your table!</p>
                                 
-                                <p style="margin: 6px 0 0 0; font-size: 14px; font-weight: 900; color: #111827; background-color: #111827; color: #ffffff; padding: 2px 8px; border-radius: 4px; display: inline-block;">smartshop19.online</p>
+                                <p style="margin: 6px 0 0 0; font-size: 13px; font-weight: 900; color: #ffffff !important; background-color: #111827 !important; padding: 3px 10px; border-radius: 6px; display: inline-block; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;">smartshop19.online</p>
                             </div>
                         </div>
 
-                        <div style="text-align: center; border-bottom: 3px solid #111827; padding-bottom: 15px; margin-bottom: 25px;">
-                            <h2 style="font-size: 30px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1.5px; color: #111827;">Our Menu</h2>
+                        <div style="text-align: center; border-bottom: 3px solid #111827; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h2 style="font-size: 26px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1.5px; color: #111827;">OUR MENU</h2>
+                            
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 8px; font-size: 11px; font-weight: 800; color: #374151;">
+                                <span style="display: inline-flex; align-items: center; gap: 5px;">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border: 1.5px solid #16a34a; border-radius: 2px;"><span style="width: 4px; height: 4px; background-color: #16a34a; border-radius: 50%;"></span></span> Veg
+                                </span>
+                                <span style="display: inline-flex; align-items: gap: 5px;">
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; border: 1.5px solid #dc2626; border-radius: 2px;"><span style="width: 4px; height: 4px; background-color: #dc2626; border-radius: 50%;"></span></span> Non-Veg
+                                </span>
+                            </div>
                         </div>
 
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px 35px; margin-bottom: 20px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px 30px; margin-bottom: 20px;">
                             ${menuHTML}
                         </div>
 
-                        <div style="text-align: center; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 15px;">
-                          <p style="font-size: 10px; color: #9ca3af; font-style: italic; margin: 0;">Thanks for visiting! Prices subject to change.</p>
+                        <div style="text-align: center; margin-top: 25px; border-top: 1px solid #e5e7eb; padding-top: 10px;">
+                          <p style="font-size: 10px; color: #6b7280; font-weight: 600; margin: 0;">Thank you for visiting! Powered by smartshop19.online</p>
                         </div>
 
-                    </div> </div>
+                    </div>
+                </div>
             `;
 
-            // Print Trigger
             printArea.classList.remove('hidden');
             window.print();
             
@@ -548,7 +568,6 @@
             }, 1000);
         }
 
-        // Initialize All Functions
         loadGallery();
         loadMenu();
     </script>
