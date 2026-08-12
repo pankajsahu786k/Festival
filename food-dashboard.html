@@ -305,14 +305,19 @@
         
         let allProducts = []; 
         let editingItemId = null; 
-
-        async function loadMenu() {
+async function loadMenu() {
             try {
-                const shopRes = await fetch(`/api/shop/${shopSlug}`);
-                if (shopRes.ok) {
-                    const shopData = await shopRes.json();
-                    shopNameDisplay = shopData.shopName;
-                    document.getElementById('welcomeHeader').innerText = `Welcome, ${shopNameDisplay}! 👨‍🍳`;
+                // 🛡️ SAFE SHOP FETCH: (Taki error aane par menu load hona na ruke)
+                try {
+                    const shopRes = await fetch(`/api/shop/${shopSlug}`);
+                    if (shopRes.ok) {
+                        const shopData = await shopRes.json();
+                        shopNameDisplay = shopData.shopName || shopSlug;
+                        const header = document.getElementById('welcomeHeader');
+                        if(header) header.innerText = `Welcome, ${shopNameDisplay}! 👨‍🍳`;
+                    }
+                } catch (shopError) {
+                    console.log("Shop name fetch me delay hai, par menu load jari rahega.");
                 }
 
                 const res = await fetch(`/api/products/${shopSlug}`);

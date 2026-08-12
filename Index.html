@@ -285,11 +285,25 @@
             if (!res.ok) throw new Error(`Server Error`);
             const data = await res.json();
 
-            // 🌟 FAST & LIGHTWEIGHT FILTER (NO HEAVY KEYWORD SEARCH) 🌟
+            // 🌟 SMART HYBRID FILTER (Naya Backend Tag + Purana Item Fallback) 🌟
             let finalData = data.filter(item => {
-                const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
+                let itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
                 
-                // Agar item ka storeType current tab se match nahi karta, toh turant hata do
+                // 🛠️ FALLBACK: Agar purana item hai jisme tag nahi hai, toh naam se pehchano!
+                if (!itemStoreType || itemStoreType === '') {
+                    const catString = (item.category || item.shopCategory || item.shopName || '').toLowerCase();
+                    const itemDesc = (item.description || '').toLowerCase();
+                    const itemName = (item.name || '').toLowerCase();
+
+                    const isFoodItem = catString.includes('food') || catString.includes('cafe') || catString.includes('restaurant') || catString.includes('bakery') || itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemName.includes('pizza') || itemName.includes('dosa') || itemName.includes('samosa') || itemName.includes('kachori');
+                    const isServiceItem = catString.includes('repair') || catString.includes('salon');
+
+                    if (isFoodItem) itemStoreType = 'food';
+                    else if (isServiceItem) itemStoreType = 'service';
+                    else itemStoreType = 'retail';
+                }
+
+                // Agar item ka tab match nahi kar raha, toh hata do
                 if (itemStoreType !== currentTab) return false;
 
                 // Diet Filter for Food Tab
@@ -297,12 +311,8 @@
                     const itemDesc = (item.description || '').toLowerCase();
                     const isNonVegTag = itemDesc.includes('[non-veg]') || itemDesc.includes('[egg]');
                     
-                    if (currentDiet === 'veg') {
-                        return !isNonVegTag;
-                    }
-                    if (currentDiet === 'non-veg') {
-                        return isNonVegTag;
-                    }
+                    if (currentDiet === 'veg') return !isNonVegTag;
+                    if (currentDiet === 'non-veg') return isNonVegTag;
                 }
 
                 return true;
