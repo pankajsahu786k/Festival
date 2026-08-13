@@ -94,6 +94,7 @@
         }
 
         // 🏪 1. Fetch Shop Info & Set Map (FINAL CORRECTED MAP URLs)
+        // 🏪 1. Fetch Shop Info & Set Map (EXACT GPS LOCATION FIX)
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
@@ -104,22 +105,24 @@
                     document.getElementById('shopName').innerText = shop.shopName;
                     document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
                     
-                    // 🗺️ SMART MAP ENGINE (GPS ya Name/Address dono par chalega)
+                    // 🗺️ SMART MAP ENGINE (Priority to exact Lat/Long)
                     let mapQuery = "";
                     
                     if (shop.latitude && shop.longitude) {
+                        // 📍 Yahan hum direct GPS coordinates use kar rahe hain
                         mapQuery = `${shop.latitude},${shop.longitude}`;
                     } else if (shop.address) {
+                        // Agar GPS nahi hai, tabhi address pe jayega
                         mapQuery = encodeURIComponent(shop.address);
                     } else {
                         mapQuery = encodeURIComponent(shop.shopName + " Bhopal"); 
                     }
 
-                    // 1. Google Map Embed iframe (✅ EXACT OFFICIAL EMBED URL)
+                    // 1. Google Map Embed iframe (✅ STANDARD FORMAT FOR EXACT PIN)
                     const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
                     document.getElementById('shopMapIframe').src = finalMapUrl;
                     
-                    // 2. Direct Phone Navigation Link (✅ OFFICIAL GOOGLE DIRECTIONS URL)
+                    // 2. Direct Phone Navigation Link (✅ STANDARD GOOGLE DIRECTIONS URL)
                     const finalDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
                     document.getElementById('getDirectionsBtn').href = finalDirUrl;
                     
