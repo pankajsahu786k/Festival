@@ -93,38 +93,48 @@
             window.location.href = 'index.html';
         }
 
-        // 🏪 1. Fetch Shop Info & Set Map
+        // 🏪 1. Fetch Shop Info & Set Map (CLEAN & WORKING FIX)
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
                 if (res.ok) {
                     const shop = await res.json();
                     
-                    // Shop ke basic details update karna
                     document.getElementById('headerShopName').innerText = shop.shopName;
                     document.getElementById('shopName').innerText = shop.shopName;
                     document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
                     
-                    // 🗺️ MAP ENGINE: Agar vendor ke paas latitude/longitude hai
+                    // 🗺️ SMART MAP ENGINE (GPS ya Name/Address dono par chalega)
+                    let mapQuery = "";
+                    
                     if (shop.latitude && shop.longitude) {
-                        // 1. Google Map Embed Iframe Link (100% Free)
-                        const mapUrl = `https://maps.google.com/maps?q=${shop.latitude},${shop.longitude}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-                        document.getElementById('shopMapIframe').src = mapUrl;
-                        
-                        // 2. Direct Navigation Link (Phone ka Maps app kholne ke liye)
-                        const dirUrl = `https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}`;
-                        document.getElementById('getDirectionsBtn').href = dirUrl;
-                        
-                        // 3. Address dikhana
-                        if (shop.address) {
-                            document.getElementById('addressText').innerText = shop.address;
-                        } else {
-                            document.getElementById('shopAddressFull').classList.add('hidden');
-                        }
-                        
-                        // Sab set hone ke baad map section dikha do
-                        document.getElementById('mapSection').classList.remove('hidden');
+                        // Agar exact GPS hai
+                        mapQuery = `${shop.latitude},${shop.longitude}`;
+                    } else if (shop.address) {
+                        // Agar GPS nahi hai, toh Address use karo
+                        mapQuery = encodeURIComponent(shop.address);
+                    } else {
+                        // Agar address bhi nahi hai, toh Shop Name aur City search karo
+                        mapQuery = encodeURIComponent(shop.shopName + " Bhopal"); 
                     }
+
+                    // 1. Google Map Embed iframe (💯 OFFICIAL WORKING URL)
+                    const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                    document.getElementById('shopMapIframe').src = finalMapUrl;
+                    
+                    // 2. Direct Phone Navigation Link (🚀 OFFICIAL DIRECTIONS URL)
+                    const finalDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
+                    document.getElementById('getDirectionsBtn').href = finalDirUrl;
+                    
+                    // 3. Address dikhana
+                    if (shop.address) {
+                        document.getElementById('addressText').innerText = shop.address;
+                    } else {
+                        document.getElementById('shopAddressFull').classList.add('hidden');
+                    }
+                    
+                    // Map section ko visible kardo
+                    document.getElementById('mapSection').classList.remove('hidden');
                 }
             } catch (error) { 
                 console.error("Error loading shop info"); 

@@ -329,8 +329,8 @@
                     distanceHtml = `<span class="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">📍 ${item.distance.toFixed(1)} KM away</span>`;
                 }
 
-                const itemStoreType = (item.storeType || item.shopStoreType || '').toLowerCase();
-                const targetPage = itemStoreType === 'food' ? 'food-shop.html' : 'shop.html';
+                // 🚀 FOOLPROOF ROUTING: Jo tab open hai, hamesha wahi page khulega!
+                const targetPage = currentTab === 'food' ? 'food-shop.html' : 'shop.html';
 
                 return `
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition overflow-hidden group flex flex-col">
