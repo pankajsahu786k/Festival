@@ -93,8 +93,7 @@
             window.location.href = 'index.html';
         }
 
-        // 🏪 1. Fetch Shop Info & Set Map (FINAL CORRECTED MAP URLs)
-        // 🏪 1. Fetch Shop Info & Set Map (EXACT GPS LOCATION FIX)
+        // 🏪 1. Fetch Shop Info & Set Map (DATABASE VARIABLE FIX)
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
@@ -105,24 +104,23 @@
                     document.getElementById('shopName').innerText = shop.shopName;
                     document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
                     
-                    // 🗺️ SMART MAP ENGINE (Priority to exact Lat/Long)
+                    // 🗺️ SMART MAP ENGINE (Database Fix)
                     let mapQuery = "";
                     
-                    if (shop.latitude && shop.longitude) {
-                        // 📍 Yahan hum direct GPS coordinates use kar rahe hain
-                        mapQuery = `${shop.latitude},${shop.longitude}`;
+                    // 📍 ASLI FIX: 'shop.location.lat' aur 'shop.location.lng' use karna
+                    if (shop.location && shop.location.lat && shop.location.lng) {
+                        mapQuery = `${shop.location.lat},${shop.location.lng}`;
                     } else if (shop.address) {
-                        // Agar GPS nahi hai, tabhi address pe jayega
                         mapQuery = encodeURIComponent(shop.address);
                     } else {
                         mapQuery = encodeURIComponent(shop.shopName + " Bhopal"); 
                     }
 
-                    // 1. Google Map Embed iframe (✅ STANDARD FORMAT FOR EXACT PIN)
+                    // 1. Google Map Embed iframe (✅ 100% OFFICIAL MAP URL)
                     const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
                     document.getElementById('shopMapIframe').src = finalMapUrl;
                     
-                    // 2. Direct Phone Navigation Link (✅ STANDARD GOOGLE DIRECTIONS URL)
+                    // 2. Direct Phone Navigation Link (✅ OFFICIAL GOOGLE DIR URL)
                     const finalDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
                     document.getElementById('getDirectionsBtn').href = finalDirUrl;
                     
