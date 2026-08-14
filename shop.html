@@ -28,10 +28,23 @@
                         </span>
                     </div>
                 </div>
-                <div class="bg-gray-50 p-2.5 rounded-full border border-gray-100 shadow-sm">🏪</div>
+                <a id="callBtn" href="#" class="bg-orange-100 text-orange-600 px-4 py-2 rounded-full hover:bg-orange-200 transition shadow-sm font-bold text-sm flex items-center gap-1 hidden">📞 Call</a>
             </div>
         </header>
-
+        <div class="m-4 p-4 border border-gray-100 rounded-xl bg-white hidden shadow-sm" id="mapSection">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-extrabold text-gray-900">Store Location 📍</h3>
+                <a id="getDirectionsBtn" href="#" target="_blank" class="text-[11px] font-bold bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition shadow-sm border border-blue-100 flex items-center gap-1">
+                    Get Directions ↗
+                </a>
+            </div>
+            <div class="w-full h-36 rounded-xl overflow-hidden border border-gray-200 shadow-inner relative bg-gray-50">
+                <iframe id="shopMapIframe" width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" src=""></iframe>
+            </div>
+            <p id="shopAddressFull" class="text-xs text-gray-500 font-medium mt-2 leading-relaxed flex gap-1">
+                <span class="text-gray-400">🏠</span> <span id="addressText">Address yahan aayega...</span>
+            </p>
+        </div>
         <main class="p-4 grid grid-cols-2 gap-4" id="productList">
             <div class="col-span-2 text-center py-10 text-gray-400 font-medium">Loading items...</div>
         </main>
@@ -133,10 +146,47 @@
                     document.getElementById('storeName').innerText = realShopName;
                     dynamicVendorPhone = "91" + data.mobileNumber; 
                     
-                    if(data.location) {
+                    // 📞 CALL BUTTON ENGINE
+                    const callBtn = document.getElementById('callBtn');
+                    if (callBtn) {
+                        if (data.mobileNumber) {
+                            callBtn.href = `tel:${data.mobileNumber}`;
+                            callBtn.classList.remove('hidden'); // Button dikhao
+                        } else {
+                            callBtn.classList.add('hidden'); 
+                        }
+                    }
+
+                    // 🗺️ SMART MAP ENGINE (Exact GPS tracking)
+                    let mapQuery = "";
+                    
+                    if (data.location && data.location.lat && data.location.lng) {
                         shopCoordinates = data.location;
                         detectCustomerDistance(); // Trigger live tracking engine
+                        mapQuery = `${data.location.lat},${data.location.lng}`;
+                    } else if (data.address) {
+                        mapQuery = encodeURIComponent(data.address);
+                    } else {
+                        mapQuery = encodeURIComponent(data.shopName + " Bhopal"); 
                     }
+
+                    // 1. Google Map Embed iframe (💯 PERFECT URL WITH $)
+                    const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                    document.getElementById('shopMapIframe').src = finalMapUrl;
+                    
+                    // 2. Direct Phone Navigation Link (💯 PERFECT URL WITH $)
+                    const finalDirUrl = `https://maps.google.com/maps?q=${mapQuery}`;
+                    document.getElementById('getDirectionsBtn').href = finalDirUrl;
+                    
+                    // 3. Address dikhana
+                    if (data.address) {
+                        document.getElementById('addressText').innerText = data.address;
+                    } else {
+                        document.getElementById('shopAddressFull').classList.add('hidden');
+                    }
+                    
+                    // Map section ko visible kardo
+                    document.getElementById('mapSection').classList.remove('hidden');
                 }
             } catch (error) { console.error(error); }
         }
