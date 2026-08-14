@@ -587,6 +587,8 @@ app.post('/api/customer/search', async (req, res) => {
             return {
                 ...p._doc,
                 shopName: shop.shopName,
+                storeType: shop.storeType, // 🚀 ASLI FIX: Ab backend batayega ki yeh dukaan Service hai ya Retail!
+                shopCategory: shop.category,
                 distance: vendorDistances[p.shopSlug]
             };
         }).filter(p => p !== null);
