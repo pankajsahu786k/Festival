@@ -93,7 +93,7 @@
             window.location.href = 'index.html';
         }
 
-        // 🏪 1. Fetch Shop Info & Set Map (FINAL ERROR-FREE VERSION)
+        // 🏪 1. Fetch Shop Info & Set Map (SEO & MAP FIX)
         async function fetchShopInfo() {
             try {
                 const res = await fetch(`/api/shop/${shopSlug}`);
@@ -104,7 +104,10 @@
                     document.getElementById('shopName').innerText = shop.shopName;
                     document.getElementById('shopCategory').innerText = shop.category || "Food Outlet";
                     
-                    // 📞 CALL BUTTON ENGINE: Phone app kholne ke liye
+                    // 🌟 SEO FIX: Page ka title dukaan ke naam par set karna
+                    document.title = shop.shopName + " - SmartShop Bhopal";
+                    
+                    // 📞 CALL BUTTON ENGINE
                     const callBtn = document.getElementById('callBtn');
                     if (callBtn) {
                         if (shop.mobileNumber) {
@@ -115,24 +118,22 @@
                         }
                     }
 
-                    // 🗺️ SMART MAP ENGINE (Database Fix)
+                    // 🗺️ SMART MAP ENGINE
                     let mapQuery = "";
-                    
-                    // 📍 ASLI FIX: 'shop.location.lat' aur 'shop.location.lng'
                     if (shop.location && shop.location.lat && shop.location.lng) {
-                        mapQuery = `${shop.location.lat},${shop.location.lng}`;
+                        mapQuery = shop.location.lat + "," + shop.location.lng;
                     } else if (shop.address) {
                         mapQuery = encodeURIComponent(shop.address);
                     } else {
                         mapQuery = encodeURIComponent(shop.shopName + " Bhopal"); 
                     }
 
-                    // 1. Google Map Embed iframe (💯 PERFECT URL WITH $)
-                    const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                    // 1. Google Map Embed iframe (💯 BULLETPROOF URL)
+                    const finalMapUrl = "https://maps.google.com/maps?q=" + mapQuery + "&t=&z=15&ie=UTF8&iwloc=&output=embed";
                     document.getElementById('shopMapIframe').src = finalMapUrl;
                     
-                    // 2. Direct Phone Navigation Link (💯 PERFECT URL WITH $)
-                    const finalDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
+                    // 2. Direct Phone Navigation Link (🚀 BULLETPROOF URL)
+                    const finalDirUrl = "https://maps.google.com/maps?q=" + mapQuery;
                     document.getElementById('getDirectionsBtn').href = finalDirUrl;
                     
                     // 3. Address dikhana
@@ -142,7 +143,6 @@
                         document.getElementById('shopAddressFull').classList.add('hidden');
                     }
                     
-                    // Map section ko visible kardo
                     document.getElementById('mapSection').classList.remove('hidden');
                 }
             } catch (error) { 

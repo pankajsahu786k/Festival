@@ -604,6 +604,37 @@ app.post('/api/customer/search', async (req, res) => {
         res.status(500).json({ message: "Search fail ho gaya." });
     }
 });
+// ==========================================
+// 🌍 GOOGLE SEO SITEMAP GENERATOR
+// ==========================================
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const vendors = await Vendor.find({ isSuspended: false });
+        
+        // Sitemap ka header
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+        
+        // 1. Aapki main website ka link
+        xml += `  <url>\n    <loc>https://www.smartshop19.com/</loc>\n    <priority>1.0</priority>\n  </url>\n`;
+
+        // 2. Har ek dukaan ka direct link auto-generate karna
+        vendors.forEach(shop => {
+            // Food wale food-shop pe jayenge, baaki shop.html pe
+            const page = shop.storeType === 'food' ? 'food-shop.html' : 'shop.html';
+            const shopUrl = `https://www.smartshop19.com/${page}?store=${shop.shopSlug}`;
+            
+            xml += `  <url>\n    <loc>${shopUrl}</loc>\n    <priority>0.8</priority>\n  </url>\n`;
+        });
+
+        xml += `</urlset>`;
+        
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        res.status(500).send("Error generating sitemap");
+    }
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

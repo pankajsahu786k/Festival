@@ -146,36 +146,38 @@
                     document.getElementById('storeName').innerText = realShopName;
                     dynamicVendorPhone = "91" + data.mobileNumber; 
                     
+                    // 🌟 SEO FIX: Page ka title dukaan ke naam par set karna
+                    document.title = realShopName + " - SmartShop Bhopal";
+                    
                     // 📞 CALL BUTTON ENGINE
                     const callBtn = document.getElementById('callBtn');
                     if (callBtn) {
                         if (data.mobileNumber) {
                             callBtn.href = `tel:${data.mobileNumber}`;
-                            callBtn.classList.remove('hidden'); // Button dikhao
+                            callBtn.classList.remove('hidden'); 
                         } else {
                             callBtn.classList.add('hidden'); 
                         }
                     }
 
-                    // 🗺️ SMART MAP ENGINE (Exact GPS tracking)
+                    // 🗺️ SMART MAP ENGINE
                     let mapQuery = "";
-                    
                     if (data.location && data.location.lat && data.location.lng) {
                         shopCoordinates = data.location;
-                        detectCustomerDistance(); // Trigger live tracking engine
-                        mapQuery = `${data.location.lat},${data.location.lng}`;
+                        detectCustomerDistance();
+                        mapQuery = data.location.lat + "," + data.location.lng;
                     } else if (data.address) {
                         mapQuery = encodeURIComponent(data.address);
                     } else {
                         mapQuery = encodeURIComponent(data.shopName + " Bhopal"); 
                     }
 
-                    // 1. Google Map Embed iframe (💯 OFFICIAL GOOGLE MAPS LINK)
-                    const finalMapUrl = `https://maps.google.com/maps?q=${mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                    // 1. Google Map Embed iframe (💯 BULLETPROOF URL)
+                    const finalMapUrl = "https://maps.google.com/maps?q=" + mapQuery + "&t=&z=15&ie=UTF8&iwloc=&output=embed";
                     document.getElementById('shopMapIframe').src = finalMapUrl;
                     
-                    // 2. Direct Phone Navigation Link (🚀 OFFICIAL DIRECTIONS LINK)
-                    const finalDirUrl = `https://www.google.com/maps/dir/?api=1&destination=${mapQuery}`;
+                    // 2. Direct Phone Navigation Link (🚀 BULLETPROOF URL)
+                    const finalDirUrl = "https://maps.google.com/maps?q=" + mapQuery;
                     document.getElementById('getDirectionsBtn').href = finalDirUrl;
                     
                     // 3. Address dikhana
@@ -185,7 +187,6 @@
                         document.getElementById('shopAddressFull').classList.add('hidden');
                     }
                     
-                    // Map section ko visible kardo
                     document.getElementById('mapSection').classList.remove('hidden');
                 }
             } catch (error) { console.error(error); }
