@@ -296,7 +296,9 @@
                     const itemName = (item.name || '').toLowerCase();
 
                     const isFoodItem = catString.includes('food') || catString.includes('cafe') || catString.includes('restaurant') || catString.includes('bakery') || itemDesc.includes('[veg]') || itemDesc.includes('[non-veg]') || itemName.includes('pizza') || itemName.includes('dosa') || itemName.includes('samosa') || itemName.includes('kachori');
-                    const isServiceItem = catString.includes('repair') || catString.includes('salon');
+                    
+                    // 🚀 ASLI FIX: Service category ke saare naye keywords yahan add kar diye hain
+                    const isServiceItem = catString.includes('repair') || catString.includes('salon') || catString.includes('plumber') || catString.includes('electrician') || catString.includes('carpenter') || catString.includes('event') || catString.includes('tent') || catString.includes('real estate') || catString.includes('broker') || catString.includes('tailor') || catString.includes('boutique') || catString.includes('service') || catString.includes('parlour');
 
                     if (isFoodItem) itemStoreType = 'food';
                     else if (isServiceItem) itemStoreType = 'service';
@@ -317,7 +319,6 @@
 
                 return true;
             });
-
             if (finalData.length === 0) {
                 grid.innerHTML = `<p class="col-span-full text-center py-10 text-gray-500 font-medium">Is category / filter me koi item nahi mila. 😔</p>`;
                 return;
