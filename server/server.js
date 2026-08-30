@@ -9,6 +9,7 @@ const Vendor = require('./models/Vendor');
 const jwt = require('jsonwebtoken'); 
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+const axios = require('axios');
 
 // 🌟 MULTER SETUP (Gallery photos handle karne ke liye)
 const multer = require('multer');
@@ -242,29 +243,6 @@ app.delete('/api/vendor/agent/:id', async (req, res) => {
     }
 });
 
-// ==========================================
-// 2. PRODUCT APIS
-// ==========================================
-app.post('/api/products/add', async (req, res) => {
-    try {
-        const { shopSlug, name, price, category, description, images, stockQuantity } = req.body;
-        
-        if (!images || images.length < 1 || images.length > 5) {
-            return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
-        }
-
-        const newProduct = new Product({
-            shopSlug, name, price, category, description, images, stockQuantity: stockQuantity || 1
-        });
-
-        await newProduct.save();
-        res.status(201).json({ message: "Item successfully add ho gaya!", product: newProduct });
-    } catch (error) {
-        console.error("Add Product Error:", error);
-        res.status(500).json({ message: "Server error, item add nahi ho paya." });
-    }
-});
-
 app.get('/api/products/:shopSlug', async (req, res) => {
     try {
         const products = await Product.find({ shopSlug: req.params.shopSlug }).sort({ createdAt: -1 });
@@ -331,6 +309,48 @@ app.post('/api/vendor/upload-gallery', async (req, res) => {
     } catch (error) {
         console.error("Gallery upload error:", error);
         res.status(500).json({ message: "Server mein error aayi, kripya baad mein try karein." });
+    }
+});
+// ==========================================
+// 2. PRODUCT APIS (WITH MAKE.COM WEBHOOK)
+// ==========================================
+app.post('/api/products/add', async (req, res) => {
+    try {
+        const { shopSlug, name, price, category, description, images, stockQuantity } = req.body;
+        
+        if (!images || images.length < 1 || images.length > 5) {
+            return res.status(400).json({ message: "Kripya 1 se 5 photos upload karein." });
+        }
+
+        const newProduct = new Product({
+            shopSlug, name, price, category, description, images, stockQuantity: stockQuantity || 1
+        });
+
+        await newProduct.save();
+
+        // 🚀 MAKE.COM INSTAGRAM WEBHOOK TRIGGER
+        const MAKE_WEBHOOK_URL = 'https://hook.eu1.make.com/1w9hur1606gdjj37u47qf85o54386hbn';
+        
+        // Background mein webhook trigger (User request block nahi hogi)
+        axios.post(MAKE_WEBHOOK_URL, {
+            productId: newProduct._id,
+            name: newProduct.name,
+            price: newProduct.price,
+            category: newProduct.category,
+            description: newProduct.description,
+            imageUrl: newProduct.images[0], // Pehli photo Instagram ke liye
+            shopSlug: newProduct.shopSlug,
+            productUrl: `https://www.smartshop19.com/shop.html?store=${newProduct.shopSlug}`
+        }).then(() => {
+            console.log('✅ Make.com Webhook sent successfully for Instagram auto-post!');
+        }).catch((err) => {
+            console.error('⚠️ Make.com Webhook error:', err.message);
+        });
+
+        res.status(201).json({ message: "Item successfully add ho gaya!", product: newProduct });
+    } catch (error) {
+        console.error("Add Product Error:", error);
+        res.status(500).json({ message: "Server error, item add nahi ho paya." });
     }
 });
 // ==========================================
