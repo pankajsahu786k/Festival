@@ -46,6 +46,12 @@
                 <a href="#" onclick="showSection('vendors')" id="nav-vendors" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">🏪 Manage Vendors</a>
                 <a href="#" onclick="showSection('products')" id="nav-products" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition">📦 All Listings</a>
                 
+                <!-- NEW: Outlet Revenue & Growth Tab -->
+                <a href="#" onclick="showSection('revenue')" id="nav-revenue" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition flex items-center justify-between border border-indigo-700 mt-2 shadow-sm">
+                    <span>💰 Outlet Revenue</span>
+                    <span class="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</span>
+                </a>
+
                 <a href="adminanalytics.html" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition flex items-center justify-between border border-indigo-700 mt-4 shadow-sm">
                     <span>🏆 Top Shops Data</span>
                     <span class="bg-blue-500 text-[10px] px-2 py-0.5 rounded-full font-bold">PRO</span>
@@ -60,8 +66,12 @@
             
             <header class="bg-white shadow-sm px-8 py-5 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
                 <h2 class="text-xl font-bold text-gray-800">Platform Control Center 🎛️</h2>
-                <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
-                    <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> SYSTEM LIVE
+                <div class="flex items-center gap-3">
+                    <!-- Mobile Quick Buttons -->
+                    <button onclick="showSection('revenue')" class="md:hidden bg-green-100 text-green-800 px-3 py-1.5 rounded-lg text-xs font-bold">💰 Revenue</button>
+                    <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                        <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> SYSTEM LIVE
+                    </div>
                 </div>
             </header>
 
@@ -69,14 +79,22 @@
                 
                 <div id="sec-overview" class="space-y-6">
                     <h3 class="text-2xl font-extrabold text-gray-900">Platform Stats</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gradient-to-br from-indigo-500 to-blue-600 p-8 rounded-3xl text-white shadow-lg relative overflow-hidden">
-                            <h4 class="text-indigo-100 font-bold uppercase tracking-widest text-sm">Total Vendors / Shops</h4>
-                            <p id="statVendors" class="text-6xl font-black mt-2">0</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-gradient-to-br from-indigo-500 to-blue-600 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-indigo-100 font-bold uppercase tracking-widest text-xs">Total Vendors / Shops</h4>
+                            <p id="statVendors" class="text-5xl font-black mt-2">0</p>
                         </div>
-                        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 p-8 rounded-3xl text-white shadow-lg relative overflow-hidden">
-                            <h4 class="text-blue-100 font-bold uppercase tracking-widest text-sm">Total Live Properties / Items</h4>
-                            <p id="statProducts" class="text-6xl font-black mt-2">0</p>
+                        <div class="bg-gradient-to-br from-blue-500 to-cyan-500 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-blue-100 font-bold uppercase tracking-widest text-xs">Total Live Items</h4>
+                            <p id="statProducts" class="text-5xl font-black mt-2">0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-emerald-500 to-green-600 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-green-100 font-bold uppercase tracking-widest text-xs">Total Business Volume</h4>
+                            <p id="statTotalGMV" class="text-4xl font-black mt-2">₹0</p>
+                        </div>
+                        <div class="bg-gradient-to-br from-orange-500 to-amber-600 p-6 rounded-3xl text-white shadow-lg relative overflow-hidden">
+                            <h4 class="text-orange-100 font-bold uppercase tracking-widest text-xs">Today's Outlet Sales</h4>
+                            <p id="statTodayGMV" class="text-4xl font-black mt-2">₹0</p>
                         </div>
                     </div>
                 </div>
@@ -105,7 +123,40 @@
                 <div id="sec-products" class="hidden space-y-6">
                     <h3 class="text-2xl font-extrabold text-gray-900">All System Listings</h3>
                     <div id="allProductsList" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    </div>
+                </div>
+
+                <!-- NEW: OUTLET REVENUE & BUSINESS GROWTH SECTION -->
+                <div id="sec-revenue" class="hidden space-y-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-2xl font-extrabold text-gray-900">Outlet Revenue & Growth Tracker 📈</h3>
+                            <p class="text-sm text-gray-500">Yahan se dekhein kaunsi dukaan kitne ke orders le rahi hai taaki aap unse Subscription charge kar sakein.</p>
                         </div>
+                        <button onclick="fetchVendorPerformance()" class="bg-indigo-600 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-indigo-700 transition shadow-sm">
+                            🔄 Refresh Sales Data
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b border-gray-100 text-xs uppercase text-gray-500 font-extrabold">
+                                    <th class="p-4">Outlet / Shop Name</th>
+                                    <th class="p-4">Owner & WhatsApp</th>
+                                    <th class="p-4 text-center">Today's Orders</th>
+                                    <th class="p-4">Today's Sales (₹)</th>
+                                    <th class="p-4 text-center">Total Orders</th>
+                                    <th class="p-4">Completed Sales (₹)</th>
+                                    <th class="p-4">Total Business Volume (₹)</th>
+                                    <th class="p-4">Growth / Plan Potential</th>
+                                </tr>
+                            </thead>
+                            <tbody id="revenueTableBody" class="text-sm divide-y divide-gray-50">
+                                <tr><td colspan="8" class="p-6 text-center text-gray-400">Loading outlet revenue data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
             </div>
@@ -119,6 +170,7 @@
             document.getElementById('adminLoginScreen').classList.add('hidden');
             document.getElementById('adminDashboardScreen').classList.remove('hidden');
             fetchAdminData();
+            fetchVendorPerformance();
         }
 
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
@@ -139,6 +191,7 @@
                     document.getElementById('adminLoginScreen').classList.add('hidden');
                     document.getElementById('adminDashboardScreen').classList.remove('hidden');
                     fetchAdminData();
+                    fetchVendorPerformance();
                 } else {
                     alert(data.message);
                 }
@@ -153,14 +206,26 @@
         }
 
         function showSection(sectionId) {
-            ['overview', 'vendors', 'products'].forEach(id => {
-                document.getElementById(`sec-${id}`).classList.add('hidden');
-                document.getElementById(`nav-${id}`).classList.remove('bg-indigo-600');
-                document.getElementById(`nav-${id}`).classList.add('hover:bg-indigo-800');
+            ['overview', 'vendors', 'products', 'revenue'].forEach(id => {
+                const sec = document.getElementById(`sec-${id}`);
+                const nav = document.getElementById(`nav-${id}`);
+                if (sec) sec.classList.add('hidden');
+                if (nav) {
+                    nav.classList.remove('bg-indigo-600');
+                    nav.classList.add('hover:bg-indigo-800');
+                }
             });
-            document.getElementById(`sec-${sectionId}`).classList.remove('hidden');
-            document.getElementById(`nav-${sectionId}`).classList.add('bg-indigo-600');
-            document.getElementById(`nav-${sectionId}`).classList.remove('hover:bg-indigo-800');
+            const targetSec = document.getElementById(`sec-${sectionId}`);
+            const targetNav = document.getElementById(`nav-${sectionId}`);
+            if (targetSec) targetSec.classList.remove('hidden');
+            if (targetNav) {
+                targetNav.classList.add('bg-indigo-600');
+                targetNav.classList.remove('hover:bg-indigo-800');
+            }
+
+            if (sectionId === 'revenue') {
+                fetchVendorPerformance();
+            }
         }
 
         async function fetchAdminData() {
@@ -180,7 +245,7 @@
                 } else {
                     tbody.innerHTML = vendors.map(v => `
                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                            <td class="p-4 font-bold text-gray-900">${v.shopName} <br><a href="shop.html?store=${v.shopSlug}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline">View Live Store 🔗</a></td>
+                            <td class="p-4 font-bold text-gray-900">${v.shopName} <br><a href="${v.storeType === 'food' ? 'food-shop.html' : 'shop.html'}?store=${v.shopSlug}" target="_blank" class="text-[10px] text-blue-500 font-bold hover:underline">View Live Store 🔗</a></td>
                             <td class="p-4 text-gray-600 font-medium">${v.mobileNumber}</td>
                             <td class="p-4">
                                 <span class="px-3 py-1 text-[11px] font-black rounded-full uppercase ${v.isSuspended ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">
@@ -220,6 +285,75 @@
             } catch(err) { console.error("Admin data fetch error", err); }
         }
 
+        async function fetchVendorPerformance() {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/vendors-performance`);
+                const data = await res.json();
+
+                // Calculate Platform Wide Totals for Overview Cards
+                const totalPlatformGMV = data.reduce((sum, v) => sum + (v.grossOrderValue || 0), 0);
+                const todayPlatformGMV = data.reduce((sum, v) => sum + (v.todayGrossValue || 0), 0);
+
+                const statTotalEl = document.getElementById('statTotalGMV');
+                const statTodayEl = document.getElementById('statTodayGMV');
+                if (statTotalEl) statTotalEl.innerText = `₹${totalPlatformGMV.toLocaleString('en-IN')}`;
+                if (statTodayEl) statTodayEl.innerText = `₹${todayPlatformGMV.toLocaleString('en-IN')}`;
+
+                const tbody = document.getElementById('revenueTableBody');
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-gray-500">Koi vendor data uplabdh nahi hai.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = data.map(v => {
+                    // Subscription recommendation badge logic
+                    let planBadge = `<span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-[11px] font-bold">🌱 Starter (Free)</span>`;
+                    if (v.grossOrderValue >= 5000 || v.totalOrders >= 10) {
+                        planBadge = `<span class="px-2.5 py-1 bg-green-100 text-green-700 border border-green-300 rounded-full text-[11px] font-extrabold">💎 Ready for Subscription</span>`;
+                    } else if (v.grossOrderValue > 0 || v.totalOrders > 0) {
+                        planBadge = `<span class="px-2.5 py-1 bg-blue-100 text-blue-700 rounded-full text-[11px] font-bold">📈 Growing Outlet</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="p-4">
+                                <p class="font-bold text-gray-900">${v.shopName}</p>
+                                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600">${v.storeType}</span>
+                            </td>
+                            <td class="p-4">
+                                <p class="font-semibold text-gray-800 text-xs">${v.ownerName || 'Owner'}</p>
+                                <a href="https://wa.me/91${v.mobileNumber}" target="_blank" class="text-xs text-green-600 font-bold hover:underline">📱 ${v.mobileNumber}</a>
+                            </td>
+                            <td class="p-4 text-center">
+                                <span class="px-2.5 py-1 rounded-lg font-extrabold text-xs ${v.todayOrdersCount > 0 ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500'}">
+                                    ${v.todayOrdersCount}
+                                </span>
+                            </td>
+                            <td class="p-4 font-extrabold text-orange-600">
+                                ₹${(v.todayGrossValue || 0).toLocaleString('en-IN')}
+                            </td>
+                            <td class="p-4 text-center font-bold text-indigo-600">
+                                ${v.totalOrders} <span class="text-[10px] text-gray-400 font-normal">(${v.completedOrdersCount} done)</span>
+                            </td>
+                            <td class="p-4 font-bold text-green-600">
+                                ₹${(v.totalRevenue || 0).toLocaleString('en-IN')}
+                            </td>
+                            <td class="p-4 font-black text-gray-900 text-base">
+                                ₹${(v.grossOrderValue || 0).toLocaleString('en-IN')}
+                                ${v.pendingRevenue > 0 ? `<br><span class="text-[10px] text-amber-600 font-semibold">(₹${v.pendingRevenue} pending)</span>` : ''}
+                            </td>
+                            <td class="p-4">
+                                ${planBadge}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error("Error fetching vendor performance:", err);
+            }
+        }
+
         async function toggleSuspend(id) {
             if(!confirm("Kya aap sach me is dukandaar ka account status badalna chahte hain?")) return;
             try {
@@ -237,6 +371,7 @@
                 if(res.ok) {
                     alert('Vendor aur uske items delete ho gaye!');
                     fetchAdminData();
+                    fetchVendorPerformance();
                 }
             } catch(err) { alert('Delete karne me error aayi.'); }
         }

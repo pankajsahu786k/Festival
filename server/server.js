@@ -52,6 +52,81 @@ app.get('/api/test', (req, res) => {
 });
 
 // ==========================================
+// 📊 SUPER ADMIN: VENDOR BUSINESS GROWTH & REVENUE REPORT
+// ==========================================
+app.get('/api/admin/vendors-performance', async (req, res) => {
+    try {
+        const vendors = await Vendor.find({ role: 'vendor' }).sort({ createdAt: -1 });
+        const orders = await Order.find(); // Saare orders nikal lo
+
+        const today = new Date().toISOString().split('T')[0];
+
+        const vendorPerformance = vendors.map(vendor => {
+            // Is vendor ke saare orders filter karo
+            const shopOrders = orders.filter(o => o.shopSlug === vendor.shopSlug);
+            
+            const totalOrders = shopOrders.length;
+            const completedOrders = shopOrders.filter(o => o.status === 'Completed');
+            const pendingOrders = shopOrders.filter(o => o.status === 'Pending');
+            
+            // Completed Revenue (Paisa jo pakka ho gaya)
+            const totalRevenue = completedOrders.reduce((sum, order) => {
+                return sum + (Number(order.totalAmount) || 0);
+            }, 0);
+
+            // Pending Orders Value (Jo orders abhi process ho rahe hain)
+            const pendingRevenue = pendingOrders.reduce((sum, order) => {
+                return sum + (Number(order.totalAmount) || 0);
+            }, 0);
+
+            // Gross Order Value (Sabhi orders mila kar total kitne ka business aaya, सिवाय Cancelled ke)
+            const grossOrderValue = shopOrders.filter(o => o.status !== 'Cancelled').reduce((sum, order) => {
+                return sum + (Number(order.totalAmount) || 0);
+            }, 0);
+
+            // Aaj ke orders aur sales nikalne ke liye
+            const todayOrders = shopOrders.filter(o => o.createdAt && new Date(o.createdAt).toISOString().split('T')[0] === today);
+            const todayRevenue = todayOrders.filter(o => o.status === 'Completed').reduce((sum, order) => {
+                return sum + (Number(order.totalAmount) || 0);
+            }, 0);
+            const todayGrossValue = todayOrders.filter(o => o.status !== 'Cancelled').reduce((sum, order) => {
+                return sum + (Number(order.totalAmount) || 0);
+            }, 0);
+
+            return {
+                _id: vendor._id,
+                shopName: vendor.shopName,
+                ownerName: vendor.ownerName,
+                mobileNumber: vendor.mobileNumber,
+                shopSlug: vendor.shopSlug,
+                storeType: vendor.storeType || 'retail',
+                category: vendor.category || 'General',
+                shopViews: vendor.shopViews || 0,
+                totalOrders,
+                completedOrdersCount: completedOrders.length,
+                pendingOrdersCount: pendingOrders.length,
+                totalRevenue, // Total completed sales amount
+                pendingRevenue,
+                grossOrderValue, // Total business volume
+                todayOrdersCount: todayOrders.length,
+                todayRevenue,
+                todayGrossValue,
+                isSuspended: vendor.isSuspended,
+                createdAt: vendor.createdAt
+            };
+        });
+
+        // Sabse zyada business dene wale outlets ko upar sort karein
+        vendorPerformance.sort((a, b) => b.grossOrderValue - a.grossOrderValue);
+
+        res.json(vendorPerformance);
+    } catch (error) {
+        console.error("Vendor Performance API Error:", error);
+        res.status(500).json({ message: "Performance data fetch karne me error aaya." });
+    }
+});
+
+// ==========================================
 // 1. VENDOR REGISTRATION & LOGIN APIS
 // ==========================================
 app.post('/api/vendor/register', async (req, res) => {
@@ -311,6 +386,7 @@ app.post('/api/vendor/upload-gallery', async (req, res) => {
         res.status(500).json({ message: "Server mein error aayi, kripya baad mein try karein." });
     }
 });
+
 // ==========================================
 // 2. PRODUCT APIS (WITH MAKE.COM WEBHOOK)
 // ==========================================
@@ -353,6 +429,7 @@ app.post('/api/products/add', async (req, res) => {
         res.status(500).json({ message: "Server error, item add nahi ho paya." });
     }
 });
+
 // ==========================================
 // 📸 GET GALLERY PHOTOS (Page load hone par photos bhejne ke liye)
 // ==========================================
@@ -596,7 +673,7 @@ app.post('/api/customer/search', async (req, res) => {
         let productQuery = { shopSlug: { $in: vendorSlugs } }; 
         
         if (searchQuery) {
-            productQuery.name = { $regex: searchQuery, $options: 'i' }; 
+            productQuery.name = { $regex: searchQuery,$options: 'i' }; 
         }
         
         const products = await Product.find(productQuery);
@@ -624,6 +701,7 @@ app.post('/api/customer/search', async (req, res) => {
         res.status(500).json({ message: "Search fail ho gaya." });
     }
 });
+
 // ==========================================
 // 🌍 GOOGLE SEO SITEMAP GENERATOR
 // ==========================================

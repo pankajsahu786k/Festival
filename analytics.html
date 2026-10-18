@@ -2,150 +2,278 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Shop Analytics - SmartShop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Analytics - Super Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen p-4 md:p-8">
+<body class="bg-gray-50 text-gray-900 flex h-screen overflow-hidden">
 
-    <div class="max-w-5xl mx-auto">
-        
-        <header class="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-6">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900">Store Analytics 📈</h1>
-                <p class="text-sm text-gray-500 font-medium mt-1">Real-time performance data & insights</p>
+    <aside class="w-64 bg-indigo-900 text-white flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-indigo-800">
+            <h1 class="text-2xl font-black tracking-tight">Super<span class="text-blue-400">Admin</span></h1>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="admin.html" class="block px-4 py-3 hover:bg-indigo-800 rounded-xl font-medium transition text-gray-300">⬅️ Back to Dashboard</a>
+            
+            <a href="adminanalytics.html" class="block px-4 py-3 bg-indigo-600 rounded-xl font-semibold shadow-md flex items-center justify-between mt-4 border border-indigo-500">
+                <span>🏆 Top Shops Data</span>
+                <span class="bg-blue-400 text-indigo-900 text-[10px] px-2 py-0.5 rounded-full font-black">PRO</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-indigo-800">
+            <button onclick="adminLogout()" class="w-full px-4 py-3 bg-indigo-800 hover:bg-red-600 rounded-xl font-medium transition text-left">🚪 Logout Boss</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header class="bg-white shadow-sm px-4 md:px-8 py-5 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
+            <div class="flex items-center gap-3">
+                <a href="admin.html" class="md:hidden bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm border border-gray-200">← Back</a>
+                <h2 class="text-xl font-bold text-gray-800">Platform Analytics & Outlet Sales 📈</h2>
             </div>
-            <button onclick="window.history.back()" class="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-xl font-bold hover:bg-gray-200 transition shadow-sm">← Back</button>
+            <div class="bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                <span class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></span> LIVE DATA
+            </div>
         </header>
 
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Store Views</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-2" id="statViews">--</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Avg Time Spent</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-2" id="statTime">--</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-orange-500">
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Orders</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-2" id="statOrders">--</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-purple-500">
-                <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Success Rate</p>
-                <h3 class="text-3xl font-black text-gray-900 mt-2" id="statConv">--</h3>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col items-center justify-center">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 w-full text-left">📊 Most Viewed Products</h2>
-                <div class="w-full relative h-[300px]">
-                    <canvas id="trendingChart"></canvas>
+        <div class="p-4 md:p-8 max-w-7xl mx-auto w-full space-y-8">
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-indigo-500">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Platform Views</p>
+                    <h3 class="text-3xl font-black text-indigo-600 mt-2" id="totalPlatformViews">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-blue-500">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Active Shops</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-2" id="totalActiveShops">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-green-500">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Products Hosted</p>
+                    <h3 class="text-3xl font-black text-gray-900 mt-2" id="totalProductsHosted">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 border-l-4 border-l-orange-500">
+                    <p class="text-[11px] font-bold text-gray-500 uppercase tracking-wide">Total Outlet Sales Volume</p>
+                    <h3 class="text-3xl font-black text-orange-600 mt-2" id="totalPlatformSales">₹0</h3>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">🔥 Trending Items</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6">🏆 Top 5 Shops (By Customer Scans)</h3>
+                    <div class="relative h-[250px]"><canvas id="topShopsChart"></canvas></div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6">📦 Products per Shop (Top 5)</h3>
+                    <div class="relative h-[250px]"><canvas id="productsChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg p-6 text-white mt-8">
+                <h2 class="text-lg font-black mb-4 flex items-center gap-2">🏆 Top Performing Shops (Leaderboard)</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="leaderboardContainer">
+                    <p class="text-sm font-medium text-orange-100">Loading leaderboard...</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 mt-8 overflow-hidden">
+                <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">🏪 All Registered Vendors & Daily Order Revenue</h2>
+                        <p class="text-xs text-gray-500">Har outlet ki daily sales aur total business growth yahan track karein</p>
+                    </div>
+                    <button onclick="fetchAnalyticsData()" class="text-sm font-bold text-orange-600 hover:underline">🔄 Refresh</button>
+                </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="border-b border-gray-100 bg-gray-50 rounded-lg">
-                                <th class="py-3 px-4 text-[10px] font-extrabold text-gray-500 uppercase rounded-tl-lg">Item Name</th>
-                                <th class="py-3 px-4 text-[10px] font-extrabold text-gray-500 uppercase rounded-tr-lg text-right">Views 👁️</th>
+                            <tr class="bg-white border-b border-gray-100">
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Shop Name</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Owner & Mobile</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Views 👁️</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Today's Orders & Sales</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Total Orders & Revenue</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="py-4 px-6 text-[11px] font-extrabold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="trendingTable">
-                            <tr><td colspan="2" class="text-center py-6 text-gray-400 text-sm">Loading data...</td></tr>
+                        <tbody id="vendorTableBody" class="divide-y divide-gray-50">
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400 font-medium">Fetching data...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
         </div>
-    </div>
+    </main>
 
     <script>
-        const urlParams = new URLSearchParams(window.location.search);
-        const shopSlug = urlParams.get('store') || localStorage.getItem('shopSlug');
-
-        if(!shopSlug) {
-            alert("⚠️ No shop selected!");
-            window.location.href = "dashboard.html";
+        if (!localStorage.getItem('adminToken')) {
+            window.location.href = 'admin.html';
         }
 
-        async function fetchAnalytics() {
+        function adminLogout() {
+            localStorage.removeItem('adminToken');
+            window.location.href = 'admin.html';
+        }
+
+        async function fetchAnalyticsData() {
             try {
-                const res = await fetch(`/api/analytics/dashboard/${shopSlug}`);
-                const data = await res.json();
+                const vRes = await fetch('/api/admin/vendors');
+                const vendors = await vRes.json();
+                
+                const pRes = await fetch('/api/admin/products');
+                const products = await pRes.json();
 
-                if(res.ok) {
-                    document.getElementById('statViews').innerText = data.views;
-                    document.getElementById('statTime').innerText = data.avgTimeSpent;
-                    document.getElementById('statOrders').innerText = data.totalOrders;
-                    document.getElementById('statConv').innerText = data.conversionRate;
+                const perfRes = await fetch('/api/admin/vendors-performance');
+                const performanceData = await perfRes.json();
 
-                    renderTable(data.trendingProducts);
-                    renderChart(data.trendingProducts);
-                }
-            } catch (err) {
-                console.error("Error fetching analytics", err);
-            }
+                const activeShops = vendors.filter(v => !v.isSuspended).length;
+                let totalViews = 0;
+                vendors.forEach(v => { totalViews += (v.shopViews || 0); });
+
+                const totalSalesVolume = performanceData.reduce((sum, item) => sum + (item.grossOrderValue || 0), 0);
+
+                document.getElementById('totalActiveShops').innerText = activeShops;
+                document.getElementById('totalPlatformViews').innerText = totalViews;
+                document.getElementById('totalProductsHosted').innerText = products.length;
+                document.getElementById('totalPlatformSales').innerText = `₹${totalSalesVolume.toLocaleString('en-IN')}`;
+
+                renderTopShopsChart(vendors);
+                renderProductsChart(vendors, products);
+                renderLeaderboard(vendors);
+                renderVendorsTable(vendors, performanceData);
+
+            } catch (error) { console.error("Error fetching data", error); }
         }
 
-        function renderTable(products) {
-            const table = document.getElementById('trendingTable');
-            if(products.length === 0) {
-                table.innerHTML = `<tr><td colspan="2" class="text-center py-6 text-gray-400 text-sm font-medium bg-gray-50 rounded-b-lg">Abhi tak kisi item ko view nahi kiya gaya hai.</td></tr>`;
-                return;
-            }
-            table.innerHTML = products.map((p, index) => `
-                <tr class="border-b border-gray-50 hover:bg-orange-50/50 transition">
-                    <td class="py-3 px-4 font-bold text-sm text-gray-800 flex items-center gap-2">
-                        <span class="bg-gray-100 text-gray-500 w-5 h-5 flex items-center justify-center rounded text-[10px]">${index + 1}</span> 
-                        <span class="truncate max-w-[200px]">${p.name}</span>
-                    </td>
-                    <td class="py-3 px-4 font-black text-orange-600 text-right">${p.views || 0}</td>
-                </tr>
-            `).join('');
-        }
-
-        function renderChart(products) {
-            const ctx = document.getElementById('trendingChart').getContext('2d');
+        // CHARTS RENDER FUNCTIONS
+        function renderTopShopsChart(vendors) {
+            const sortedVendors = [...vendors].sort((a, b) => (b.shopViews || 0) - (a.shopViews || 0)).slice(0, 5);
+            const labels = sortedVendors.map(v => v.shopName);
+            const data = sortedVendors.map(v => v.shopViews || 0);
             
-            // Labels aur Data alag karna
-            const labels = products.map(p => p.name.substring(0, 15) + '...');
-            const viewCounts = products.map(p => p.views || 0);
+            const ctx = document.getElementById('topShopsChart');
+            let chartStatus = Chart.getChart("topShopsChart");
+            if (chartStatus != undefined) { chartStatus.destroy(); }
 
-            new Chart(ctx, {
+            new Chart(ctx.getContext('2d'), {
                 type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Total Views',
-                        data: viewCounts,
-                        backgroundColor: 'rgba(234, 88, 12, 0.8)', // Orange-600
-                        borderRadius: 6,
-                        barThickness: 30
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                data: { labels: labels, datasets: [{ label: 'Total Views', data: data, backgroundColor: 'rgba(79, 70, 229, 0.9)', borderRadius: 6 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        fetchAnalytics();
+        function renderProductsChart(vendors, products) {
+            const productCounts = {};
+            products.forEach(p => { productCounts[p.shopSlug] = (productCounts[p.shopSlug] || 0) + 1; });
+            const shopStats = Object.keys(productCounts).map(slug => {
+                const shop = vendors.find(v => v.shopSlug === slug);
+                return { name: shop ? shop.shopName : slug, count: productCounts[slug] };
+            }).sort((a, b) => b.count - a.count).slice(0, 5);
+
+            const labels = shopStats.map(s => s.name);
+            const data = shopStats.map(s => s.count);
+
+            const ctx = document.getElementById('productsChart');
+            let chartStatus = Chart.getChart("productsChart");
+            if (chartStatus != undefined) { chartStatus.destroy(); }
+
+            new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: { labels: labels, datasets: [{ data: data, backgroundColor: ['#4f46e5', '#3b82f6', '#06b6d4', '#10b981', '#f59e0b'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } }
+            });
+        }
+
+        // LEADERBOARD RENDER
+        function renderLeaderboard(vendors) {
+            const container = document.getElementById('leaderboardContainer');
+            const sortedVendors = [...vendors].sort((a, b) => (b.shopViews || 0) - (a.shopViews || 0));
+            const top3 = sortedVendors.slice(0, 3);
+            if(top3.length === 0) { container.innerHTML = `<p class="text-sm text-orange-100">Koi dukan active nahi hai.</p>`; return; }
+
+            const medals = ['🥇 1st Place', '🥈 2nd Place', '🥉 3rd Place'];
+            container.innerHTML = top3.map((v, index) => `
+                <div class="bg-white/20 backdrop-blur-sm p-4 rounded-xl border border-white/30 flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-wider text-orange-200 mb-1">${medals[index] || 'Top'}</p>
+                        <h4 class="font-bold text-white text-lg leading-tight truncate max-w-[150px]">${v.shopName}</h4>
+                        <p class="text-xs text-orange-100 mt-1">${v.category || 'General Store'}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-3xl font-black text-white">${v.shopViews || 0}</span>
+                        <span class="text-[10px] font-bold uppercase text-orange-200">Total Scans</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // DETAILED VENDOR TABLE RENDER WITH REVENUE
+        function renderVendorsTable(vendors, performanceData = []) {
+            const tbody = document.getElementById('vendorTableBody');
+            if (vendors.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-gray-400">No vendors found.</td></tr>`; return; }
+
+            tbody.innerHTML = vendors.map(vendor => {
+                const perf = performanceData.find(p => p.shopSlug === vendor.shopSlug) || {
+                    todayOrdersCount: 0, todayGrossValue: 0, totalOrders: 0, grossOrderValue: 0, totalRevenue: 0
+                };
+
+                const isSuspended = vendor.isSuspended || false;
+                const statusBadge = isSuspended 
+                    ? `<span class="bg-red-50 text-red-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold border border-red-200">Suspended</span>` 
+                    : `<span class="bg-green-50 text-green-600 px-2.5 py-1 rounded-md text-[10px] font-extrabold border border-green-200">Active</span>`;
+                const toggleActionText = isSuspended ? "🟢 Resume" : "🔴 Suspend";
+                
+                return `
+                <tr class="hover:bg-gray-50 transition border-b border-gray-50">
+                    <td class="py-4 px-6">
+                        <p class="font-bold text-gray-900 text-sm">${vendor.shopName}</p>
+                        <p class="text-[10px] text-gray-400">${vendor.category || 'N/A'}</p>
+                        <a href="/${vendor.storeType === 'food' ? 'food-shop.html' : 'shop.html'}?store=${vendor.shopSlug}" target="_blank" class="text-[10px] text-blue-600 hover:underline font-bold">View Live ↗</a>
+                    </td>
+                    <td class="py-4 px-6">
+                        <p class="font-bold text-gray-800 text-xs">${vendor.ownerName}</p>
+                        <p class="text-[10px] text-gray-500 font-medium">📱 ${vendor.mobileNumber}</p>
+                    </td>
+                    <td class="py-4 px-6 font-black text-indigo-600 text-base">${vendor.shopViews || 0}</td>
+                    <td class="py-4 px-6">
+                        <span class="font-extrabold text-orange-600 text-sm">₹${(perf.todayGrossValue || 0).toLocaleString('en-IN')}</span>
+                        <span class="block text-[10px] text-gray-500 font-bold">${perf.todayOrdersCount || 0} orders today</span>
+                    </td>
+                    <td class="py-4 px-6">
+                        <span class="font-black text-green-600 text-sm">₹${(perf.grossOrderValue || 0).toLocaleString('en-IN')}</span>
+                        <span class="block text-[10px] text-gray-500 font-bold">${perf.totalOrders || 0} total orders</span>
+                    </td>
+                    <td class="py-4 px-6">${statusBadge}</td>
+                    <td class="py-4 px-6 text-right space-x-2 whitespace-nowrap">
+                        <a href="/analytics.html?store=${vendor.shopSlug}" target="_blank" class="text-xs font-bold text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md transition">📈 Data</a>
+                        <button onclick="toggleVendorStatus('${vendor._id}')" class="text-xs font-bold text-gray-700 hover:bg-gray-100 px-2 py-1.5 rounded-md transition border border-gray-200">${toggleActionText}</button>
+                        <button onclick="deleteVendor('${vendor._id}')" class="text-xs font-bold text-white bg-red-600 hover:bg-red-700 px-2 py-1.5 rounded-md transition shadow-sm">Delete</button>
+                    </td>
+                </tr>
+            `}).join('');
+        }
+
+        async function toggleVendorStatus(id) {
+            if(!confirm("Are you sure you want to change this vendor's status?")) return;
+            try {
+                const res = await fetch(`/api/admin/vendor/toggle-status/${id}`, { method: 'PUT' });
+                if(res.ok) fetchAnalyticsData();
+            } catch (err) { alert('Error updating status'); }
+        }
+
+        async function deleteVendor(id) {
+            if(!confirm("⚠️ WARNING: This will permanently delete the vendor and ALL their products. Continue?")) return;
+            try {
+                const res = await fetch(`/api/admin/vendor/${id}`, { method: 'DELETE' });
+                if(res.ok) fetchAnalyticsData();
+            } catch (err) { alert('Delete failed'); }
+        }
+
+        fetchAnalyticsData();
     </script>
 </body>
 </html>
